@@ -1,19 +1,22 @@
 from coreapi.document import Document, Link, Object, List
-from coreapi.encoders import DocJSONEncoder
+from coreapi.codecs import DocJSONCodec
 from coreapi.exceptions import ParseError, RequestError
 from coreapi.transport import HTTPTransport
 
 
+__version__ = '0.1'
+
+
 def loads(bytestring):
-    encoder = DocJSONEncoder()
-    return encoder.loads(bytestring)
+    codec = DocJSONCodec()
+    return codec.loads(bytestring)
 
 
 def dumps(document, indent=None):
-    encoder = DocJSONEncoder()
-    return encoder.dumps(document, indent=indent)
+    codec = DocJSONCodec()
+    return codec.dumps(document, indent=indent)
 
 
-def get(uri):
+def get(url):
     transport = HTTPTransport()
-    return transport.follow(uri)
+    return transport.follow(url)

@@ -1,0 +1,10 @@
+*.pyc
+*~
+.*
+
+/env/
+/coreapi.egg-info/
+/dist/
+
+!.gitignore
+!.travis.yml
