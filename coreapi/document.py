@@ -1,129 +1,151 @@
 #coding: utf-8
-from collections import Mapping, OrderedDict
-from coreapi.compat import is_string, urlparse
-import re
+from collections import Mapping
+from coreapi.compat import is_string
+from coreapi.exceptions import DocumentError
 
 
-# <TODO Notes - http://127.0.0.1:3000/>
-#     add_note(description)
-#     notes: [
-#         <Note - http://127.0.0.1:3000/626579bd-b2ba-40d0-92af-9ff0bfa5f276>
-#             complete: False
-#             description: 'blah!'
-#             delete()
-#             edit(description, complete)
-#         <Note - http://127.0.0.1:3000/626579bd-b2ba-40d0-92af-9ff0bfa5f276>
-#             complete: False
-#             description: 'blah!'
-#             delete()
-#             edit(description, complete)
-#     ]
+def _make_immutable(value):
+    """
+    Coerce standard python container types into our immutable primatives.
+    Used when instantiating documents.
 
-# Regex for valid python identifiers
-_PYTHON_IDENTIFIER = re.compile(r"^[^\d\W]\w*\Z", re.UNICODE)
+    Eg. Document({"meta": {"title": ...}, "notes": [...]})
+
+    Notice that in the above style the instantiation is written as
+    regular Python dicts, lists, but once we have the object it
+    will consist of immutable container types.
+    """
+    if isinstance(value, dict):
+        return Object(value)
+    elif isinstance(value, (list, tuple)):
+        return Array(value)
+    elif (
+        is_string(value) or
+        value is None or
+        isinstance(value, (int, float, bool, Document, Object, Array, Link))
+    ):
+        return value
+
+    msg = "Invalid type in document. Got '%s'." % type(value)
+    raise DocumentError(msg)
 
 
-def _get_default_transport():
-    # One of those odd edge cases where a circular import
-    # is actually reasonable.
-    from coreapi.transport import HTTPTransport
-    return HTTPTransport()
+def _document_sorting(item):
+    """
+    Document sorting: 'meta' first, then regular attributes
+    sorted alphabetically, then links sorted alphabetically.
+    """
+    key, value = item
+    if isinstance(value, Link):
+        return (2, key)
+    elif key != 'meta':
+        return (1, key)
+    return (0, key)
 
 
-def _copy_with_replace(doc, replace_from, replace_to):
-    if doc == replace_from:
-        return replace_to
+def _object_sorting(item):
+    """
+    Object sorting: Regular attributes sorted alphabetically,
+    then links sorted alphabetically.
+    """
+    key, value = item
+    if isinstance(value, Link):
+        return (1, key)
+    return (0, key)
 
-    if isinstance(doc, Document):
-        return Document({
-            key: _copy_with_replace(value, replace_from, replace_to)
-            for key, value in doc.items()
-        })
-    elif isinstance(doc, Object):
-        return Object({
-            key: _copy_with_replace(value, replace_from, replace_to)
-            for key, value in doc.items()
-        })
-    elif isinstance(doc, List):
-        return List([
-            _copy_with_replace(item, replace_from, replace_to)
-            for item in doc
+
+def _document_repr(node):
+    """
+    Return the representation of a document or other primative
+    in plain python style. Only the outermost element gets the
+    class wrapper.
+    """
+    if isinstance(node, (Document, Object)):
+        return '{%s}' % ', '.join([
+            '%s: %s' % (repr(key), _document_repr(value))
+            for key, value in node.items()
         ])
-    elif isinstance(doc, Link):
-        return Link(doc.url, doc.rel, doc.fields)
-    return doc
-
-
-def _copy_with_remove(doc, remove_from):
-    if doc == remove_from:
-        return None
-
-    if isinstance(doc, Document):
-        return Document({
-            key: _copy_with_remove(value, remove_from)
-            for key, value in doc.items()
-            if value is not remove_from
-        })
-    elif isinstance(doc, Object):
-        return Object({
-            key: _copy_with_remove(value, remove_from)
-            for key, value in doc.items()
-            if value is not remove_from
-        })
-    elif isinstance(doc, List):
-        return List([
-            _copy_with_remove(item, remove_from)
-            for item in doc
-            if item is not remove_from
+    elif isinstance(node, Array):
+        return '[%s]' % ', '.join([
+            _document_repr(value) for value in node
         ])
-    elif isinstance(doc, Link):
-        return Link(doc.url, doc.rel, doc.fields)
-    return doc
+    return repr(node)
 
 
 class Document(Mapping):
-    def __init__(self, data):
-        self._data = OrderedDict(data)
-        self._parent = None
-        for child in self.values():
-            if isinstance(child, (Document, Object, List, Link)):
-                child._parent = self
+    def __init__(self, *args, **kwargs):
+        data = dict(*args, **kwargs)
+        for key, value in data.items():
+            if not is_string(key):
+                raise DocumentError('Document keys must be strings.')
+            data[key] = _make_immutable(value)
+        self._data = data
 
-    def _get_root(self):
-        if self._parent is None:
-            return self
-        return self._parent._get_root()
-
-    def __getattr__(self, attr):
-        # Support attribute style lookup eg. `document.meta.title`
-        try:
-            return self._data[attr]
-        except KeyError:
-            raise AttributeError("document has no attribute '%s'" % attr)
+    def __setattr__(self, key, value):
+        if key == '_data':
+            return object.__setattr__(self, key, value)
+        raise TypeError("'Document' object does not support property assignment")
 
     def __getitem__(self, key):
-        # Delegate mapping implementation to the `_data` ordered dict.
         return self._data[key]
 
     def __iter__(self):
-        # Delegate mapping implementation to the `_data` ordered dict.
-        return iter(self._data)
+        items = sorted(self._data.items(), key=_document_sorting)
+        return iter([key for key, value in items])
 
     def __len__(self):
-        # Delegate mapping implementation to the `_data` ordered dict.
         return len(self._data)
 
-    def __dir__(self):
-        # Return class methods plus all valid python identifiers that are keys
-        # of the document. Used for tab completion in interactive python shell.
-        attr_keys = [key for key in self._data if _PYTHON_IDENTIFIER.match(key)]
-        return list(set(dir(Document) + attr_keys))
+    def __repr__(self):
+        return 'Document(%s)' % _document_repr(self)
 
-    def __str__(self):
-        return "%s - %s" % (self.meta.get('title', '<no title>'), self.meta.url)
+
+class Object(Mapping):
+    """
+    An immutable mapping of strings to values.
+    """
+    def __init__(self, *args, **kwargs):
+        data = dict(*args, **kwargs)
+        for key, value in data.items():
+            assert is_string(key), 'Object keys must be strings.'
+            data[key] = _make_immutable(value)
+        self._data = data
+
+    def __setattr__(self, key, value):
+        if key == '_data':
+            return object.__setattr__(self, key, value)
+        raise TypeError("'Object' object does not support property assignment")
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __iter__(self):
+        items = sorted(self._data.items(), key=_object_sorting)
+        return iter([key for key, value in items])
+
+    def __len__(self):
+        return len(self._data)
 
     def __repr__(self):
-        return _coreapi_repr(self)
+        return 'Object(%s)' % _document_repr(self)
+
+
+class Array(tuple):
+    """
+    An immutable list type container.
+    """
+    def __init__(self, *args):
+        data = [
+            _make_immutable(value)
+            for value in tuple(*args)
+        ]
+        return super(Array, self).__init__(data)
+
+    def __setattr__(self, key, value):
+        raise TypeError("'Array' object does not support property assignment")
+
+    def __repr__(self):
+        return 'Array(%s)' % _document_repr(self)
 
 
 class Link(object):
@@ -131,7 +153,6 @@ class Link(object):
         self.url = url
         self.rel = rel
         self.fields = [] if (fields is None) else fields
-        self._parent = None
 
     def _validate(self, **kwargs):
         """
@@ -180,17 +201,6 @@ class Link(object):
             field_as_string(field) for field in self.fields
         ])
 
-    def _get_root(self):
-        if self._parent is None:
-            return self
-        return self._parent._get_root()
-
-    def _get_parent_document(self):
-        node = self._parent
-        while not isinstance(node, Document):
-            node = node._parent
-        return node
-
     def __call__(self, **kwargs):
         assert self._parent is not None, (
             "Cannot call this link as it is not attached to a document."
@@ -213,76 +223,6 @@ class Link(object):
         )
 
 
-class List(tuple):
-    """
-    This class is an immutable list-like object, that prints the
-    contained data using a nice indented representation.
-    """
-    def __init__(self, *args):
-        super(List, self).__init__(*args)
-        for child in self:
-            if isinstance(child, (Document, Object, List, Link)):
-                child._parent = self
-
-    def _get_root(self):
-        if self._parent is None:
-            return self
-        return self._parent._get_root()
-
-    def __repr__(self):
-        return _coreapi_repr(self)
-
-
-class Object(Mapping):
-    """
-    This class is an immutable ordered dictionary, that also allows
-    us to access the attributes as properties on the object.
-
-    For example: `doc.author.name` will lookup doc['author']['name'].
-
-    It also prints the contained data using a nice indented representation.
-    """
-    def __init__(self, *args, **kwargs):
-        self._data = OrderedDict(*args, **kwargs)
-        self._parent = None
-        for child in self.values():
-            if isinstance(child, (Document, Object, List, Link)):
-                child._parent = self
-
-    def _get_root(self):
-        if self._parent is None:
-            return self
-        return self._parent._get_root()
-
-    def __getattr__(self, attr):
-        # Allow 'doc.meta.title' style as a shortcut to "doc['meta']['title']"
-        try:
-            return self[attr]
-        except KeyError:
-            raise AttributeError("object has no attribute '%s'" % attr)
-
-    def __getitem__(self, key):
-        # Delegate mapping implementation to the `_data` ordered dict.
-        return self._data[key]
-
-    def __iter__(self):
-        # Delegate mapping implementation to the `_data` ordered dict.
-        return iter(self._data)
-
-    def __len__(self):
-        # Delegate mapping implementation to the `_data` ordered dict.
-        return len(self._data)
-
-    def __dir__(self):
-        # Return class methods plus all valid python identifiers that are keys
-        # of the document.  Used for tab completion in interactive python shell.
-        attr_keys = [key for key in self._data if identifier.match(key)]
-        return list(set(dir(Object) + attr_keys))
-
-    def __repr__(self):
-        return _coreapi_repr(self)
-
-
 ### Formatted printing of DocJSON documents.
 
 def _coreapi_repr(obj, indent=0):
@@ -302,7 +242,7 @@ def _coreapi_repr(obj, indent=0):
         ret += '    ' * indent + '}'
         return ret
 
-    elif isinstance(obj, List):
+    elif isinstance(obj, Array):
         final_idx = len(obj) - 1
         ret = '[\n'
         for idx, val in enumerate(obj):
@@ -312,6 +252,6 @@ def _coreapi_repr(obj, indent=0):
         return ret
 
     if is_string(obj):
-       return "'" + str(obj) + "'"
+        return "'" + str(obj) + "'"
 
     return repr(obj)

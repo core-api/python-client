@@ -1,8 +1,11 @@
-try:  # pragma: no cover - Python 2.x
+# flake8: noqa
+try:
     import urlparse
+
     def is_string(text):
         return isinstance(text, (str, unicode))
-except ImportError:  # pragma: no cover - Python 3.x
+except ImportError:
     import urllib.parse as urlparse
+
     def is_string(text):
         return isinstance(text, str)

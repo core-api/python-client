@@ -1,12 +1,12 @@
 #coding: utf-8
 from collections import OrderedDict
 from coreapi.compat import is_string, urlparse
-from coreapi.document import Document, Link, List, Object
+from coreapi.document import Document, Link, Array, Object
 from coreapi.exceptions import ParseError
 import json
 
 
-class DocJSONEncoder:
+class DocJSONCodec:
     media_type = 'application/vnd.document+json'
 
     def loads(self, bytes, base_url=None):
@@ -112,7 +112,7 @@ class DocJSONEncoder:
             # Ignore 'Link' objects contained in a list.
             if not isinstance(value, Link):
                 parsed.append(value)
-        return List(parsed)
+        return Array(parsed)
 
 
 class _CustomJSONEncoder(json.JSONEncoder):
