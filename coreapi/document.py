@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 from collections import Mapping, Sequence
 from coreapi.compat import is_string
 from coreapi.exceptions import DocumentError

@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 from coreapi.compat import urlparse
 from coreapi.codecs import DocJSONCodec
 from coreapi.exceptions import RequestError

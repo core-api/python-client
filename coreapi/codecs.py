@@ -1,4 +1,4 @@
-#coding: utf-8
+# coding: utf-8
 from collections import OrderedDict
 from coreapi.compat import is_string, urlparse
 from coreapi.document import Document, Link, Array, Object
@@ -20,10 +20,10 @@ class DocJSONCodec:
         except ValueError as exc:
             raise ParseError('Malformed JSON - ' + str(exc))
 
-        # The returned JSON MUST be a document.
+        # The returned JSON MUST be a document.
         if not isinstance(data, OrderedDict):
             raise ParseError('Expected a DocJSON document, but got %s' % type(data).__name__)
-        if not '_type' in data:
+        if '_type' not in data:
             raise ParseError('Document missing "_type": "document"')
         if data['_type'] != 'document':
             raise ParseError('Document should have "_type": "document", but had incorrect "_type": "%s"' % data['_type'])
@@ -76,7 +76,7 @@ class DocJSONCodec:
     def _parse_link(self, data, base_url):
         url, rel, fields = None, None, None
 
-        # A link MAY contain `url`, `rel` and `fields` attributes.
+        # A link MAY contain `url`, `rel` and `fields` attributes.
         if 'url' in data and is_string(data['url']):
             url = data['url']
         if 'rel' in data and is_string(data['rel']):
