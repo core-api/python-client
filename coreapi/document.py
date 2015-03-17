@@ -1,5 +1,5 @@
 #coding: utf-8
-from collections import Mapping
+from collections import Mapping, Sequence
 from coreapi.compat import is_string
 from coreapi.exceptions import DocumentError
 
@@ -56,7 +56,7 @@ def _object_sorting(item):
 
 def _document_repr(node):
     """
-    Return the representation of a document or other primative
+    Return the representation of a Document or other primative
     in plain python style. Only the outermost element gets the
     class wrapper.
     """
@@ -72,7 +72,128 @@ def _document_repr(node):
     return repr(node)
 
 
+def _document_str(node, indent=0):
+    """
+    Return a verbose, indented representation of a Document or other primative.
+    """
+    if isinstance(node, (Document, Object)):
+        head_indent = '    ' * indent
+        body_indent = '    ' * (indent + 1)
+
+        delimiter = '\n' if isinstance(node, Document) else ',\n'
+        body = delimiter.join([
+            (
+                '%s%s: %s' % (
+                    body_indent, repr(key), _document_str(value, indent + 1)
+                )
+                if not isinstance(value, Link)
+                else '%s%s()' % (body_indent, str(key))
+            )
+            for key, value in node.items()
+        ])
+
+        if isinstance(node, Document):
+            head = '%s<%s - %s>' % (
+                head_indent, node['meta']['title'], node['meta']['url']
+            )
+            return head + '\n' + body
+        return '{\n' + body + '\n' + head_indent + '}'
+
+    elif isinstance(node, Array):
+        head_indent = '    ' * indent
+        body_indent = '    ' * (indent + 1)
+
+        body = ',\n'.join([
+            body_indent + _document_str(value, indent + 1) for value in node
+        ])
+
+        return '[\n' + body + '\n' + head_indent + ']'
+
+    return repr(node)
+
+
+# Functions for returning a modified copy of an immutable primative:
+
+def remove(node, key):
+    """
+    Return a new immutable container type, with the given key removed.
+    """
+    if isinstance(node, (Document, Object)):
+        data = dict(node._data)
+    elif isinstance(node, Array):
+        data = list(node._data)
+    else:
+        raise TypeError(
+            "Expected Core API container type. Got '%s'." % type(node)
+        )
+
+    data.pop(key)
+    return type(node)(data)
+
+
+def replace(node, key, value):
+    """
+    Return a new immutable container type, with the given key removed.
+    """
+    if isinstance(node, (Document, Object)):
+        data = dict(node)
+    elif isinstance(node, Array):
+        data = list(node)
+    else:
+        raise TypeError(
+            "Expected Core API container type. Got '%s'." % type(node)
+        )
+
+    data[key] = value
+    return type(node)(data)
+
+
+def deep_remove(node, keys):
+    """
+    Return a new immutable container type, with the given nested key removed.
+    """
+    if not isinstance(node, (Array, Document, Object)):
+        raise TypeError("Expected Core API container type.")
+
+    if not keys:
+        return None
+    elif len(keys) == 1:
+        return remove(node, keys[0])
+
+    key = keys[0]
+    next = node[key]
+    child = deep_remove(next, keys[1:])
+    return replace(node, key, child)
+
+
+def deep_replace(node, keys, value):
+    """
+    Return a new immutable container type, with the given nested key replaced.
+    """
+    if not isinstance(node, (Array, Document, Object)):
+        raise TypeError("Expected Core API container type.")
+
+    if not keys:
+        return value
+    elif len(keys) == 1:
+        return replace(node, keys[0], value)
+
+    key = keys[0]
+    next = node[key]
+    child = deep_replace(next, keys[1:], value)
+    return replace(node, key, child)
+
+
+# The Core API primatives:
+
 class Document(Mapping):
+    """
+    The Core API document type.
+
+    Expresses the data that the client may access,
+    and the actions that the client may perform.
+    """
+
     def __init__(self, *args, **kwargs):
         data = dict(*args, **kwargs)
         for key, value in data.items():
@@ -98,6 +219,9 @@ class Document(Mapping):
 
     def __repr__(self):
         return 'Document(%s)' % _document_repr(self)
+
+    def __str__(self):
+        return _document_str(self)
 
 
 class Object(Mapping):
@@ -129,23 +253,45 @@ class Object(Mapping):
     def __repr__(self):
         return 'Object(%s)' % _document_repr(self)
 
+    def __str__(self):
+        return _document_str(self)
 
-class Array(tuple):
+
+class Array(Sequence):
     """
     An immutable list type container.
     """
     def __init__(self, *args):
-        data = [
+        self._data = [
             _make_immutable(value)
-            for value in tuple(*args)
+            for value in list(*args)
         ]
-        return super(Array, self).__init__(data)
 
     def __setattr__(self, key, value):
+        if key == '_data':
+            return object.__setattr__(self, key, value)
         raise TypeError("'Array' object does not support property assignment")
+
+    def __getitem__(self, key):
+        return self._data[key]
+
+    def __iter__(self):
+        return iter(self._data)
+
+    def __len__(self):
+        return len(self._data)
+
+    def __eq__(self, other):
+        return (
+            (isinstance(other, Array) and (self._data == other._data)) or
+            self._data == other
+        )
 
     def __repr__(self):
         return 'Array(%s)' % _document_repr(self)
+
+    def __str__(self):
+        return _document_str(self)
 
 
 class Link(object):
@@ -206,52 +352,22 @@ class Link(object):
             "Cannot call this link as it is not attached to a document."
         )
         self._validate(**kwargs)
-        transport = _get_default_transport()
+        transport = None
         document = transport.follow(url=self.url, rel=self.rel, arguments=kwargs)
-        if self.rel in (None, 'follow'):
-            return document
+        return document
 
-        root_document = self._get_root()
-        parent_document = self._get_parent_document()
-        if self.rel == 'delete':
-            return _copy_with_remove(root_document, parent_document)
-        return _copy_with_replace(root_document, parent_document, document)
-
-    def __repr__(self):
-        return "<Link url='%s' rel='%s' fields=(%s)>" % (
-            self.url, self.rel, self._fields_as_string()
+    def __eq__(self, other):
+        return (
+            isinstance(other, Link) and
+            self.url == other.url and
+            self.rel == other.rel and
+            self.fields == other.fields
         )
 
-
-### Formatted printing of DocJSON documents.
-
-def _coreapi_repr(obj, indent=0):
-    """
-    Returns an indented string representation for a document.
-    """
-    if isinstance(obj, (Document, Object)):
-        final_idx = len(obj) - 1
-        ret = '{\n'
-        for idx, (key, val) in enumerate(obj.items()):
-            ret += '    ' * (indent + 1) + key
-            if isinstance(val, Link):
-                ret += '(' + val._fields_as_string() + ')'
-            else:
-                ret += ': ' + _coreapi_repr(val, indent + 1)
-            ret += idx == final_idx and '\n' or ',\n'
-        ret += '    ' * indent + '}'
-        return ret
-
-    elif isinstance(obj, Array):
-        final_idx = len(obj) - 1
-        ret = '[\n'
-        for idx, val in enumerate(obj):
-            ret += '    ' * (indent + 1) + _coreapi_repr(val, indent + 1)
-            ret += idx == final_idx and '\n' or ',\n'
-        ret += '    ' * indent + ']'
-        return ret
-
-    if is_string(obj):
-        return "'" + str(obj) + "'"
-
-    return repr(obj)
+    def __repr__(self):
+        args = "url=%s" % repr(self.url)
+        if self.rel:
+            args += ", rel=%s" % (self.rel)
+        if self.fields:
+            args += ", fields=%s" % repr(self.fields)
+        return "Link(%s)" % args
