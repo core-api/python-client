@@ -60,7 +60,15 @@ def _document_repr(node):
     in plain python style. Only the outermost element gets the
     class wrapper.
     """
-    if isinstance(node, (Document, Object)):
+    if isinstance(node, Document):
+        content = ', '.join([
+            '%s: %s' % (repr(key), _document_repr(value))
+            for key, value in node.items()
+        ])
+        return 'Document(url=%s, title=%s, content={%s})' % (
+            repr(node.url), repr(node.title), content
+        )
+    elif isinstance(node, Object):
         return '{%s}' % ', '.join([
             '%s: %s' % (repr(key), _document_repr(value))
             for key, value in node.items()
@@ -94,7 +102,7 @@ def _document_str(node, indent=0):
 
         if isinstance(node, Document):
             head = '%s<%s - %s>' % (
-                head_indent, node['meta']['title'], node['meta']['url']
+                head_indent, node.title, node.url
             )
             return head + '\n' + body
         return '{\n' + body + '\n' + head_indent + '}'
@@ -128,6 +136,8 @@ def remove(node, key):
         )
 
     data.pop(key)
+    if isinstance(node, Document):
+        return type(node)(url=node.url, title=node.title, content=data)
     return type(node)(data)
 
 
@@ -145,6 +155,8 @@ def replace(node, key, value):
         )
 
     data[key] = value
+    if isinstance(node, Document):
+        return type(node)(url=node.url, title=node.title, content=data)
     return type(node)(data)
 
 
@@ -194,8 +206,11 @@ class Document(Mapping):
     and the actions that the client may perform.
     """
 
-    def __init__(self, *args, **kwargs):
-        data = dict(*args, **kwargs)
+    def __init__(self, url=None, title=None, content=None):
+        self._url = '' if (url is None) else url
+        self._title = '' if (title is None) else title
+        data = {} if (content is None) else dict(content)
+
         for key, value in data.items():
             if not is_string(key):
                 raise DocumentError('Document keys must be strings.')
@@ -203,7 +218,7 @@ class Document(Mapping):
         self._data = data
 
     def __setattr__(self, key, value):
-        if key == '_data':
+        if key in ('_data', '_url', '_title'):
             return object.__setattr__(self, key, value)
         raise TypeError("'Document' object does not support property assignment")
 
@@ -218,10 +233,18 @@ class Document(Mapping):
         return len(self._data)
 
     def __repr__(self):
-        return 'Document(%s)' % _document_repr(self)
+        return _document_repr(self)
 
     def __str__(self):
         return _document_str(self)
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def title(self):
+        return self._title
 
     def action(self, keys, **kwargs):
         """

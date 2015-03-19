@@ -5,25 +5,24 @@ import pytest
 
 @pytest.fixture
 def doc():
-    return Document({
-        'meta': {
-            'url': 'http://example.org',
-            'title': 'Example'
-        },
-        'integer': 123,
-        'dict': {'key': 'value'},
-        'list': [1, 2, 3],
-        'link': Link(url='/'),
-        'nested': {'child': Link(url='/123')},
-        '_type': 'needs escaping'
-    })
+    return Document(
+        url='http://example.org',
+        title='Example',
+        content={
+            'integer': 123,
+            'dict': {'key': 'value'},
+            'list': [1, 2, 3],
+            'link': Link(url='/'),
+            'nested': {'child': Link(url='/123')},
+            '_type': 'needs escaping'
+        })
 
 
 def test_document_to_primative(doc):
     data = _document_to_primative(doc)
     assert data == {
         '_type': 'document',
-        'meta': {
+        '_meta': {
             'url': 'http://example.org',
             'title': 'Example'
         },
@@ -39,7 +38,7 @@ def test_document_to_primative(doc):
 def test_primative_to_document(doc):
     data = {
         '_type': 'document',
-        'meta': {
+        '_meta': {
             'url': 'http://example.org',
             'title': 'Example'
         },

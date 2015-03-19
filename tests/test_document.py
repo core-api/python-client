@@ -6,17 +6,16 @@ import pytest
 
 @pytest.fixture
 def doc():
-    return Document({
-        'meta': {
-            'url': 'http://example.org',
-            'title': 'Example'
-        },
-        'integer': 123,
-        'dict': {'key': 'value'},
-        'list': [1, 2, 3],
-        'link': Link(url='/'),
-        'nested': {'child': Link(url='/123')}
-    })
+    return Document(
+        url='http://example.org',
+        title='Example',
+        content={
+            'integer': 123,
+            'dict': {'key': 'value'},
+            'list': [1, 2, 3],
+            'link': Link(url='/'),
+            'nested': {'child': Link(url='/123')}
+        })
 
 
 @pytest.fixture
@@ -210,8 +209,7 @@ def test_deep_replace_type_error():
 
 def test_document_repr(doc):
     assert repr(doc) == (
-        "Document({"
-        "'meta': {'title': 'Example', 'url': 'http://example.org'}, "
+        "Document(url='http://example.org', title='Example', content={"
         "'dict': {'key': 'value'}, "
         "'integer': 123, "
         "'list': [1, 2, 3], "
@@ -237,10 +235,6 @@ def test_array_repr(array):
 def test_document_str(doc):
     assert str(doc) == _dedent("""
         <Example - http://example.org>
-            'meta': {
-                'title': 'Example',
-                'url': 'http://example.org'
-            }
             'dict': {
                 'key': 'value'
             }
@@ -288,10 +282,6 @@ def test_array_str(array):
 
 def test_document_equality(doc):
     assert doc == {
-        'meta': {
-            'url': 'http://example.org',
-            'title': 'Example'
-        },
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
@@ -312,9 +302,9 @@ def test_array_equality(array):
 
 def test_document_keys_must_be_strings():
     with pytest.raises(DocumentError):
-        Document({'meta': {'url': '', 'title': ''}, 0: 123})
+        Document(content={0: 123})
 
 
 def test_document_values_must_be_valid_primatives():
     with pytest.raises(DocumentError):
-        Document({'meta': {'url': '', 'title': ''}, 'a': set()})
+        Document(content={'a': set()})

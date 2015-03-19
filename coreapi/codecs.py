@@ -6,20 +6,21 @@ from coreapi.exceptions import ParseError
 import json
 
 
-def _escape_type(string):
+def _escape_key(string):
     """
-    The '_type' is reserved, so escape to '__type' if it occurs.
+    The '_type' and '_meta' keys are reserved.
+    Prefix with an additional '_' if they occur.
     """
-    if string.startswith('_') and string.lstrip('_') == 'type':
+    if string.startswith('_') and string.lstrip('_') in ('type', 'meta'):
         return '_' + string
     return string
 
 
-def _unescape_type(string):
+def _unescape_key(string):
     """
-    Unescape '__type' if it occurs.
+    Unescape '__type' and '__meta' keys if they occur.
     """
-    if string.startswith('__') and string.lstrip('_') == 'type':
+    if string.startswith('__') and string.lstrip('_') in ('type', 'meta'):
         return string[1:]
     return string
 
@@ -32,8 +33,9 @@ def _document_to_primative(node):
     if isinstance(node, Document):
         ret = OrderedDict()
         ret['_type'] = 'document'
+        ret['_meta'] = {'url': node.url, 'title': node.title}
         ret.update([
-            (_escape_type(key), _document_to_primative(value))
+            (_escape_key(key), _document_to_primative(value))
             for key, value in node.items()
         ])
         return ret
@@ -50,7 +52,7 @@ def _document_to_primative(node):
 
     elif isinstance(node, Object):
         return OrderedDict([
-            (_escape_type(key), _document_to_primative(value))
+            (_escape_key(key), _document_to_primative(value))
             for key, value in node.items()
         ])
 
@@ -66,30 +68,22 @@ def _primative_to_document(data):
     and return a Core API document.
     """
     if isinstance(data, dict) and data.get('_type') == 'document':
-        if 'meta' not in data:
-            raise ParseError("Document missing 'meta' section.")
-        if not isinstance(data['meta'], dict):
-            raise ParseError("Document 'meta' section must be an object.")
-        if 'url' not in data['meta']:
-            raise ParseError("Document missing 'meta.url' section.")
-        if not isinstance(data['meta']['url'], string_types):
-            raise ParseError("Document 'meta.url' must be a string.")
+        meta = data.get('_meta', {})
+        if not isinstance(meta, dict):
+            meta = {}
 
-        # Note that we ignore anything in 'meta' except url and title.
-        # All other keys are reserved.
-        url = data['meta']['url']
-        title = str(data['meta'].get('title', ''))
+        url = meta.get('url', '')
+        if not isinstance(url, string_types):
+            url = ''
 
-        items = [
-            ('meta', {'url': url, 'title': title})
-        ] + [
-            (key, value) for key, value in data.items()
-            if key != '_type' and key != 'meta'
-        ]
+        title = meta.get('title', '')
+        if not isinstance(title, string_types):
+            title = ''
 
-        return Document({
-            _unescape_type(key): _primative_to_document(value)
-            for key, value in items
+        return Document(url=url, title=title, content={
+            _unescape_key(key): _primative_to_document(value)
+            for key, value in data.items()
+            if key not in ('_type', '_meta')
         })
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
@@ -109,9 +103,9 @@ def _primative_to_document(data):
 
     elif isinstance(data, dict):
         return Object({
-            _unescape_type(key): _primative_to_document(value)
+            _unescape_key(key): _primative_to_document(value)
             for key, value in data.items()
-            if key != '_type'
+            if key not in ('_type', '_meta')
         })
 
     elif isinstance(data, list):
