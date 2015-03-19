@@ -1,12 +1,12 @@
 # coding: utf-8
 from coreapi.compat import urlparse
-from coreapi.codecs import DocJSONCodec
+from coreapi.codecs import JSONCodec
 from coreapi.exceptions import RequestError
 import requests
 import json
 
 
-class HTTPTransport:
+class HTTPTransport(object):
     schemes = ['http', 'https']
 
     def follow(self, url, rel=None, arguments=None):
@@ -39,5 +39,5 @@ class HTTPTransport:
         response = requests.request(method, url, **opts)
         if response.status_code == 204:
             return None
-        codec = DocJSONCodec()
+        codec = JSONCodec()
         return codec.loads(response.content, base_url=url)

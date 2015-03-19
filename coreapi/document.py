@@ -104,7 +104,7 @@ def _document_str(node, indent=0):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + _document_str(value, indent + 1) for value in node
+            body_indent + _document_str(value, indent + 1).lstrip() for value in node
         ])
 
         return '[\n' + body + '\n' + head_indent + ']'
@@ -223,6 +223,35 @@ class Document(Mapping):
     def __str__(self):
         return _document_str(self)
 
+    def action(self, keys, **kwargs):
+        """
+        Perform an action by calling one of the links in the document tree.
+        Returns a new document, or `None` if the current document was removed.
+        """
+        # Determine the link node being acted on, and its parent document.
+        # 'node' is the link we're calling the action for.
+        # 'document_keys' is the list of keys to the link's parent document.
+        node = self
+        document = self
+        document_keys = []
+        for idx, key in enumerate(keys, start=1):
+            node = node[key]
+            if isinstance(node, Document):
+                document = node
+                document_keys = keys[:idx]
+
+        # Ensure that we've correctly indexed into a link.
+        if not isinstance(node, Link):
+            raise ValueError(
+                "Can only call 'action' on a Link. Got type '%s'." % type(node)
+            )
+
+        # Perform the action, and return a new document.
+        ret = node.call(document, **kwargs)
+        if ret is None:
+            return deep_remove(self, document_keys)
+        return deep_replace(self, document_keys, ret)
+
 
 class Object(Mapping):
     """
@@ -295,10 +324,11 @@ class Array(Sequence):
 
 
 class Link(object):
-    def __init__(self, url=None, rel=None, fields=None):
+    def __init__(self, url=None, rel=None, fields=None, action=None):
         self.url = url
         self.rel = rel
         self.fields = [] if (fields is None) else fields
+        self.action = action
 
     def _validate(self, **kwargs):
         """
@@ -347,14 +377,13 @@ class Link(object):
             field_as_string(field) for field in self.fields
         ])
 
-    def __call__(self, **kwargs):
-        assert self._parent is not None, (
-            "Cannot call this link as it is not attached to a document."
-        )
+    def call(self, document, **kwargs):
+        from coreapi.transport import HTTPTransport
         self._validate(**kwargs)
-        transport = None
-        document = transport.follow(url=self.url, rel=self.rel, arguments=kwargs)
-        return document
+        if self.action:
+            return self.action(document, **kwargs)
+        transport = HTTPTransport()
+        return transport.follow(url=self.url, rel=self.rel, arguments=kwargs)
 
     def __eq__(self, other):
         return (
