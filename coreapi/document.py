@@ -283,7 +283,8 @@ class Object(Mapping):
     def __init__(self, *args, **kwargs):
         data = dict(*args, **kwargs)
         for key, value in data.items():
-            assert is_string(key), 'Object keys must be strings.'
+            if not is_string(key):
+                raise TypeError('Object keys must be strings.')
             data[key] = _make_immutable(value)
         self._data = data
 
