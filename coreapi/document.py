@@ -94,8 +94,9 @@ def _document_str(node, indent=0):
         ])
 
         if isinstance(node, Document):
-            head = '<%s %s>' % (
-                node.title, repr(node.url)
+            head = '<%s%s>' % (
+                node.title.strip() or 'Document',
+                ' ' + repr(node.url) if node.url else ''
             )
             return head + '\n' + body
         return '{\n' + body + '\n' + head_indent + '}'
