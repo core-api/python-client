@@ -234,20 +234,20 @@ def test_array_repr(array):
 
 def test_document_str(doc):
     assert str(doc) == _dedent("""
-        <Example - http://example.org>
+        <Example 'http://example.org'>
             'dict': {
                 'key': 'value'
-            }
-            'integer': 123
+            },
+            'integer': 123,
             'list': [
                 1,
                 2,
                 3
-            ]
+            ],
             'nested': {
-                child()
-            }
-            link()
+                'child': link()
+            },
+            'link': link()
     """)
 
 

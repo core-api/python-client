@@ -88,21 +88,14 @@ def _document_str(node, indent=0):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
-        delimiter = '\n' if isinstance(node, Document) else ',\n'
-        body = delimiter.join([
-            (
-                '%s%s: %s' % (
-                    body_indent, repr(key), _document_str(value, indent + 1)
-                )
-                if not isinstance(value, Link)
-                else '%s%s()' % (body_indent, str(key))
-            )
+        body = ',\n'.join([
+            body_indent + repr(key) + ': ' + _document_str(value, indent + 1)
             for key, value in node.items()
         ])
 
         if isinstance(node, Document):
-            head = '%s<%s - %s>' % (
-                head_indent, node.title, node.url
+            head = '<%s %s>' % (
+                node.title, repr(node.url)
             )
             return head + '\n' + body
         return '{\n' + body + '\n' + head_indent + '}'
@@ -112,10 +105,14 @@ def _document_str(node, indent=0):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + _document_str(value, indent + 1).lstrip() for value in node
+            body_indent + _document_str(value, indent + 1)
+            for value in node
         ])
 
         return '[\n' + body + '\n' + head_indent + ']'
+
+    elif isinstance(node, Link):
+        return 'link(%s)' % node._fields_as_string()
 
     return repr(node)
 
