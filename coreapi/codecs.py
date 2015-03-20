@@ -1,6 +1,7 @@
 # coding: utf-8
 from collections import OrderedDict
-from coreapi.compat import string_types, COMPACT_SEPARATORS, VERBOSE_SEPARATORS
+from coreapi.compat import string_types, force_bytes
+from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Field
 from coreapi.document import _transition_types, _default_transition_type
 from coreapi.exceptions import ParseError
@@ -174,11 +175,17 @@ class JSONCodec(object):
         Takes a document and returns a bytestring.
         """
         if verbose:
-            separators = VERBOSE_SEPARATORS
-            indent = 4
+            options = {
+                'ensure_ascii': False,
+                'indent': 4,
+                'separators': VERBOSE_SEPARATORS
+            }
         else:
-            separators = COMPACT_SEPARATORS
-            indent = None
+            options = {
+                'ensure_ascii': False,
+                'indent': None,
+                'separators': COMPACT_SEPARATORS
+            }
 
         data = _document_to_primative(document)
-        return json.dumps(data, indent=indent, separators=separators)
+        return force_bytes(json.dumps(data, **options))

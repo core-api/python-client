@@ -393,10 +393,6 @@ class Link(object):
     def fields(self):
         return self._fields
 
-    @property
-    def action(self):
-        return self._action
-
     def __setattr__(self, key, value):
         if key in ('_url', '_trans', '_fields', '_action'):
             return object.__setattr__(self, key, value)
@@ -460,8 +456,8 @@ class Link(object):
 
     def _transition(self, document, **parameters):
         self._validate(**parameters)
-        if self.action:
-            return self.action(document, **parameters)
+        if self._action:
+            return self._action(document, **parameters)
         from coreapi.transport import HTTPTransport
         transport = HTTPTransport()
         return transport.transition(self.url, self.trans, parameters=parameters)

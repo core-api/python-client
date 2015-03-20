@@ -19,3 +19,9 @@ except ImportError:
     string_types = (str,)
     COMPACT_SEPARATORS = (',', ':')
     VERBOSE_SEPARATORS = (',', ': ')
+
+
+def force_bytes(string):
+    if isinstance(string, string_types):
+        return string.encode('utf-8')
+    return string
