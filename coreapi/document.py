@@ -98,8 +98,8 @@ def _document_str(node, indent=0):
                 node.title.strip() or 'Document',
                 ' ' + repr(node.url) if node.url else ''
             )
-            return head + '\n' + body
-        return '{\n' + body + '\n' + head_indent + '}'
+            return head if (not body) else head + '\n' + body
+        return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
 
     elif isinstance(node, Array):
         head_indent = '    ' * indent
@@ -110,7 +110,7 @@ def _document_str(node, indent=0):
             for value in node
         ])
 
-        return '[\n' + body + '\n' + head_indent + ']'
+        return '[]' if (not body) else '[\n' + body + '\n' + head_indent + ']'
 
     elif isinstance(node, Link):
         return 'link(%s)' % node._fields_as_string()
