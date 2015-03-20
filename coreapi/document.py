@@ -1,5 +1,5 @@
 # coding: utf-8
-from collections import Mapping, Sequence
+from collections import Mapping, Sequence, namedtuple
 from coreapi.compat import string_types
 
 
@@ -107,6 +107,15 @@ def _document_str(node, indent=0):
     return repr(node)
 
 
+# The field class, as used by Link objects:
+
+Field = namedtuple('Field', ['name', 'required'])
+
+
+def required(name):
+    return Field(name, required=True)
+
+
 # Functions for returning a modified copy of an immutable primative:
 
 def remove(node, key):
@@ -198,16 +207,18 @@ class Document(Mapping):
             raise TypeError("'url' must be a string.")
         if title is not None and not isinstance(title, string_types):
             raise TypeError("'title' must be a string.")
+        if content is not None and not isinstance(content, dict):
+            raise TypeError("'content' must be a dict.")
+        if content is not None and any([
+            not isinstance(key, string_types) for key in content.keys()
+        ]):
+            raise TypeError('Document keys must be strings.')
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
-        data = {} if (content is None) else dict(content)
-
-        for key, value in data.items():
-            if not isinstance(key, string_types):
-                raise TypeError('Document keys must be strings.')
-            data[key] = _make_immutable(value)
-        self._data = data
+        self._data = {} if (content is None) else {
+            key: _make_immutable(value) for key, value in content.items()
+        }
 
     def __setattr__(self, key, value):
         if key in ('_data', '_url', '_title'):
@@ -348,36 +359,64 @@ class Array(Sequence):
 
 class Link(object):
     def __init__(self, url=None, trans=None, fields=None, action=None):
-        self.url = '' if (url is None) else url
-        self.trans = 'follow' if (trans is None) else trans
-        self.fields = [] if (fields is None) else fields
-        self.action = action
-
-        if not isinstance(self.url, string_types):
+        if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
-        if self.trans not in _transition_types:
-            raise TypeError('Invalid type for link "%s".' % self.trans)
-        if not isinstance(self.fields, list):
+        if (trans is not None) and (not isinstance(trans, string_types)):
+            raise TypeError("Argument 'trans' must be a string.")
+        if (trans is not None) and (trans not in _transition_types):
+            raise ValueError('Invalid transition type for link "%s".' % trans)
+        if (fields is not None) and (not isinstance(fields, list)):
             raise TypeError("Argument 'fields' must be a list.")
+        if (fields is not None) and any([
+            not (isinstance(item, string_types) or isinstance(item, Field))
+            for item in fields
+        ]):
+            raise TypeError("Argument 'fields' must be a list of strings or fields.")
 
-    def _validate(self, **kwargs):
+        self._url = '' if (url is None) else url
+        self._trans = 'follow' if (trans is None) else trans
+        self._fields = [] if (fields is None) else [
+            item if isinstance(item, Field) else Field(item, required=False)
+            for item in fields
+        ]
+        self._action = action
+
+    @property
+    def url(self):
+        return self._url
+
+    @property
+    def trans(self):
+        return self._trans
+
+    @property
+    def fields(self):
+        return self._fields
+
+    @property
+    def action(self):
+        return self._action
+
+    def __setattr__(self, key, value):
+        if key in ('_url', '_trans', '_fields', '_action'):
+            return object.__setattr__(self, key, value)
+        raise TypeError("'Link' object does not support property assignment")
+
+    def _validate(self, **parameters):
         """
-        Ensure that arguments passed to the link are correct.
+        Ensure that parameters passed to the link are correct.
 
-        Raises a `ValueError` if any arguments do not validate.
+        Raises a `ValueError` if any parameters do not validate.
         """
-        provided = set(kwargs.keys())
-
-        # Get sets of field names for both required and optional fields.
+        provided = set(parameters.keys())
         required = set([
-            field.get('name') for field in self.fields
-            if field.get('required', True)
+            field.name for field in self.fields if field.required
         ])
         optional = set([
-            field.get('name') for field in self.fields
-            if not field.get('required', True)
+            field.name for field in self.fields if not field.required
         ])
 
+        # Determine any parameter names supplied that are not valid.
         unexpected = provided - (optional | required)
         unexpected = ['"' + item + '"' for item in sorted(unexpected)]
         if unexpected:
@@ -396,31 +435,43 @@ class Link(object):
         Return the fields as a string containing all the field names,
         indicating which fields are required and which are optional.
 
+        In this display we order fields with required fields first.
+
         For example: "text, [completed]"
         """
-        def field_as_string(field):
-            if field.get('required', True):
-                return field.get('name')
-            return '[' + field.get('name') + ']'
-
         return ', '.join([
-            field_as_string(field) for field in self.fields
+            field.name for field in self.fields if field.required
+        ] + [
+            '[%s]' % field.name for field in self.fields if not field.required
         ])
 
-    def _transition(self, document, **kwargs):
-        self._validate(**kwargs)
+    def _fields_as_repr(self):
+        """
+        Return the fields as a repr string.
+
+        For example: "required('text'), 'completed'"
+        """
+        return ', '.join([
+            'required(%s)' % repr(field.name)
+            if field.required else
+            repr(field.name)
+            for field in self.fields
+        ])
+
+    def _transition(self, document, **parameters):
+        self._validate(**parameters)
         if self.action:
-            return self.action(document, **kwargs)
+            return self.action(document, **parameters)
         from coreapi.transport import HTTPTransport
         transport = HTTPTransport()
-        return transport.follow(url=self.url, trans=self.trans, arguments=kwargs)
+        return transport.transition(self.url, self.trans, parameters=parameters)
 
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
             self.url == other.url and
             self.trans == other.trans and
-            self.fields == other.fields
+            set(self.fields) == set(other.fields)
         )
 
     def __repr__(self):
@@ -428,5 +479,5 @@ class Link(object):
         if self.trans != _default_transition_type:
             args += ", trans=%s" % repr(self.trans)
         if self.fields:
-            args += ", fields=%s" % repr(self.fields)
+            args += ", fields=[%s]" % self._fields_as_repr()
         return "Link(%s)" % args

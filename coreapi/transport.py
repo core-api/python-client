@@ -18,7 +18,7 @@ _http_method_map = {
 class HTTPTransport(object):
     schemes = ('http', 'https')
 
-    def follow(self, url, trans=None, arguments=None):
+    def transition(self, url, trans=None, parameters=None):
         url_components = urlparse.urlparse(url)
         if url_components.scheme.lower() not in self.schemes:
             raise RequestError('Unknown URL scheme "%s"' % url_components.scheme)
@@ -27,13 +27,13 @@ class HTTPTransport(object):
 
         method = _http_method_map[trans]
 
-        if arguments and method == 'GET':
+        if parameters and method == 'GET':
             opts = {
-                'params': arguments
+                'params': parameters
             }
-        elif arguments:
+        elif parameters:
             opts = {
-                'data': json.dumps(arguments),
+                'data': json.dumps(parameters),
                 'headers': {'content-type': 'application/json'}
             }
         else:

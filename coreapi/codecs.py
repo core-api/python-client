@@ -1,7 +1,8 @@
 # coding: utf-8
 from collections import OrderedDict
 from coreapi.compat import string_types, COMPACT_SEPARATORS, VERBOSE_SEPARATORS
-from coreapi.document import Document, Link, Array, Object, _default_transition_type
+from coreapi.document import Document, Link, Array, Object, Field
+from coreapi.document import _transition_types, _default_transition_type
 from coreapi.exceptions import ParseError
 import json
 
@@ -57,7 +58,13 @@ def _document_to_primative(node):
         if node.trans != _default_transition_type:
             ret['trans'] = node.trans
         if node.fields:
-            ret['fields'] = node.fields
+            # Use short format for optional fields, long format for required.
+            ret['fields'] = [
+                item.name
+                if not item.required else
+                {'name': item.name, 'required': item.required}
+                for item in node.fields
+            ]
         return ret
 
     elif isinstance(node, Object):
@@ -101,14 +108,30 @@ def _primative_to_document(data):
         if not isinstance(url, string_types):
             url = ''
 
-        url = data['url']
         trans = data.get('trans')
+        if not isinstance(trans, string_types) or (trans not in _transition_types):
+            trans = None
+
         fields = data.get('fields', [])
-        return Link(
-            url=url,
-            trans=trans,
-            fields=fields
-        )
+        if not isinstance(fields, list):
+            fields = []
+        else:
+            # Ignore any field items that don't match the required structure.
+            fields = [
+                item for item in fields
+                if isinstance(item, string_types) or (
+                    isinstance(item, dict) and
+                    isinstance(item.get('name'), string_types)
+                )
+            ]
+            # Transform the strings or dicts into strings or Field instances.
+            fields = [
+                item if isinstance(item, string_types) else
+                Field(item['name'], required=bool(item.get('required', False)))
+                for item in fields
+            ]
+
+        return Link(url=url, trans=trans, fields=fields)
 
     elif isinstance(data, dict):
         return Object({

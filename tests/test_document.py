@@ -1,4 +1,4 @@
-from coreapi import remove, replace, deep_remove, deep_replace
+from coreapi import required, remove, replace, deep_remove, deep_replace
 from coreapi import Array, Document, Object, Link
 import pytest
 
@@ -12,7 +12,11 @@ def doc():
             'integer': 123,
             'dict': {'key': 'value'},
             'list': [1, 2, 3],
-            'link': Link(url='/'),
+            'link': Link(
+                url='/',
+                trans='action',
+                fields=['optional', required('required')]
+            ),
             'nested': {'child': Link(url='/123')}
         })
 
@@ -25,6 +29,15 @@ def obj():
 @pytest.fixture
 def array():
     return Array([{'a': 1}, {'b': 2}, {'c': 3}])
+
+
+@pytest.fixture
+def link():
+    return Link(
+        url='/',
+        trans='action',
+        fields=[required('required'), 'optional']
+    )
 
 
 def _dedent(string):
@@ -90,6 +103,14 @@ def test_array_does_not_support_property_assignment(array):
 def test_array_does_not_support_item_deletion(array):
     with pytest.raises(TypeError):
         del array[1]
+
+
+# Links are immutable.
+
+def test_link_does_not_support_property_assignment():
+    link = Link()
+    with pytest.raises(TypeError):
+        link.integer = 456
 
 
 # Children in documents are immutable primatives.
@@ -213,7 +234,8 @@ def test_document_repr(doc):
         "'integer': 123, "
         "'list': [1, 2, 3], "
         "'nested': {'child': Link(url='/123')}, "
-        "'link': Link(url='/')"
+        "'link': Link(url='/', trans='action', "
+        "fields=['optional', required('required')])"
         "})"
     )
     assert eval(repr(doc)) == doc
@@ -246,7 +268,7 @@ def test_document_str(doc):
             'nested': {
                 'child': link()
             },
-            'link': link()
+            'link': link(required, [optional])
     """)
 
 
@@ -284,7 +306,11 @@ def test_document_equality(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': Link(url='/'),
+        'link': Link(
+            url='/',
+            trans='action',
+            fields=['optional', required('required')]
+        ),
         'nested': {'child': Link(url='/123')}
     }
 
@@ -309,6 +335,11 @@ def test_document_title_must_be_string():
         Document(title=123)
 
 
+def test_document_content_must_be_dict():
+    with pytest.raises(TypeError):
+        Document(content=123)
+
+
 def test_document_keys_must_be_strings():
     with pytest.raises(TypeError):
         Document(content={0: 123})
@@ -327,3 +358,47 @@ def test_object_keys_must_be_strings():
 def test_array_may_not_contain_links():
     with pytest.raises(TypeError):
         Array([Link()])
+
+
+# Link arguments must be valid.
+
+def test_link_url_must_be_string():
+    with pytest.raises(TypeError):
+        Link(url=123)
+
+
+def test_link_trans_must_be_string():
+    with pytest.raises(TypeError):
+        Link(trans=123)
+
+
+def test_link_trans_must_be_valid():
+    with pytest.raises(ValueError):
+        Link(trans='fail')
+
+
+def test_link_fields_must_be_list():
+    with pytest.raises(TypeError):
+        Link(fields=123)
+
+
+def test_link_field_items_must_be_valid():
+    with pytest.raises(TypeError):
+        Link(fields=[123])
+
+
+# Links correctly validate required and optional parameters.
+
+def test_link_with_correct_parameters(link):
+    link._validate(required=123)
+    link._validate(required=123, optional=456)
+
+
+def test_link_missing_required_parameter(link):
+    with pytest.raises(ValueError):
+        link._validate(optional=456)
+
+
+def test_link_with_invalid_parameter(link):
+    with pytest.raises(ValueError):
+        link._validate(required=123, unknown=123)
