@@ -9,7 +9,7 @@ __all__ = [
 try:
     import urlparse
 
-    string_types = (str, unicode)
+    string_types = (type(b''), type(u''))
     COMPACT_SEPARATORS = (b',', b':')
     VERBOSE_SEPARATORS = (b',', b': ')
 
