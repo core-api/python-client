@@ -1,4 +1,5 @@
-from coreapi import Document, Link, JSONCodec
+# coding: utf-8
+from coreapi import Document, Link, JSONCodec, ParseError
 from coreapi.codecs import _document_to_primative, _primative_to_document
 import pytest
 
@@ -22,6 +23,8 @@ def doc():
             '_type': 'needs escaping'
         })
 
+
+# Documents have a mapping to python primatives in JSON style.
 
 def test_document_to_primative(doc):
     data = _document_to_primative(doc)
@@ -57,9 +60,55 @@ def test_primative_to_document(doc):
     assert _primative_to_document(data) == doc
 
 
+# Codecs can load a document successfully.
+
 def test_minimal_document(json_codec):
-    doc = json_codec.loads('{"_type": "document"}')
+    """
+    Ensure we can load the smallest possible valid JSON encoding.
+    """
+    doc = json_codec.load('{"_type":"document"}')
     assert isinstance(doc, Document)
     assert doc.url == ''
     assert doc.title == ''
     assert doc == {}
+
+
+# Parse errors should be raised for invalid encodings.
+
+def test_malformed_json(json_codec):
+    """
+    Invalid JSON should raise a ParseError.
+    """
+    with pytest.raises(ParseError):
+        json_codec.load('_')
+
+
+def test_not_a_document(json_codec):
+    """
+    Valid JSON that does not return a document as the top level element
+    should raise a ParseError.
+    """
+    with pytest.raises(ParseError):
+        json_codec.load('{}')
+
+
+# Encodings may have a verbose and a compact style.
+
+def test_compact_style(json_codec):
+    doc = Document(content={'a': 123, 'b': 456})
+    bytes = json_codec.dump(doc)
+    assert bytes == b'{"_type":"document","a":123,"b":456}'
+
+
+def test_verbose_style(json_codec):
+    doc = Document(content={'a': 123, 'b': 456})
+    bytes = json_codec.dump(doc, verbose=True)
+    assert bytes == b"""{
+    "_type": "document",
+    "a": 123,
+    "b": 456
+}"""
+
+# Tests for graceful ommissions.
+
+# TODO

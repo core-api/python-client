@@ -1,13 +1,9 @@
 # coding: utf-8
 
 
-class DocumentError(Exception):
-    pass
-
-
 class ParseError(Exception):
     """
-    Raised when invalid DocJSON content is encountered.
+    Raised when an invalid Core API encoding is encountered.
     """
     pass
 

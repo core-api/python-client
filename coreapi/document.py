@@ -1,7 +1,10 @@
 # coding: utf-8
 from collections import Mapping, Sequence
-from coreapi.compat import is_string
-from coreapi.exceptions import DocumentError
+from coreapi.compat import string_types
+
+
+_transition_types = ('follow', 'action', 'create', 'update', 'delete')
+_default_transition_type = 'follow'
 
 
 def _make_immutable(value):
@@ -20,33 +23,19 @@ def _make_immutable(value):
     elif isinstance(value, (list, tuple)):
         return Array(value)
     elif (
-        is_string(value) or
         value is None or
+        isinstance(value, string_types) or
         isinstance(value, (int, float, bool, Document, Object, Array, Link))
     ):
         return value
 
-    msg = "Invalid type in document. Got '%s'." % type(value)
-    raise DocumentError(msg)
+    raise TypeError("Invalid type in document. Got '%s'." % type(value))
 
 
-def _document_sorting(item):
+def _key_sorting(item):
     """
-    Document sorting: 'meta' first, then regular attributes
-    sorted alphabetically, then links sorted alphabetically.
-    """
-    key, value = item
-    if isinstance(value, Link):
-        return (2, key)
-    elif key != 'meta':
-        return (1, key)
-    return (0, key)
-
-
-def _object_sorting(item):
-    """
-    Object sorting: Regular attributes sorted alphabetically,
-    then links sorted alphabetically.
+    Document and Object sorting.
+    Regular attributes sorted alphabetically, then links sorted alphabetically.
     """
     key, value = item
     if isinstance(value, Link):
@@ -205,13 +194,18 @@ class Document(Mapping):
     """
 
     def __init__(self, url=None, title=None, content=None):
+        if url is not None and not isinstance(url, string_types):
+            raise TypeError("'url' must be a string.")
+        if title is not None and not isinstance(title, string_types):
+            raise TypeError("'title' must be a string.")
+
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
         data = {} if (content is None) else dict(content)
 
         for key, value in data.items():
-            if not is_string(key):
-                raise DocumentError('Document keys must be strings.')
+            if not isinstance(key, string_types):
+                raise TypeError('Document keys must be strings.')
             data[key] = _make_immutable(value)
         self._data = data
 
@@ -224,7 +218,7 @@ class Document(Mapping):
         return self._data[key]
 
     def __iter__(self):
-        items = sorted(self._data.items(), key=_document_sorting)
+        items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
 
     def __len__(self):
@@ -249,6 +243,11 @@ class Document(Mapping):
         Perform an action by calling one of the links in the document tree.
         Returns a new document, or `None` if the current document was removed.
         """
+        if not isinstance(keys, (list, tuple)):
+            raise TypeError("'keys' must be a list of strings.")
+        if any([not isinstance(key, string_types) for key in keys]):
+            raise TypeError("'keys' must be a list of strings.")
+
         # Determine the link node being acted on, and its parent document.
         # 'node' is the link we're calling the action for.
         # 'document_keys' is the list of keys to the link's parent document.
@@ -268,7 +267,7 @@ class Document(Mapping):
             )
 
         # Perform the action, and return a new document.
-        ret = node.call(document, **kwargs)
+        ret = node._transition(document, **kwargs)
         if ret is None:
             return deep_remove(self, document_keys)
         return deep_replace(self, document_keys, ret)
@@ -281,7 +280,7 @@ class Object(Mapping):
     def __init__(self, *args, **kwargs):
         data = dict(*args, **kwargs)
         for key, value in data.items():
-            if not is_string(key):
+            if not isinstance(key, string_types):
                 raise TypeError('Object keys must be strings.')
             data[key] = _make_immutable(value)
         self._data = data
@@ -295,7 +294,7 @@ class Object(Mapping):
         return self._data[key]
 
     def __iter__(self):
-        items = sorted(self._data.items(), key=_object_sorting)
+        items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
 
     def __len__(self):
@@ -317,6 +316,8 @@ class Array(Sequence):
             _make_immutable(value)
             for value in list(*args)
         ]
+        if any([isinstance(item, Link) for item in self._data]):
+            raise TypeError("Array may not contain 'Link' items.")
 
     def __setattr__(self, key, value):
         if key == '_data':
@@ -346,11 +347,18 @@ class Array(Sequence):
 
 
 class Link(object):
-    def __init__(self, url=None, rel=None, fields=None, action=None):
-        self.url = url
-        self.rel = rel
+    def __init__(self, url=None, trans=None, fields=None, action=None):
+        self.url = '' if (url is None) else url
+        self.trans = 'follow' if (trans is None) else trans
         self.fields = [] if (fields is None) else fields
         self.action = action
+
+        if not isinstance(self.url, string_types):
+            raise TypeError("Argument 'url' must be a string.")
+        if self.trans not in _transition_types:
+            raise TypeError('Invalid type for link "%s".' % self.trans)
+        if not isinstance(self.fields, list):
+            raise TypeError("Argument 'fields' must be a list.")
 
     def _validate(self, **kwargs):
         """
@@ -399,26 +407,26 @@ class Link(object):
             field_as_string(field) for field in self.fields
         ])
 
-    def call(self, document, **kwargs):
-        from coreapi.transport import HTTPTransport
+    def _transition(self, document, **kwargs):
         self._validate(**kwargs)
         if self.action:
             return self.action(document, **kwargs)
+        from coreapi.transport import HTTPTransport
         transport = HTTPTransport()
-        return transport.follow(url=self.url, rel=self.rel, arguments=kwargs)
+        return transport.follow(url=self.url, trans=self.trans, arguments=kwargs)
 
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
             self.url == other.url and
-            self.rel == other.rel and
+            self.trans == other.trans and
             self.fields == other.fields
         )
 
     def __repr__(self):
         args = "url=%s" % repr(self.url)
-        if self.rel:
-            args += ", rel=%s" % (self.rel)
+        if self.trans != _default_transition_type:
+            args += ", trans=%s" % repr(self.trans)
         if self.fields:
             args += ", fields=%s" % repr(self.fields)
         return "Link(%s)" % args

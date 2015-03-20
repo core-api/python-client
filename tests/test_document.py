@@ -1,6 +1,5 @@
 from coreapi import remove, replace, deep_remove, deep_replace
 from coreapi import Array, Document, Object, Link
-from coreapi import DocumentError
 import pytest
 
 
@@ -300,11 +299,31 @@ def test_array_equality(array):
 
 # Documents meet the Core API constraints.
 
+def test_document_url_must_be_string():
+    with pytest.raises(TypeError):
+        Document(url=123)
+
+
+def test_document_title_must_be_string():
+    with pytest.raises(TypeError):
+        Document(title=123)
+
+
 def test_document_keys_must_be_strings():
-    with pytest.raises(DocumentError):
+    with pytest.raises(TypeError):
         Document(content={0: 123})
 
 
 def test_document_values_must_be_valid_primatives():
-    with pytest.raises(DocumentError):
+    with pytest.raises(TypeError):
         Document(content={'a': set()})
+
+
+def test_object_keys_must_be_strings():
+    with pytest.raises(TypeError):
+        Object(content={0: 123})
+
+
+def test_array_may_not_contain_links():
+    with pytest.raises(TypeError):
+        Array([Link()])

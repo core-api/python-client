@@ -1,7 +1,7 @@
 # coding: utf-8
 from collections import OrderedDict
-from coreapi.compat import string_types
-from coreapi.document import Document, Link, Array, Object
+from coreapi.compat import string_types, COMPACT_SEPARATORS, VERBOSE_SEPARATORS
+from coreapi.document import Document, Link, Array, Object, _default_transition_type
 from coreapi.exceptions import ParseError
 import json
 
@@ -33,7 +33,16 @@ def _document_to_primative(node):
     if isinstance(node, Document):
         ret = OrderedDict()
         ret['_type'] = 'document'
-        ret['_meta'] = {'url': node.url, 'title': node.title}
+
+        # Only fill in items in '_meta' if required.
+        meta = OrderedDict()
+        if node.url:
+            meta['url'] = node.url
+        if node.title:
+            meta['title'] = node.title
+        if meta:
+            ret['_meta'] = meta
+
         ret.update([
             (_escape_key(key), _document_to_primative(value))
             for key, value in node.items()
@@ -43,9 +52,10 @@ def _document_to_primative(node):
     elif isinstance(node, Link):
         ret = OrderedDict()
         ret['_type'] = 'link'
-        ret['url'] = node.url
-        if node.rel:
-            ret['rel'] = node.rel
+        if node.url:
+            ret['url'] = node.url
+        if node.trans != _default_transition_type:
+            ret['trans'] = node.trans
         if node.fields:
             ret['fields'] = node.fields
         return ret
@@ -87,17 +97,16 @@ def _primative_to_document(data):
         })
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
-        if 'url' not in data:
-            raise ParseError("Link missing 'url'.")
-        if not isinstance(data['url'], string_types):
-            raise ParseError("Link 'url' must be a string.")
+        url = data.get('url', '')
+        if not isinstance(url, string_types):
+            url = ''
 
         url = data['url']
-        rel = data.get('rel')
+        trans = data.get('trans')
         fields = data.get('fields', [])
         return Link(
             url=url,
-            rel=rel,
+            trans=trans,
             fields=fields
         )
 
@@ -117,16 +126,19 @@ def _primative_to_document(data):
 
 
 class JSONCodec(object):
-    media_type = 'TODO'
+    media_types = (
+        'application/vnd.coreapi+json',
+        'application/json'
+    )
 
-    def loads(self, bytes, base_url=None):
+    def load(self, bytes, base_url=None):
         """
         Takes a bytestring and returns a document.
         """
         try:
             data = json.loads(bytes)
         except ValueError as exc:
-            raise ParseError('Malformed JSON. ' + str(exc))
+            raise ParseError('Malformed JSON. %s' % exc)
 
         doc = _primative_to_document(data)
         if not isinstance(doc, Document):
@@ -134,9 +146,16 @@ class JSONCodec(object):
 
         return doc
 
-    def dumps(self, document, indent=None):
+    def dump(self, document, verbose=False):
         """
         Takes a document and returns a bytestring.
         """
+        if verbose:
+            separators = VERBOSE_SEPARATORS
+            indent = 4
+        else:
+            separators = COMPACT_SEPARATORS
+            indent = None
+
         data = _document_to_primative(document)
-        return json.dumps(data, indent=indent)
+        return json.dumps(data, indent=indent, separators=separators)

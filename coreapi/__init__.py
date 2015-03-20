@@ -1,27 +1,30 @@
+# coding: utf-8
+from coreapi.codecs import JSONCodec
 from coreapi.document import Array, Document, Link, Object
 from coreapi.document import remove, replace, deep_remove, deep_replace
-from coreapi.codecs import JSONCodec
-from coreapi.exceptions import DocumentError, ParseError, RequestError
+from coreapi.exceptions import ParseError, RequestError
 from coreapi.transport import HTTPTransport
 
 
 __version__ = '0.1'
 __all__ = [
+    'JSONCodec',
     'Array', 'Document', 'Link', 'Object',
     'remove', 'replace', 'deep_remove', 'deep_replace',
-    'dumps', 'get', 'loads',
-    'DocumentError', 'ParseError', 'RequestError'
+    'ParseError', 'RequestError',
+    'HTTPTransport',
+    'load', 'dump', 'get'
 ]
 
 
-def loads(bytestring):
+def load(bytestring):
     codec = JSONCodec()
-    return codec.loads(bytestring)
+    return codec.load(bytestring)
 
 
-def dumps(document, indent=None):
+def dump(document, verbose=False):
     codec = JSONCodec()
-    return codec.dumps(document, indent=indent)
+    return codec.dump(document, verbose=verbose)
 
 
 def get(url):
