@@ -402,3 +402,20 @@ def test_link_missing_required_parameter(link):
 def test_link_with_invalid_parameter(link):
     with pytest.raises(ValueError):
         link._validate(required=123, unknown=123)
+
+
+# Invalid calls to '.action()' should error.
+
+def test_keys_should_be_a_list(doc):
+    with pytest.raises(TypeError):
+        doc.action('nested')
+
+
+def test_keys_should_be_a_list_of_strings_or_ints(doc):
+    with pytest.raises(TypeError):
+        doc.action(['nested', {}])
+
+
+def test_keys_should_be_valid_indexes(doc):
+    with pytest.raises(KeyError):
+        doc.action(['dummy'])
