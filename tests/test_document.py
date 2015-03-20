@@ -1,3 +1,4 @@
+# coding: utf-8
 from coreapi import required, remove, replace, deep_remove, deep_replace
 from coreapi import Array, Document, Object, Link
 import pytest

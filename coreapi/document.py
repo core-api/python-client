@@ -1,10 +1,21 @@
 # coding: utf-8
 from collections import Mapping, Sequence, namedtuple
 from coreapi.compat import string_types
+from coreapi.exceptions import LinkError
 
 
-_transition_types = ('follow', 'action', 'new', 'update', 'delete')
+_transition_types = ('follow', 'action', 'create', 'update', 'delete')
 _default_transition_type = 'follow'
+
+
+def _default_link_func(document, link, **parameters):
+    """
+    When calling a link the default behavior is to call through
+    to the HTTP transport layer.
+    """
+    from coreapi.transport import HTTPTransport
+    transport = HTTPTransport()
+    return transport.transition(link.url, link.trans, parameters=parameters)
 
 
 def _make_immutable(value):
@@ -203,6 +214,9 @@ class Document(Mapping):
     """
 
     def __init__(self, url=None, title=None, content=None):
+        if title is None and content is None and isinstance(url, dict):
+            url, content = None, url
+
         if url is not None and not isinstance(url, string_types):
             raise TypeError("'url' must be a string.")
         if title is not None and not isinstance(title, string_types):
@@ -279,12 +293,28 @@ class Document(Mapping):
             raise ValueError(
                 "Can only call 'action' on a Link. Got type '%s'." % type(node)
             )
+        link = node
 
         # Perform the action, and return a new document.
-        ret = node._transition(document, **kwargs)
-        if ret is None:
+        ret = link._transition(document, **kwargs)
+
+        if link.trans == 'delete':
+            if ret is not None:
+                msg = 'Called link with trans="%s". Expected None, but got "%s"'
+                raise LinkError(msg % (link.trans, type(ret).__name__))
             return deep_remove(self, document_keys)
-        return deep_replace(self, document_keys, ret)
+
+        elif link.trans in ('action', 'update'):
+            if not isinstance(ret, Document):
+                msg = 'Called link with trans="%s". Expected Document, but got "%s"'
+                raise LinkError(msg % (link.trans, type(ret).__name__))
+            return deep_replace(self, document_keys, ret)
+
+        assert link.trans in ('follow', 'create')
+        if not isinstance(ret, Document):
+            msg = 'Called link with trans="%s". Expected Document, but got "%s"'
+            raise LinkError(msg % (link.trans, type(ret).__name__))
+        return ret
 
 
 class Object(Mapping):
@@ -361,7 +391,10 @@ class Array(Sequence):
 
 
 class Link(object):
-    def __init__(self, url=None, trans=None, fields=None, action=None):
+    """
+    Links represent the actions that a client may perform.
+    """
+    def __init__(self, url=None, trans=None, fields=None, func=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (trans is not None) and (not isinstance(trans, string_types)):
@@ -382,7 +415,7 @@ class Link(object):
             item if isinstance(item, Field) else Field(item, required=False)
             for item in fields
         ]
-        self._action = action
+        self._func = _default_link_func if func is None else func
 
     @property
     def url(self):
@@ -397,7 +430,7 @@ class Link(object):
         return self._fields
 
     def __setattr__(self, key, value):
-        if key in ('_url', '_trans', '_fields', '_action'):
+        if key in ('_url', '_trans', '_fields', '_func'):
             return object.__setattr__(self, key, value)
         raise TypeError("'Link' object does not support property assignment")
 
@@ -459,11 +492,7 @@ class Link(object):
 
     def _transition(self, document, **parameters):
         self._validate(**parameters)
-        if self._action:
-            return self._action(document, **parameters)
-        from coreapi.transport import HTTPTransport
-        transport = HTTPTransport()
-        return transport.transition(self.url, self.trans, parameters=parameters)
+        return self._func(document=document, link=self, **parameters)
 
     def __eq__(self, other):
         return (

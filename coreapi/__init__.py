@@ -2,7 +2,7 @@
 from coreapi.codecs import JSONCodec
 from coreapi.document import Array, Document, Link, Object, required
 from coreapi.document import remove, replace, deep_remove, deep_replace
-from coreapi.exceptions import ParseError, RequestError
+from coreapi.exceptions import ParseError, RequestError, LinkError
 from coreapi.transport import HTTPTransport
 
 
@@ -11,7 +11,7 @@ __all__ = [
     'JSONCodec',
     'Array', 'Document', 'Link', 'Object', 'required',
     'remove', 'replace', 'deep_remove', 'deep_replace',
-    'ParseError', 'RequestError',
+    'ParseError', 'RequestError', 'LinkError',
     'HTTPTransport',
     'load', 'dump', 'get'
 ]

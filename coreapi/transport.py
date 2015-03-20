@@ -40,7 +40,7 @@ class HTTPTransport(object):
             opts = {}
 
         response = requests.request(method, url, **opts)
-        if response.status_code == 204:
+        if not response.content:
             return None
         codec = JSONCodec()
         return codec.load(response.content, base_url=url)
