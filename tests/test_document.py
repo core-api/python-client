@@ -419,3 +419,8 @@ def test_keys_should_be_a_list_of_strings_or_ints(doc):
 def test_keys_should_be_valid_indexes(doc):
     with pytest.raises(KeyError):
         doc.action(['dummy'])
+
+
+def test_keys_should_access_a_link(doc):
+    with pytest.raises(ValueError):
+        doc.action(['dict'])
