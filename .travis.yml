@@ -1,14 +1,12 @@
 language: python
 
-sudo: false
-
-env:
-    - TOX_ENV=py34
-    - TOX_ENV=py33
-    - TOX_ENV=py27
+python:
+  - "2.7"
+  - "3.3"
+  - "3.4"
 
 install:
-  - pip install tox
+    - pip install -r requirements.txt
 
 script:
-    - tox -e $TOX_ENV
+    - ./runtests
