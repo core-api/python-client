@@ -3,7 +3,7 @@ from collections import Mapping, Sequence, namedtuple
 from coreapi.compat import string_types
 
 
-_transition_types = ('follow', 'action', 'create', 'update', 'delete')
+_transition_types = ('follow', 'action', 'new', 'update', 'delete')
 _default_transition_type = 'follow'
 
 
@@ -480,3 +480,6 @@ class Link(object):
         if self.fields:
             args += ", fields=[%s]" % self._fields_as_repr()
         return "Link(%s)" % args
+
+    def __str__(self):
+        return _document_str(self)

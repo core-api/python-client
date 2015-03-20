@@ -299,6 +299,10 @@ def test_array_str(array):
     """)
 
 
+def test_link_str(link):
+    assert str(link) == "link(required, [optional])"
+
+
 # Container types support equality functions.
 
 def test_document_equality(doc):
