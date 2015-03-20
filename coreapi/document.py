@@ -411,10 +411,10 @@ class Link(object):
 
         self._url = '' if (url is None) else url
         self._trans = 'follow' if (trans is None) else trans
-        self._fields = [] if (fields is None) else [
+        self._fields = () if (fields is None) else tuple([
             item if isinstance(item, Field) else Field(item, required=False)
             for item in fields
-        ]
+        ])
         self._func = _default_link_func if func is None else func
 
     @property
@@ -428,11 +428,6 @@ class Link(object):
     @property
     def fields(self):
         return self._fields
-
-    def __setattr__(self, key, value):
-        if key in ('_url', '_trans', '_fields', '_func'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Link' object does not support property assignment")
 
     def _validate(self, **parameters):
         """
@@ -491,8 +486,16 @@ class Link(object):
         ])
 
     def _transition(self, document, **parameters):
+        """
+        Call a link and return a new document or other media.
+        """
         self._validate(**parameters)
         return self._func(document=document, link=self, **parameters)
+
+    def __setattr__(self, key, value):
+        if key in ('_url', '_trans', '_fields', '_func'):
+            return object.__setattr__(self, key, value)
+        raise TypeError("'Link' object does not support property assignment")
 
     def __eq__(self, other):
         return (
