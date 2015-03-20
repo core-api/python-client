@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import Document, Link, JSONCodec, ParseError
+from coreapi import Document, Link, JSONCodec, ParseError, required
 from coreapi.codecs import _document_to_primative, _primative_to_document
 import pytest
 
@@ -109,6 +109,55 @@ def test_verbose_style(json_codec):
     "b": 456
 }"""
 
+
+# Links should use compact format for optional fields, verbose for required.
+
+def test_link_encodings(json_codec):
+    doc = Document(content={
+        'link': Link(
+            trans='action',
+            fields=['optional', required('required')]
+        )
+    })
+    bytes = json_codec.dump(doc, verbose=True)
+    assert bytes == b"""{
+    "_type": "document",
+    "link": {
+        "_type": "link",
+        "trans": "action",
+        "fields": [
+            "optional",
+            {
+                "name": "required",
+                "required": true
+            }
+        ]
+    }
+}"""
+
+
 # Tests for graceful ommissions.
 
-# TODO
+def test_invalid_document_meta_ignored(json_codec):
+    doc = json_codec.load('{"_type": "document", "_meta": 1, "a": 1}')
+    assert doc == Document(content={"a": 1})
+
+
+def test_invalid_document_url_ignored(json_codec):
+    doc = json_codec.load('{"_type": "document", "_meta": {"url": 1}, "a": 1}')
+    assert doc == Document(content={"a": 1})
+
+
+def test_invalid_document_title_ignored(json_codec):
+    doc = json_codec.load('{"_type": "document", "_meta": {"title": 1}, "a": 1}')
+    assert doc == Document(content={"a": 1})
+
+
+def test_invalid_link_url_ignored(json_codec):
+    doc = json_codec.load('{"_type": "document", "link": {"_type": "link", "url": 1}}')
+    assert doc == Document(content={"link": Link()})
+
+
+def test_invalid_link_fields_ignored(json_codec):
+    doc = json_codec.load('{"_type": "document", "link": {"_type": "link", "fields": 1}}')
+    assert doc == Document(content={"link": Link()})

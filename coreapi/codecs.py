@@ -63,7 +63,7 @@ def _document_to_primative(node):
             ret['fields'] = [
                 item.name
                 if not item.required else
-                {'name': item.name, 'required': item.required}
+                OrderedDict([('name', item.name), ('required', item.required)])
                 for item in node.fields
             ]
         return ret
