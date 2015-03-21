@@ -304,6 +304,20 @@ def test_link_str(link):
     assert str(link) == "link(required, [optional])"
 
 
+def test_graceful_relative_urls():
+    doc = Document(url='http://example.org/', title='Example', content={
+        'a': Document(title='Full', url='http://example.com/123'),
+        'b': Document(title='Path', url='http://example.org/123'),
+        'c': Document(title='None', url='http://example.org/')
+    })
+    assert str(doc) == _dedent("""
+        <Example 'http://example.org/'>
+            'a': <Full 'http://example.com/123'>,
+            'b': <Path '/123'>,
+            'c': <None>
+    """)
+
+
 # Container types support equality functions.
 
 def test_document_equality(doc):

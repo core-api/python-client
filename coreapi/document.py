@@ -1,6 +1,6 @@
 # coding: utf-8
 from collections import Mapping, Sequence, namedtuple
-from coreapi.compat import string_types
+from coreapi.compat import string_types, urlparse
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
@@ -72,6 +72,23 @@ def _key_sorting(item):
     return (0, key)
 
 
+def _graceful_relative_link(base_url, url):
+    """
+    Return a graceful link for a URL relative to a base URL.
+
+    * If they are the same, return an empty string.
+    * If the have the same scheme and hostname, return the path & query params.
+    * Otherwise return the full URL.
+    """
+    if url == base_url:
+        return ''
+    base_prefix = '%s://%s' % urlparse.urlparse(base_url or '')[0:2]
+    url_prefix = '%s://%s' % urlparse.urlparse(url or '')[0:2]
+    if base_prefix == url_prefix and url_prefix != '://':
+        return url[len(url_prefix):]
+    return url
+
+
 def _document_repr(node):
     """
     Return the representation of a Document or other primative
@@ -98,23 +115,30 @@ def _document_repr(node):
     return repr(node)
 
 
-def _document_str(node, indent=0):
+def _document_str(node, indent=0, base_url=None):
     """
     Return a verbose, indented representation of a Document or other primative.
     """
+    if isinstance(node, (Document, Link)):
+        url = urlparse.urljoin(base_url, node.url)
+    else:
+        url = base_url
+
     if isinstance(node, (Document, Object)):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + repr(key) + ': ' + _document_str(value, indent + 1)
+            body_indent + repr(key) + ': ' +
+            _document_str(value, indent + 1, base_url=url)
             for key, value in node.items()
         ])
 
         if isinstance(node, Document):
+            url = _graceful_relative_link(base_url, node.url)
             head = '<%s%s>' % (
                 node.title.strip() or 'Document',
-                ' ' + repr(node.url) if node.url else ''
+                ' ' + repr(url) if url else ''
             )
             return head if (not body) else head + '\n' + body
         return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
@@ -124,7 +148,7 @@ def _document_str(node, indent=0):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + _document_str(value, indent + 1)
+            body_indent + _document_str(value, indent + 1, base_url=url)
             for value in node
         ])
 
