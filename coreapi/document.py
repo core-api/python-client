@@ -13,9 +13,8 @@ def _default_link_func(document, link, **parameters):
     When calling a link the default behavior is to call through
     to the HTTP transport layer.
     """
-    from coreapi.transport import HTTPTransport
-    transport = HTTPTransport()
-    return transport.transition(link.url, link.trans, parameters=parameters)
+    from coreapi.transport import transition
+    return transition(link.url, link.trans, parameters=parameters)
 
 
 def _make_immutable(value):

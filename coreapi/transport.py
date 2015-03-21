@@ -15,16 +15,22 @@ _http_method_map = {
 }
 
 
+def transition(url, trans=None, parameters=None):
+    url_components = urlparse.urlparse(url)
+    scheme = url_components.scheme.lower()
+    netloc = url_components.netloc
+
+    if scheme not in REGISTERED_SCHEMES:
+        raise RequestError('Unknown URL scheme "%s"' % url_components.scheme)
+    if not netloc:
+        raise RequestError('URL missing hostname "%s"' % url)
+
+    cls = REGISTERED_SCHEMES[scheme]
+    return cls().transition(url, transition, parameters)
+
+
 class HTTPTransport(object):
-    schemes = ('http', 'https')
-
     def transition(self, url, trans=None, parameters=None):
-        url_components = urlparse.urlparse(url)
-        if url_components.scheme.lower() not in self.schemes:
-            raise RequestError('Unknown URL scheme "%s"' % url_components.scheme)
-        if not url_components.netloc:
-            raise RequestError('URL missing hostname "%s"' % url)
-
         method = _http_method_map[trans]
 
         if parameters and method == 'GET':
@@ -44,3 +50,9 @@ class HTTPTransport(object):
             return None
         codec = JSONCodec()
         return codec.load(response.content, base_url=url)
+
+
+REGISTERED_SCHEMES = {
+    'http': HTTPTransport,
+    'https': HTTPTransport
+}
