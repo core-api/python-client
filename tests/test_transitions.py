@@ -1,6 +1,10 @@
 # coding: utf-8
 from coreapi import Document, Link, LinkError
+import datetime
 import pytest
+
+
+now = datetime.datetime.now()
 
 
 # Transition functions.
@@ -51,7 +55,7 @@ def invalid_transitions():
     })
 
 
-# Test valid transitions
+# Test valid transitions.
 
 def test_follow(doc):
     new = doc.action(['nested', 'follow'])
@@ -78,7 +82,7 @@ def test_delete(doc):
     assert new == {}
 
 
-# Test invalid transitions
+# Test invalid transitions.
 
 def test_invalid_follow(invalid_transitions):
     with pytest.raises(LinkError):
@@ -103,3 +107,25 @@ def test_invalid_update(invalid_transitions):
 def test_invalid_delete(invalid_transitions):
     with pytest.raises(LinkError):
         invalid_transitions.action(['nested', 'delete'])
+
+
+# Test invalid parameters.
+
+def test_invalid_type(doc):
+    with pytest.raises(TypeError):
+        doc.action(['nested', 'update'], param=now)
+
+
+def test_invalid_type_in_list(doc):
+    with pytest.raises(TypeError):
+        doc.action(['nested', 'update'], param=[now])
+
+
+def test_invalid_type_in_dict(doc):
+    with pytest.raises(TypeError):
+        doc.action(['nested', 'update'], param=[{"a": now}])
+
+
+def test_invalid_key_in_dict(doc):
+    with pytest.raises(TypeError):
+        doc.action(['nested', 'update'], param=[{1: "a"}])

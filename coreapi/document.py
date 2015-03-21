@@ -43,6 +43,26 @@ def _make_immutable(value):
     raise TypeError("Invalid type in document. Got '%s'." % type(value))
 
 
+def _validate_parameter(value):
+    """
+    When calling a link parameters must be primatives or Document instances.
+    """
+    if isinstance(value, (dict)):
+        if any([not isinstance(key, string_types) for key in value.keys()]):
+            raise TypeError("Invalid parameter. Dictionary keys must be strings.")
+        [_validate_parameter(item) for item in value.values()]
+    elif isinstance(value, (list, tuple)):
+        [_validate_parameter(item) for item in value]
+    elif (
+        value is None or
+        isinstance(value, string_types) or
+        isinstance(value, (int, float, bool, Document))
+    ):
+        pass
+    else:
+        raise TypeError("Invalid parameter type. Got '%s'." % type(value))
+
+
 def _key_sorting(item):
     """
     Document and Object sorting.
@@ -456,6 +476,10 @@ class Link(object):
         if missing:
             prefix = len(missing) > 1 and 'parameters ' or 'parameter '
             raise ValueError('Missing required ' + prefix + ', '.join(missing))
+
+        # Ensure all parameter values are valid types.
+        for value in parameters.values():
+            _validate_parameter(value)
 
     def _fields_as_string(self):
         """
