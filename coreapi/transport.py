@@ -1,7 +1,7 @@
 # coding: utf-8
 from coreapi.compat import urlparse
 from coreapi.codecs import _get_registered_codec
-from coreapi.exceptions import RequestError
+from coreapi.exceptions import TransportError
 import requests
 import json
 
@@ -23,10 +23,10 @@ def transition(url, trans=None, parameters=None):
     try:
         transport_class = REGISTERED_SCHEMES[scheme]
     except KeyError:
-        raise RequestError('Unknown URL scheme "%s"' % scheme)
+        raise TransportError('Unknown URL scheme "%s"' % scheme)
 
     if not netloc:
-        raise RequestError('URL missing hostname "%s"' % url)
+        raise TransportError('URL missing hostname "%s"' % url)
 
     transport = transport_class()
     return transport.transition(url, transition, parameters)

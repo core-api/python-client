@@ -8,7 +8,7 @@ class ParseError(Exception):
     pass
 
 
-class RequestError(Exception):
+class TransportError(Exception):
     """
     Raised when the transport layer fails to make a request or get a response.
     """
