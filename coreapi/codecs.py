@@ -149,12 +149,17 @@ def _primative_to_document(data):
     return data
 
 
-class JSONCodec(object):
-    media_types = (
-        'application/vnd.coreapi+json',
-        'application/json'
-    )
+def _get_registered_codec(content_type):
+    content_type = content_type.split(';')[0].strip().lower()
+    try:
+        return REGISTERED_CODECS[content_type]
+    except KeyError:
+        raise ParseError(
+            "Cannot parse unsupported content type '%s'" % content_type
+        )
 
+
+class JSONCodec(object):
     def load(self, bytes, base_url=None):
         """
         Takes a bytestring and returns a document.
@@ -189,3 +194,9 @@ class JSONCodec(object):
 
         data = _document_to_primative(document)
         return force_bytes(json.dumps(data, **options))
+
+
+REGISTERED_CODECS = {
+    'application/vnd.coreapi+json': JSONCodec,
+    'application/json': JSONCodec
+}

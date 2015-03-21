@@ -1,6 +1,7 @@
 # coding: utf-8
 from coreapi import Document, Link, JSONCodec, ParseError, required
 from coreapi.codecs import _document_to_primative, _primative_to_document
+from coreapi.codecs import _get_registered_codec
 import pytest
 
 
@@ -161,3 +162,18 @@ def test_invalid_link_url_ignored(json_codec):
 def test_invalid_link_fields_ignored(json_codec):
     doc = json_codec.load('{"_type": "document", "link": {"_type": "link", "fields": 1}}')
     assert doc == Document(content={"link": Link()})
+
+
+# Tests for content type lookup.
+
+def test_get_supported_content_type():
+    assert _get_registered_codec('application/json') == JSONCodec
+
+
+def test_get_supported_content_type_with_parameters():
+    assert _get_registered_codec('application/json; verison=1.0') == JSONCodec
+
+
+def test_get_unsupported_content_type():
+    with pytest.raises(ParseError):
+        _get_registered_codec('application/csv')

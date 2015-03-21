@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi.compat import urlparse
-from coreapi.codecs import JSONCodec
+from coreapi.codecs import _get_registered_codec
 from coreapi.exceptions import RequestError
 import requests
 import json
@@ -48,8 +48,14 @@ class HTTPTransport(object):
         response = requests.request(method, url, **opts)
         if not response.content:
             return None
-        codec = JSONCodec()
-        return codec.load(response.content, base_url=url)
+
+        try:
+            content_type = response['content-type']
+        except KeyError:
+            raise RequestError('No Content-Type header in response')
+
+        codec_class = _get_registered_codec(content_type)
+        return codec_class().load(response.content, base_url=url)
 
 
 REGISTERED_SCHEMES = {
