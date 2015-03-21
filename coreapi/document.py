@@ -56,7 +56,7 @@ def _validate_parameter(value):
     elif (
         value is None or
         isinstance(value, string_types) or
-        isinstance(value, (int, float, bool, Document))
+        isinstance(value, (int, float, bool))
     ):
         pass
     else:
