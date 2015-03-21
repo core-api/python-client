@@ -20,13 +20,16 @@ def transition(url, trans=None, parameters=None):
     scheme = url_components.scheme.lower()
     netloc = url_components.netloc
 
-    if scheme not in REGISTERED_SCHEMES:
-        raise RequestError('Unknown URL scheme "%s"' % url_components.scheme)
+    try:
+        transport_class = REGISTERED_SCHEMES[scheme]
+    except KeyError:
+        raise RequestError('Unknown URL scheme "%s"' % scheme)
+
     if not netloc:
         raise RequestError('URL missing hostname "%s"' % url)
 
-    cls = REGISTERED_SCHEMES[scheme]
-    return cls().transition(url, transition, parameters)
+    transport = transport_class()
+    return transport.transition(url, transition, parameters)
 
 
 class HTTPTransport(object):
@@ -49,13 +52,10 @@ class HTTPTransport(object):
         if not response.content:
             return None
 
-        try:
-            content_type = response['content-type']
-        except KeyError:
-            raise RequestError('No Content-Type header in response')
-
+        content_type = response.get('content-type')
         codec_class = _get_registered_codec(content_type)
-        return codec_class().load(response.content, base_url=url)
+        codec = codec_class()
+        return codec.load(response.content, base_url=url)
 
 
 REGISTERED_SCHEMES = {

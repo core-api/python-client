@@ -166,6 +166,10 @@ def test_invalid_link_fields_ignored(json_codec):
 
 # Tests for content type lookup.
 
+def test_get_default_content_type():
+    assert _get_registered_codec() == JSONCodec
+
+
 def test_get_supported_content_type():
     assert _get_registered_codec('application/json') == JSONCodec
 

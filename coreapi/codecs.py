@@ -149,7 +149,14 @@ def _primative_to_document(data):
     return data
 
 
-def _get_registered_codec(content_type):
+def _get_registered_codec(content_type=None):
+    """
+    Given the value of a 'Content-Type' header, return the appropriate
+    codec registered to handle it.
+    """
+    if content_type is None:
+        return JSONCodec
+
     content_type = content_type.split(';')[0].strip().lower()
     try:
         return REGISTERED_CODECS[content_type]

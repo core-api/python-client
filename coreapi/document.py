@@ -1,7 +1,6 @@
 # coding: utf-8
 from collections import Mapping, Sequence, namedtuple
 from coreapi.compat import string_types
-from coreapi.exceptions import LinkError
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
@@ -317,23 +316,12 @@ class Document(Mapping):
         # Perform the action, and return a new document.
         ret = link._transition(document, **kwargs)
 
-        if link.trans == 'delete':
-            if ret is not None:
-                msg = 'Called link with trans="%s". Expected None, but got "%s"'
-                raise LinkError(msg % (link.trans, type(ret).__name__))
+        # Return the new document or other media.
+        if link.trans in ('follow', 'create'):
+            return ret
+        elif ret is None:
             return deep_remove(self, document_keys)
-
-        elif link.trans in ('action', 'update'):
-            if not isinstance(ret, Document):
-                msg = 'Called link with trans="%s". Expected Document, but got "%s"'
-                raise LinkError(msg % (link.trans, type(ret).__name__))
-            return deep_replace(self, document_keys, ret)
-
-        assert link.trans in ('follow', 'create')
-        if not isinstance(ret, Document):
-            msg = 'Called link with trans="%s". Expected Document, but got "%s"'
-            raise LinkError(msg % (link.trans, type(ret).__name__))
-        return ret
+        return deep_replace(self, document_keys, ret)
 
 
 class Object(Mapping):
