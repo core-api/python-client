@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS

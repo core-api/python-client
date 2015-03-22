@@ -1,4 +1,5 @@
 # coding: utf-8
+from __future__ import unicode_literals
 from coreapi.compat import urlparse
 from coreapi.codecs import _get_registered_codec
 from coreapi.exceptions import TransportError

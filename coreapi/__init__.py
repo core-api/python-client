@@ -11,7 +11,7 @@ __all__ = [
     'JSONCodec',
     'Array', 'Document', 'Link', 'Object', 'required',
     'remove', 'replace', 'deep_remove', 'deep_replace',
-    'ParseError', 'TransportError', 'LinkError',
+    'ParseError', 'TransportError',
     'HTTPTransport',
     'load', 'dump', 'get'
 ]
