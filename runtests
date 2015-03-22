@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import coverage
 import os
 import pytest
 import subprocess
@@ -7,9 +8,18 @@ import sys
 
 PYTEST_ARGS = ['tests', '--tb=short']
 FLAKE8_ARGS = ['coreapi', 'tests', '--ignore=E501']
+COVERAGE_OPTIONS = {
+    'include': ['coreapi/*', 'tests/*'],
+    'omit': 'coreapi/compat.py'
+}
 
 
 sys.path.append(os.path.dirname(__file__))
+
+
+class NullFile(object):
+    def write(self, data):
+        pass
 
 
 def exit_on_failure(ret, message=None):
@@ -22,6 +32,18 @@ def flake8_main(args):
     ret = subprocess.call(['flake8'] + args)
     print('flake8 failed' if ret else 'flake8 passed')
     return ret
+
+
+def fail_if_lacking_coverage(cov):
+    precent_covered = cov.report(
+        file=NullFile(), **COVERAGE_OPTIONS
+    )
+    if precent_covered == 100:
+        print('100% coverage')
+        return
+    print 'Tests passed, but not 100% coverage.'
+    cov.report(**COVERAGE_OPTIONS)
+    sys.exit(1)
 
 
 def split_class_and_function(string):
@@ -57,5 +79,9 @@ if __name__ == "__main__":
     else:
         pytest_args = PYTEST_ARGS
 
+    cov = coverage.coverage()
+    cov.start()
     exit_on_failure(pytest.main(pytest_args))
+    cov.stop()
     exit_on_failure(flake8_main(FLAKE8_ARGS))
+    fail_if_lacking_coverage(cov)
