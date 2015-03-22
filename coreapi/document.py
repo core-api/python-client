@@ -72,7 +72,7 @@ def _key_sorting(item):
     return (0, key)
 
 
-def _graceful_relative_link(base_url, url):
+def _graceful_relative_url(base_url, url):
     """
     Return a graceful link for a URL relative to a base URL.
 
@@ -119,10 +119,7 @@ def _document_str(node, indent=0, base_url=None):
     """
     Return a verbose, indented representation of a Document or other primative.
     """
-    if isinstance(node, (Document, Link)):
-        url = urlparse.urljoin(base_url, node.url)
-    else:
-        url = base_url
+    url = node.url if isinstance(node, Document) else base_url
 
     if isinstance(node, (Document, Object)):
         head_indent = '    ' * indent
@@ -135,7 +132,7 @@ def _document_str(node, indent=0, base_url=None):
         ])
 
         if isinstance(node, Document):
-            url = _graceful_relative_link(base_url, node.url)
+            url = _graceful_relative_url(base_url, node.url)
             head = '<%s%s>' % (
                 node.title.strip() or 'Document',
                 ' ' + repr(url) if url else ''

@@ -1,9 +1,10 @@
 # coding: utf-8
 from collections import OrderedDict
-from coreapi.compat import string_types, force_bytes
+from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Field
 from coreapi.document import _transition_types, _default_transition_type
+from coreapi.document import _graceful_relative_url
 from coreapi.exceptions import ParseError
 import json
 
@@ -27,7 +28,7 @@ def _unescape_key(string):
     return string
 
 
-def _document_to_primative(node):
+def _document_to_primative(node, base_url=None):
     """
     Take a Core API document and return Python primatives
     ready to be rendered into the JSON style encoding.
@@ -38,15 +39,16 @@ def _document_to_primative(node):
 
         # Only fill in items in '_meta' if required.
         meta = OrderedDict()
-        if node.url:
-            meta['url'] = node.url
+        url = _graceful_relative_url(base_url, node.url)
+        if url:
+            meta['url'] = url
         if node.title:
             meta['title'] = node.title
         if meta:
             ret['_meta'] = meta
 
         ret.update([
-            (_escape_key(key), _document_to_primative(value))
+            (_escape_key(key), _document_to_primative(value, base_url=node.url))
             for key, value in node.items()
         ])
         return ret
@@ -54,8 +56,9 @@ def _document_to_primative(node):
     elif isinstance(node, Link):
         ret = OrderedDict()
         ret['_type'] = 'link'
-        if node.url:
-            ret['url'] = node.url
+        url = _graceful_relative_url(base_url, node.url)
+        if url:
+            ret['url'] = url
         if node.trans != _default_transition_type:
             ret['trans'] = node.trans
         if node.fields:
@@ -70,7 +73,7 @@ def _document_to_primative(node):
 
     elif isinstance(node, Object):
         return OrderedDict([
-            (_escape_key(key), _document_to_primative(value))
+            (_escape_key(key), _document_to_primative(value, base_url=base_url))
             for key, value in node.items()
         ])
 
@@ -80,7 +83,7 @@ def _document_to_primative(node):
     return node
 
 
-def _primative_to_document(data):
+def _primative_to_document(data, base_url=None):
     """
     Take Python primatives as returned from parsing JSON content,
     and return a Core API document.
@@ -93,13 +96,14 @@ def _primative_to_document(data):
         url = meta.get('url', '')
         if not isinstance(url, string_types):
             url = ''
+        url = urlparse.urljoin(base_url, url)
 
         title = meta.get('title', '')
         if not isinstance(title, string_types):
             title = ''
 
         return Document(url=url, title=title, content={
-            _unescape_key(key): _primative_to_document(value)
+            _unescape_key(key): _primative_to_document(value, url)
             for key, value in data.items()
             if key not in ('_type', '_meta')
         })
@@ -108,6 +112,7 @@ def _primative_to_document(data):
         url = data.get('url', '')
         if not isinstance(url, string_types):
             url = ''
+        url = urlparse.urljoin(base_url, url)
 
         trans = data.get('trans')
         if not isinstance(trans, string_types) or (trans not in _transition_types):
@@ -136,14 +141,14 @@ def _primative_to_document(data):
 
     elif isinstance(data, dict):
         return Object({
-            _unescape_key(key): _primative_to_document(value)
+            _unescape_key(key): _primative_to_document(value, base_url)
             for key, value in data.items()
             if key not in ('_type', '_meta')
         })
 
     elif isinstance(data, list):
         return Array([
-            _primative_to_document(item) for item in data
+            _primative_to_document(item, base_url) for item in data
         ])
 
     return data
@@ -176,7 +181,7 @@ class JSONCodec(object):
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
-        doc = _primative_to_document(data)
+        doc = _primative_to_document(data, base_url)
         if not isinstance(doc, Document):
             raise ParseError('Top level node must be a document.')
 

@@ -13,14 +13,14 @@ def json_codec():
 @pytest.fixture
 def doc():
     return Document(
-        url='http://example.org',
+        url='http://example.org/',
         title='Example',
         content={
             'integer': 123,
             'dict': {'key': 'value'},
             'list': [1, 2, 3],
-            'link': Link(url='/'),
-            'nested': {'child': Link(url='/123')},
+            'link': Link(url='http://example.org/'),
+            'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
         })
 
@@ -32,13 +32,13 @@ def test_document_to_primative(doc):
     assert data == {
         '_type': 'document',
         '_meta': {
-            'url': 'http://example.org',
+            'url': 'http://example.org/',
             'title': 'Example'
         },
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'url': '/'},
+        'link': {'_type': 'link'},
         'nested': {'child': {'_type': 'link', 'url': '/123'}},
         '__type': 'needs escaping'
     }
@@ -48,14 +48,14 @@ def test_primative_to_document(doc):
     data = {
         '_type': 'document',
         '_meta': {
-            'url': 'http://example.org',
+            'url': 'http://example.org/',
             'title': 'Example'
         },
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'url': '/'},
-        'nested': {'child': {'_type': 'link', 'url': '/123'}},
+        'link': {'_type': 'link', 'url': 'http://example.org/'},
+        'nested': {'child': {'_type': 'link', 'url': 'http://example.org/123'}},
         '__type': 'needs escaping'
     }
     assert _primative_to_document(data) == doc
