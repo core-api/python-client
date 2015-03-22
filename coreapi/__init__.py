@@ -3,7 +3,7 @@ from coreapi.codecs import JSONCodec
 from coreapi.document import Array, Document, Link, Object, required
 from coreapi.document import remove, replace, deep_remove, deep_replace
 from coreapi.exceptions import ParseError, TransportError
-from coreapi.transport import HTTPTransport
+from coreapi.transport import transition
 
 
 __version__ = '0.1'
@@ -28,5 +28,4 @@ def dump(document, verbose=False):
 
 
 def get(url):
-    transport = HTTPTransport()
-    return transport.follow(url)
+    return transition(url, 'follow')

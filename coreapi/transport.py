@@ -33,7 +33,7 @@ def transition(url, trans=None, parameters=None):
         raise TransportError('Unknown URL scheme "%s".' % scheme)
 
     transport = transport_class()
-    return transport.transition(url, transition, parameters)
+    return transport.transition(url, trans, parameters)
 
 
 class HTTPTransport(object):
