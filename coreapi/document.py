@@ -119,25 +119,33 @@ def _document_str(node, indent=0, base_url=None):
     """
     Return a verbose, indented representation of a Document or other primative.
     """
-    url = node.url if isinstance(node, Document) else base_url
-
-    if isinstance(node, (Document, Object)):
+    if isinstance(node, Document):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
             body_indent + repr(key) + ': ' +
-            _document_str(value, indent + 1, base_url=url)
+            _document_str(value, indent + 1, base_url=node.url)
             for key, value in node.items()
         ])
 
-        if isinstance(node, Document):
-            url = _graceful_relative_url(base_url, node.url)
-            head = '<%s%s>' % (
-                node.title.strip() or 'Document',
-                ' ' + repr(url) if url else ''
-            )
-            return head if (not body) else head + '\n' + body
+        url = _graceful_relative_url(base_url, node.url)
+        head = '<%s%s>' % (
+            node.title.strip() or 'Document',
+            ' ' + repr(url) if url else ''
+        )
+        return head if (not body) else head + '\n' + body
+
+    elif isinstance(node, Object):
+        head_indent = '    ' * indent
+        body_indent = '    ' * (indent + 1)
+
+        body = ',\n'.join([
+            body_indent + repr(key) + ': ' +
+            _document_str(value, indent + 1, base_url=base_url)
+            for key, value in node.items()
+        ])
+
         return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
 
     elif isinstance(node, Array):
@@ -145,7 +153,7 @@ def _document_str(node, indent=0, base_url=None):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + _document_str(value, indent + 1, base_url=url)
+            body_indent + _document_str(value, indent + 1, base_url=base_url)
             for value in node
         ])
 
