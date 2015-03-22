@@ -42,19 +42,6 @@ def doc():
     })
 
 
-@pytest.fixture
-def invalid_transitions():
-    return Document(content={
-        'nested': Document(content={
-            'follow': Link(trans='follow', func=delete),
-            'action': Link(trans='action', fields=['param'], func=delete),
-            'create': Link(trans='create', fields=['param'], func=delete),
-            'update': Link(trans='update', fields=['param'], func=delete),
-            'delete': Link(trans='delete', func=create)
-        })
-    })
-
-
 # Test valid transitions.
 
 def test_follow(doc):
@@ -63,7 +50,7 @@ def test_follow(doc):
 
 
 def test_action(doc):
-    new = doc.action(['nested', 'update'], param=123)
+    new = doc.action(['nested', 'action'], param=123)
     assert new == {'nested': {'new': 123, 'param': 123}}
 
 
