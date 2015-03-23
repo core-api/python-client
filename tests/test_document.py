@@ -342,6 +342,16 @@ def test_array_equality(array):
     assert array == [{'a': 1}, {'b': 2}, {'c': 3}]
 
 
+# Container types support len.
+
+def test_document_len(doc):
+    assert len(doc) == 5
+
+
+def test_object_len(obj):
+    assert len(obj) == 2
+
+
 # Documents meet the Core API constraints.
 
 def test_document_url_must_be_string():

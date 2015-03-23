@@ -4,41 +4,39 @@ import requests
 import pytest
 
 
+encoded = (
+    b'{"_type":"document","_meta":{"url":"http://example.org"},'
+    b'"a":123,"next":{"_type":"link"}}'
+)
+
+
 @pytest.fixture
 def document():
-    return load(bytestring())
-
-
-@pytest.fixture
-def bytestring():
-    return (
-        b'{"_type":"document","_meta":{"url":"http://example.org"},'
-        b'"a":123,"next":{"_type":"link"}}'
-    )
+    return load(encoded)
 
 
 class MockResponse(object):
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, content):
+        self.content = content
         self.headers = {}
 
 
 # Basic integration tests.
 
-def test_load(bytestring):
-    assert load(bytestring) == {
+def test_load():
+    assert load(encoded) == {
         "a": 123,
         "next": Link(url='http://example.org')
     }
 
 
 def test_dump(document):
-    assert dump(document) == bytestring()
+    assert dump(document) == encoded
 
 
 def test_get(monkeypatch):
     def mockreturn(method, url):
-        return MockResponse('{"_type": "document", "example": 123}')
+        return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
@@ -48,7 +46,7 @@ def test_get(monkeypatch):
 
 def test_follow(monkeypatch, document):
     def mockreturn(method, url):
-        return MockResponse('{"_type": "document", "example": 123}')
+        return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 

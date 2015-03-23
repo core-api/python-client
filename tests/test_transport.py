@@ -11,8 +11,8 @@ def http():
 
 
 class MockResponse(object):
-    def __init__(self, text):
-        self.text = text
+    def __init__(self, content):
+        self.content = content
         self.headers = {}
 
 
@@ -37,7 +37,7 @@ def test_missing_hostname():
 
 def test_follow(monkeypatch, http):
     def mockreturn(method, url):
-        return MockResponse('{"_type": "document", "example": 123}')
+        return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
@@ -50,8 +50,9 @@ def test_follow(monkeypatch, http):
 
 def test_follow_with_parameters(monkeypatch, http):
     def mockreturn(method, url, params):
+        insert = params['example'].encode('utf-8')
         return MockResponse(
-            '{"_type": "document", "example": "%s"}' % params['example']
+            b'{"_type": "document", "example": "' + insert + b'"}'
         )
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -66,7 +67,8 @@ def test_follow_with_parameters(monkeypatch, http):
 
 def test_create(monkeypatch, http):
     def mockreturn(method, url, data, headers):
-        return MockResponse('{"_type": "document", "data": %s}' % data)
+        insert = data.encode('utf-8')
+        return MockResponse(b'{"_type": "document", "data": ' + insert + b'}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 

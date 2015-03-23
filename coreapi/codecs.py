@@ -178,7 +178,7 @@ class JSONCodec(object):
         Takes a bytestring and returns a document.
         """
         try:
-            data = json.loads(bytes)
+            data = json.loads(bytes.decode('utf-8'))
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 

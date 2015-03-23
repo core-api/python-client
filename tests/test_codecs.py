@@ -67,7 +67,7 @@ def test_minimal_document(json_codec):
     """
     Ensure we can load the smallest possible valid JSON encoding.
     """
-    doc = json_codec.load('{"_type":"document"}')
+    doc = json_codec.load(b'{"_type":"document"}')
     assert isinstance(doc, Document)
     assert doc.url == ''
     assert doc.title == ''
@@ -81,7 +81,7 @@ def test_malformed_json(json_codec):
     Invalid JSON should raise a ParseError.
     """
     with pytest.raises(ParseError):
-        json_codec.load('_')
+        json_codec.load(b'_')
 
 
 def test_not_a_document(json_codec):
@@ -90,7 +90,7 @@ def test_not_a_document(json_codec):
     should raise a ParseError.
     """
     with pytest.raises(ParseError):
-        json_codec.load('{}')
+        json_codec.load(b'{}')
 
 
 # Encodings may have a verbose and a compact style.
@@ -140,27 +140,27 @@ def test_link_encodings(json_codec):
 # Tests for graceful ommissions.
 
 def test_invalid_document_meta_ignored(json_codec):
-    doc = json_codec.load('{"_type": "document", "_meta": 1, "a": 1}')
+    doc = json_codec.load(b'{"_type": "document", "_meta": 1, "a": 1}')
     assert doc == Document(content={"a": 1})
 
 
 def test_invalid_document_url_ignored(json_codec):
-    doc = json_codec.load('{"_type": "document", "_meta": {"url": 1}, "a": 1}')
+    doc = json_codec.load(b'{"_type": "document", "_meta": {"url": 1}, "a": 1}')
     assert doc == Document(content={"a": 1})
 
 
 def test_invalid_document_title_ignored(json_codec):
-    doc = json_codec.load('{"_type": "document", "_meta": {"title": 1}, "a": 1}')
+    doc = json_codec.load(b'{"_type": "document", "_meta": {"title": 1}, "a": 1}')
     assert doc == Document(content={"a": 1})
 
 
 def test_invalid_link_url_ignored(json_codec):
-    doc = json_codec.load('{"_type": "document", "link": {"_type": "link", "url": 1}}')
+    doc = json_codec.load(b'{"_type": "document", "link": {"_type": "link", "url": 1}}')
     assert doc == Document(content={"link": Link()})
 
 
 def test_invalid_link_fields_ignored(json_codec):
-    doc = json_codec.load('{"_type": "document", "link": {"_type": "link", "fields": 1}}')
+    doc = json_codec.load(b'{"_type": "document", "link": {"_type": "link", "fields": 1}}')
     assert doc == Document(content={"link": Link()})
 
 
