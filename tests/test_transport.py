@@ -68,7 +68,9 @@ def test_follow_with_parameters(monkeypatch, http):
 
 def test_create(monkeypatch, http):
     def mockreturn(method, url, data, headers):
-        return MockResponse(b'{"_type": "document", "data": ' + data + '}')
+        return MockResponse(
+            b'{"_type": "document", "data": ' + data + b'}'
+        )
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
