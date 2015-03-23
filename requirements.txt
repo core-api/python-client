@@ -2,3 +2,4 @@ flake8==2.4.0
 pep8==1.5.7
 pytest==2.6.4
 requests==2.6.0
+coverage==3.7.1

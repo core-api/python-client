@@ -41,7 +41,7 @@ def fail_if_lacking_coverage(cov):
     if precent_covered == 100:
         print('100% coverage')
         return
-    print 'Tests passed, but not 100% coverage.'
+    print('Tests passed, but not 100% coverage.')
     cov.report(**COVERAGE_OPTIONS)
     sys.exit(1)
 
