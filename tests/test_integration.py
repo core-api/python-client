@@ -18,8 +18,8 @@ def bytestring():
 
 
 class MockResponse(object):
-    def __init__(self, content):
-        self.content = content
+    def __init__(self, text):
+        self.text = text
         self.headers = {}
 
 
@@ -38,7 +38,7 @@ def test_dump(document):
 
 def test_get(monkeypatch):
     def mockreturn(method, url):
-        return MockResponse(b'{"_type": "document", "example": 123}')
+        return MockResponse('{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
@@ -48,7 +48,7 @@ def test_get(monkeypatch):
 
 def test_follow(monkeypatch, document):
     def mockreturn(method, url):
-        return MockResponse(b'{"_type": "document", "example": 123}')
+        return MockResponse('{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 

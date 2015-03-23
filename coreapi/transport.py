@@ -53,13 +53,13 @@ class HTTPTransport(object):
             opts = {}
 
         response = requests.request(method, url, **opts)
-        if not response.content:
+        if not response.text:
             return None
 
         content_type = response.headers.get('content-type')
         codec_class = _get_registered_codec(content_type)
         codec = codec_class()
-        return codec.load(response.content, base_url=url)
+        return codec.load(response.text, base_url=url)
 
 
 REGISTERED_SCHEMES = {
