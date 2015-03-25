@@ -20,4 +20,4 @@ def test_error_message_repr():
 
 def test_error_message_str():
     error = ErrorMessage(['failed'])
-    assert str(error) == "<ErrorMessage>\n    * 'failed'"
+    assert str(error) == "['failed']"
