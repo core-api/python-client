@@ -43,6 +43,7 @@ def fail_if_lacking_coverage(cov):
         return
     print('Tests passed, but not 100% coverage.')
     cov.report(**COVERAGE_OPTIONS)
+    cov.html_report(**COVERAGE_OPTIONS)
     sys.exit(1)
 
 

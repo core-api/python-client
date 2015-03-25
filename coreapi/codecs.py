@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
-from coreapi.document import Document, Link, Array, Object, Field
+from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.document import _transition_types, _default_transition_type
 from coreapi.document import _graceful_relative_url
 from coreapi.exceptions import ParseError
@@ -81,6 +81,12 @@ def _document_to_primative(node, base_url=None):
     elif isinstance(node, Array):
         return [_document_to_primative(value) for value in node]
 
+    elif isinstance(node, Error):
+        ret = OrderedDict()
+        ret['_type'] = 'error'
+        ret['messages'] = node.messages
+        return ret
+
     return node
 
 
@@ -140,6 +146,19 @@ def _primative_to_document(data, base_url=None):
 
         return Link(url=url, trans=trans, fields=fields)
 
+    elif isinstance(data, dict) and data.get('_type') == 'error':
+        messages = data.get('messages', [])
+        if not isinstance(messages, list):
+            messages = []
+
+        # Ignore any messages which are have incorrect type.
+        messages = [
+            message for message in messages
+            if isinstance(message, string_types)
+        ]
+
+        return Error(messages)
+
     elif isinstance(data, dict):
         return Object({
             _unescape_key(key): _primative_to_document(value, base_url)
@@ -183,8 +202,8 @@ class JSONCodec(object):
             raise ParseError('Malformed JSON. %s' % exc)
 
         doc = _primative_to_document(data, base_url)
-        if not isinstance(doc, Document):
-            raise ParseError('Top level node must be a document.')
+        if not isinstance(doc, (Document, Error)):
+            raise ParseError('Top level node must be a document or error message.')
 
         return doc
 

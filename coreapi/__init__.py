@@ -1,17 +1,17 @@
 # coding: utf-8
 from coreapi.codecs import JSONCodec
-from coreapi.document import Array, Document, Link, Object, required
+from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.document import remove, replace, deep_remove, deep_replace
-from coreapi.exceptions import ParseError, TransportError
+from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.transport import transition
 
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 __all__ = [
     'JSONCodec',
-    'Array', 'Document', 'Link', 'Object', 'required',
+    'Array', 'Document', 'Link', 'Object', 'Error', 'required',
     'remove', 'replace', 'deep_remove', 'deep_replace',
-    'ParseError', 'TransportError',
+    'ParseError', 'TransportError', 'ErrorMessage',
     'HTTPTransport',
     'load', 'dump', 'get'
 ]
