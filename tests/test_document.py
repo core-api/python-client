@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi import required, remove, replace, deep_remove, deep_replace
-from coreapi import Array, Document, Object, Link
+from coreapi import Array, Document, Object, Link, Error
 import pytest
 
 
@@ -39,6 +39,11 @@ def link():
         trans='action',
         fields=[required('required'), 'optional']
     )
+
+
+@pytest.fixture
+def error():
+    return Error(['failed'])
 
 
 def _dedent(string):
@@ -112,6 +117,14 @@ def test_link_does_not_support_property_assignment():
     link = Link()
     with pytest.raises(TypeError):
         link.integer = 456
+
+
+# Errors are immutable.
+
+def test_error_does_not_support_property_assignment():
+    error = Error(['failed'])
+    with pytest.raises(TypeError):
+        error.integer = 456
 
 
 # Children in documents are immutable primatives.
@@ -252,6 +265,11 @@ def test_array_repr(array):
     assert eval(repr(array)) == array
 
 
+def test_error_repr(error):
+    assert repr(error) == "Error(['failed'])"
+    assert eval(repr(error)) == error
+
+
 # Container types have a convenient string representation.
 
 def test_document_str(doc):
@@ -302,6 +320,13 @@ def test_array_str(array):
 
 def test_link_str(link):
     assert str(link) == "link(required, [optional])"
+
+
+def test_error_str(error):
+    assert str(error) == _dedent("""
+        <Error>
+            * 'failed'
+    """)
 
 
 def test_graceful_relative_urls():
@@ -387,6 +412,16 @@ def test_object_keys_must_be_strings():
 def test_array_may_not_contain_links():
     with pytest.raises(TypeError):
         Array([Link()])
+
+
+def test_error_messages_must_be_list():
+    with pytest.raises(TypeError):
+        Error(123)
+
+
+def test_error_messages_must_be_list_of_strings():
+    with pytest.raises(TypeError):
+        Error([123])
 
 
 # Link arguments must be valid.

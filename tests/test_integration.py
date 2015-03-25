@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get, load, dump, Link
+from coreapi import get, load, dump, Link, ErrorMessage
 import requests
 import pytest
 
@@ -52,3 +52,13 @@ def test_follow(monkeypatch, document):
 
     doc = document.action(['next'])
     assert doc == {'example': 123}
+
+
+def test_error(monkeypatch, document):
+    def mockreturn(method, url):
+        return MockResponse(b'{"_type": "error", "message": ["failed"]}')
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    with pytest.raises(ErrorMessage):
+        document.action(['next'])

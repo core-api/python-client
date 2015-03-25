@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import Document, Link, JSONCodec, ParseError, required
+from coreapi import Document, Link, Error, JSONCodec, ParseError, required
 from coreapi.codecs import _document_to_primative, _primative_to_document
 from coreapi.codecs import _get_registered_codec
 import pytest
@@ -61,6 +61,24 @@ def test_primative_to_document(doc):
     assert _primative_to_document(data) == doc
 
 
+def test_error_to_primative():
+    error = Error(['failed'])
+    data = {
+        '_type': 'error',
+        'messages': ['failed']
+    }
+    assert _document_to_primative(error) == data
+
+
+def test_primative_to_error():
+    error = Error(['failed'])
+    data = {
+        '_type': 'error',
+        'messages': ['failed']
+    }
+    assert _primative_to_document(data) == error
+
+
 # Codecs can load a document successfully.
 
 def test_minimal_document(json_codec):
@@ -72,6 +90,15 @@ def test_minimal_document(json_codec):
     assert doc.url == ''
     assert doc.title == ''
     assert doc == {}
+
+
+def test_minimal_error(json_codec):
+    """
+    Ensure we can load a minimal error message encoding.
+    """
+    error = json_codec.load(b'{"_type":"error","messages":["failed"]}')
+    assert isinstance(error, Error)
+    assert error == ['failed']
 
 
 # Parse errors should be raised for invalid encodings.
@@ -162,6 +189,11 @@ def test_invalid_link_url_ignored(json_codec):
 def test_invalid_link_fields_ignored(json_codec):
     doc = json_codec.load(b'{"_type": "document", "link": {"_type": "link", "fields": 1}}')
     assert doc == Document(content={"link": Link()})
+
+
+def test_invalid_message_field_ignored(json_codec):
+    error = json_codec.load(b'{"_type": "error", "messages": 1}')
+    assert error == Error(messages=[])
 
 
 # Tests for content type lookup.

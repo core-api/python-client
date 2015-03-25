@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 from collections import Mapping, Sequence, namedtuple
 from coreapi.compat import string_types, urlparse
+from coreapi.exceptions import ErrorMessage
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
@@ -346,6 +347,10 @@ class Document(Mapping):
         # Perform the action, and return a new document.
         ret = link._transition(document, **kwargs)
 
+        # If we got an error response back, raise an exception.
+        if isinstance(ret, Error):
+            raise ErrorMessage(ret.messages)
+
         # Return the new document or other media.
         if link.trans in ('follow', 'create'):
             return ret
@@ -556,3 +561,41 @@ class Link(object):
 
     def __str__(self):
         return _document_str(self)
+
+
+class Error(object):
+    """
+    Represents an error message or messages from a Core API interface.
+    """
+    def __init__(self, messages):
+        if not isinstance(messages, (list, tuple)):
+            raise TypeError("'messages' should be a list of strings.")
+        if any([not isinstance(message, string_types) for message in messages]):
+            raise TypeError("'messages' should be a list of strings.")
+
+        self._messages = tuple(messages)
+
+    @property
+    def messages(self):
+        return list(self._messages)
+
+    def __setattr__(self, key, value):
+        if key in ('_messages'):
+            return object.__setattr__(self, key, value)
+        raise TypeError("'Error' object does not support property assignment")
+
+    def __eq__(self, other):
+        return (
+            (
+                isinstance(other, Error) and
+                (self.messages == other.messages)
+            ) or self.messages == other
+        )
+
+    def __repr__(self):
+        return 'Error(%s)' % repr(list(self.messages))
+
+    def __str__(self):
+        return '<Error>' + ''.join([
+            '\n    * %s' % repr(message) for message in self.messages
+        ])
