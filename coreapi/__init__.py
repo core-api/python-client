@@ -6,7 +6,7 @@ from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.transport import transition
 
 
-__version__ = '0.3.0'
+__version__ = '0.4.0'
 __all__ = [
     'JSONCodec',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',

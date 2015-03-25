@@ -33,6 +33,4 @@ class ErrorMessage(Exception):
         return 'ErrorMessage(%s)' % repr(list(self.messages))
 
     def __str__(self):
-        return '<ErrorMessage>' + ''.join([
-            '\n    * %s' % repr(message) for message in self.messages
-        ])
+        return repr(list(self.messages))
