@@ -69,7 +69,7 @@ The first argument to `.action()` is a list of strings or integers, indexing the
 Transitions may update of the document tree.
 
     >>> doc = doc.action(['notes', 0, 'edit'], complete=True)
-    >>> note['notes'][0]['complete']
+    >>> doc['notes'][0]['complete']
     True
 
 Or they may remove part of the document tree.
@@ -97,7 +97,7 @@ To load the same document back again.
     file = open('doc.json', 'rb')
     content = file.read()
     file.close()
-    doc = docjson.load(content)
+    doc = coreapi.load(content)
 
 ---
 
