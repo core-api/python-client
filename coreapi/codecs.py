@@ -7,7 +7,11 @@ from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.document import _transition_types, _default_transition_type
 from coreapi.document import _graceful_relative_url
 from coreapi.exceptions import ParseError
+import jinja2
 import json
+
+
+env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
 
 
 def _escape_key(string):
@@ -191,6 +195,23 @@ def _get_registered_codec(content_type=None):
         )
 
 
+def _render_html(node):
+    if isinstance(node, Document):
+        template = env.get_template('document.html')
+    elif isinstance(node, Object):
+        template = env.get_template('object.html')
+    elif isinstance(node, Array):
+        template = env.get_template('array.html')
+    elif node in (True, False, None):
+        value = {True: 'true', False: 'false', None: 'null'}[node]
+        return "<code>%s</code>" % value
+    elif isinstance(node, (float, int)):
+        return "<code>%s</code>" % node
+    else:
+        return node
+    return template.render(node=node, render=_render_html)
+
+
 class JSONCodec(object):
     def load(self, bytes, base_url=None):
         """
@@ -226,6 +247,12 @@ class JSONCodec(object):
 
         data = _document_to_primative(document)
         return force_bytes(json.dumps(data, **options))
+
+
+class HTMLCodec(object):
+    def dump(self, document):
+        template = env.get_template('index.html')
+        return template.render(document=document, render=_render_html)
 
 
 REGISTERED_CODECS = {
