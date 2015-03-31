@@ -1,0 +1,7 @@
+<table class="coreapi-array table table-striped table-condensed">
+    <tbody>
+        {% for value in node %}
+        <tr><th>{{ loop.index0 }}</th><td>{{ render(value) }}</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
