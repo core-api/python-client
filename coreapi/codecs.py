@@ -195,7 +195,7 @@ def _get_registered_codec(content_type=None):
         )
 
 
-def _render_html(node):
+def _render_html(node, base_url=None):
     if isinstance(node, Document):
         template = env.get_template('document.html')
     elif isinstance(node, Object):
@@ -209,7 +209,11 @@ def _render_html(node):
         return "<code>%s</code>" % node
     else:
         return node
-    return template.render(node=node, render=_render_html)
+
+    return template.render(
+        node=node, render=_render_html,
+        base_url=base_url, urljoin=urlparse.urljoin
+    )
 
 
 class JSONCodec(object):

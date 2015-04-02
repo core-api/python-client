@@ -66,12 +66,11 @@ $('#transitionModal .field-input').bind('input propertychange', function() {
 })
 
 $('#transitionModal').on('show.bs.modal', function (event) {
-  // Link that triggered the modal
   var link = $(event.relatedTarget)
   var document = link.closest('.coreapi-document')
   var documentTitle = document.find('thead a').first().text()
   var linkName = link.text().charAt(0).toUpperCase() + link.text().slice(1).replace('_', ' ')
-  // Extract info from data-* attributes
+  var linkHref = link.attr('href')
   var trans = link.data('trans')
   var fields = $.trim(link.data('fields'))
   if (fields) {
@@ -79,9 +78,18 @@ $('#transitionModal').on('show.bs.modal', function (event) {
   } else {
     fields = []
   }
+  var httpMethod = {
+    'follow': 'GET',
+    'action': 'POST',
+    'create': 'POST',
+    'update': 'PUT',
+    'delete': 'DELETE'
+  }[trans]
+  var hasParameters = fields.length > 0
+
   // Update the modal content
   var modal = $(this)
-  if (fields.length > 0) {
+  if (hasParameters) {
     var content = {}
     for (idx in fields) {
       content[fields[idx]] = null
@@ -93,7 +101,24 @@ $('#transitionModal').on('show.bs.modal', function (event) {
   }
   modal.find('.modal-title').text(documentTitle + ' - ' + linkName)
   modal.find('.btn-primary').text(linkName)
+
+$('#transitionButton').unbind('click')
+$('#transitionButton').click(function(){
+    var options = {
+        'url': linkHref,
+        'type': httpMethod,
+        'dataType': 'html'
+    }
+
+    if (hasParameters && httpMethod === 'GET') {
+        options['data'] = JSON.parse(modal.find('.field-input').val())
+    } else if (hasParameters) {
+        options['data'] = modal.find('.field-input').val()
+        options['contentType'] = 'application/json'
+    }
+    $.ajax(options)
 })
-    </script
+})
+    </script>
   </body>
 </html>
