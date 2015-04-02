@@ -3,4 +3,4 @@ pep8==1.5.7
 pytest==2.6.4
 requests==2.6.0
 coverage==3.7.1
-jinja2-2.7.3
+jinja2==2.7.3
