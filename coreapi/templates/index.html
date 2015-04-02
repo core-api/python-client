@@ -5,7 +5,7 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    <title>Core API</title>
+    <title>{{ document.title }}</title>
 
     <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
@@ -32,19 +32,19 @@
     </div>
 
 <!-- Modal -->
-<div class="modal fade" id="modal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+<div class="modal fade" id="transitionModal" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <form>
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">Transition</h4>
+        <h4 class="modal-title" id="myModalLabel">[Transition title]</h4>
       </div>
       <div class="modal-body form-group">
         <textarea rows=8 class="form-control field-input"></textarea>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <button id="transitionButton" type="button" class="btn btn-primary">[Save text]</button>
       </div>
       </form>
     </div>
@@ -56,32 +56,21 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script>
-String.prototype.prettify = function() {
-    return this.charAt(0).toUpperCase() + this.slice(1).replace('_', ' ');
-}
-
-function IsJsonString(str) {
+$('#transitionModal .field-input').bind('input propertychange', function() {
     try {
-        JSON.parse(str);
+        JSON.parse(this.value);
     } catch (e) {
-        return false;
+        $('#transitionModal').find('.btn-primary').prop('disabled', true);
     }
-    return true;
-}
-
-$('#modal .field-input').bind('input propertychange', function() {
-    if (IsJsonString(this.value)) {
-        $('#modal').find('.btn-primary').prop('disabled', false);
-    } else {
-        $('#modal').find('.btn-primary').prop('disabled', true);
-    }
+    $('#transitionModal').find('.btn-primary').prop('disabled', false);
 })
 
-$('#modal').on('show.bs.modal', function (event) {
+$('#transitionModal').on('show.bs.modal', function (event) {
   // Link that triggered the modal
   var link = $(event.relatedTarget)
   var document = link.closest('.coreapi-document')
   var documentTitle = document.find('thead a').first().text()
+  var linkName = link.text().charAt(0).toUpperCase() + link.text().slice(1).replace('_', ' ')
   // Extract info from data-* attributes
   var trans = link.data('trans')
   var fields = $.trim(link.data('fields'))
@@ -102,8 +91,8 @@ $('#modal').on('show.bs.modal', function (event) {
   } else {
     modal.find('.modal-body').hide()
   }
-  modal.find('.modal-title').text(documentTitle + ' - ' + link.text().prettify())
-  modal.find('.btn-primary').text(link.text().prettify())
+  modal.find('.modal-title').text(documentTitle + ' - ' + linkName)
+  modal.find('.btn-primary').text(linkName)
 })
     </script
   </body>
