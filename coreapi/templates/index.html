@@ -58,11 +58,12 @@
     <script>
 $('#transitionModal .field-input').bind('input propertychange', function() {
     try {
-        JSON.parse(this.value);
+        JSON.parse(this.value)
     } catch (e) {
-        $('#transitionModal').find('.btn-primary').prop('disabled', true);
+        $('#transitionModal').find('.btn-primary').prop('disabled', true)
+        return
     }
-    $('#transitionModal').find('.btn-primary').prop('disabled', false);
+    $('#transitionModal').find('.btn-primary').prop('disabled', false)
 })
 
 $('#transitionModal').on('show.bs.modal', function (event) {
@@ -107,7 +108,27 @@ $('#transitionButton').click(function(){
     var options = {
         'url': linkHref,
         'type': httpMethod,
-        'dataType': 'html'
+        'dataType': 'html',
+    }
+
+    if (trans === 'delete') {
+        options['success'] = function(data) {
+            var row = document.closest('tr')
+            var container = row.closest('table')
+            row.remove()
+            if (container && container.hasClass('coreapi-array')) {
+                container.find('> tbody > tr > th').each(function(c){
+                    $(this).text(c)
+                })
+            }
+            modal.modal('hide')
+        }
+    } else if (trans === 'action' || trans === 'update') {
+        options['success'] = function(data) {
+            var newDocument = $(data).find('.coreapi-document').first()
+            document.replaceWith(newDocument)
+            modal.modal('hide')
+        }
     }
 
     if (hasParameters && httpMethod === 'GET') {
