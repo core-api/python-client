@@ -202,6 +202,8 @@ def _render_html(node, base_url=None):
         template = env.get_template('object.html')
     elif isinstance(node, Array):
         template = env.get_template('array.html')
+    elif isinstance(node, Error):
+        template = env.get_template('error.html')
     elif node in (True, False, None):
         value = {True: 'true', False: 'false', None: 'null'}[node]
         return "<code>%s</code>" % value

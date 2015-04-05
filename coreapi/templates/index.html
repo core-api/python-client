@@ -4,142 +4,204 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
     <title>{{ document.title }}</title>
-
-    <!-- Bootstrap -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
-
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
     <style>
-    table {
-      margin-bottom: 0 !important;
-      border: 1px solid #ddd;
-    }
-    div.container {
-      padding-top: 20px;
-    }
+        table {
+          margin-bottom: 0 !important;
+          border: 1px solid #ddd;
+        }
+        div.container {
+          padding-top: 20px;
+        }
+        ul.errors {
+            margin-top: 20px;
+        }
+        div.modal-body {
+            margin-bottom: 0;
+        }
+        table.coreapi-array > tbody > tr > th {
+            width: 50px;
+        }
+        table > tbody > tr > th {
+            width: 200px;
+        }
     </style>
   </head>
   <body>
     <div class="container">
-    {{ render(document) }}
+      {{ render(document) }}
     </div>
 
-<!-- Modal -->
-<div class="modal fade" id="transitionModal" tabindex="-1" role="dialog" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <form>
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="myModalLabel">[Transition title]</h4>
+    <!-- The transition modal -->
+    <div class="modal fade" id="transitionModal" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form>
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">[Transition title]</h4>
+          </div>
+          <div class="modal-body form-group">
+            <textarea rows=8 class="form-control field-input"></textarea>
+            <ul class="errors"></ul>
+          </div>
+          <div class="modal-footer">
+            <button id="transitionButton" type="button" class="btn btn-primary">[Save text]</button>
+          </div>
+          </form>
+        </div>
       </div>
-      <div class="modal-body form-group">
-        <textarea rows=8 class="form-control field-input"></textarea>
-      </div>
-      <div class="modal-footer">
-        <button id="transitionButton" type="button" class="btn btn-primary">[Save text]</button>
-      </div>
-      </form>
     </div>
-  </div>
-</div>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
     <script>
-$('#transitionModal .field-input').bind('input propertychange', function() {
-    try {
-        JSON.parse(this.value)
-    } catch (e) {
-        $('#transitionModal').find('.btn-primary').prop('disabled', true)
-        return
-    }
-    $('#transitionModal').find('.btn-primary').prop('disabled', false)
-})
-
-$('#transitionModal').on('show.bs.modal', function (event) {
-  var link = $(event.relatedTarget)
-  var document = link.closest('.coreapi-document')
-  var documentTitle = document.find('thead a').first().text()
-  var linkName = link.text().charAt(0).toUpperCase() + link.text().slice(1).replace('_', ' ')
-  var linkHref = link.attr('href')
-  var trans = link.data('trans')
-  var fields = $.trim(link.data('fields'))
-  if (fields) {
-    fields = fields.split(' ')
-  } else {
-    fields = []
-  }
-  var httpMethod = {
-    'follow': 'GET',
-    'action': 'POST',
-    'create': 'POST',
-    'update': 'PUT',
-    'delete': 'DELETE'
-  }[trans]
-  var hasParameters = fields.length > 0
-
-  // Update the modal content
-  var modal = $(this)
-  if (hasParameters) {
-    var content = {}
-    for (idx in fields) {
-      content[fields[idx]] = null
-    }
-    modal.find('.field-input').val(JSON.stringify(content, null, 4))
-    modal.find('.modal-body').show()
-  } else {
-    modal.find('.modal-body').hide()
-  }
-  modal.find('.modal-title').text(documentTitle + ' - ' + linkName)
-  modal.find('.btn-primary').text(linkName)
-
-$('#transitionButton').unbind('click')
-$('#transitionButton').click(function(){
-    var options = {
-        'url': linkHref,
-        'type': httpMethod,
-        'dataType': 'html',
-    }
-
-    if (trans === 'delete') {
-        options['success'] = function(data) {
-            var row = document.closest('tr')
-            var container = row.closest('table')
-            row.remove()
-            if (container && container.hasClass('coreapi-array')) {
-                container.find('> tbody > tr > th').each(function(c){
-                    $(this).text(c)
-                })
+        $('#transitionModal .field-input').bind('input propertychange', function() {
+            // Disable the transition modal button, on invalid JSON content.
+            try {
+                JSON.parse(this.value)
+            } catch (e) {
+                $('#transitionModal').find('.btn-primary').prop('disabled', true)
+                return
             }
-            modal.modal('hide')
-        }
-    } else if (trans === 'action' || trans === 'update') {
-        options['success'] = function(data) {
-            var newDocument = $(data).find('.coreapi-document').first()
-            document.replaceWith(newDocument)
-            modal.modal('hide')
-        }
-    }
+            $('#transitionModal').find('.btn-primary').prop('disabled', false)
+        })
 
-    if (hasParameters && httpMethod === 'GET') {
-        options['data'] = JSON.parse(modal.find('.field-input').val())
-    } else if (hasParameters) {
-        options['data'] = modal.find('.field-input').val()
-        options['contentType'] = 'application/json'
-    }
-    $.ajax(options)
-})
-})
+        $('#transitionModal').on('hidden.bs.modal', function () {
+            // Closing the transition modal clears any errors.
+            $('ul.errors').children().remove()
+        })
+
+        function setModalText(modal, link, document) {
+            var title = document.find('thead a').first().text()
+            var action = (
+                link.text().charAt(0).toUpperCase() +
+                link.text().slice(1).replace('_', ' ')
+            )
+            modal.find('.modal-title').text(title + ' - ' + action)
+            modal.find('.btn-primary').text(action)
+        }
+
+        function setModalFieldsInput(modal, fields) {
+            if (fields.length > 0) {
+                var content = {}
+                for (idx in fields) {
+                    content[fields[idx]] = null
+                }
+                modal.find('.field-input').val(JSON.stringify(content, null, 4))
+                modal.find('.modal-body').show()
+            } else {
+                modal.find('.modal-body').hide()
+            }
+        }
+
+        function splitFields(fieldsData) {
+            fieldsData = $.trim(fieldsData)
+            if (fieldsData) {
+                return fieldsData.split(' ')
+            } else {
+                return []
+            }
+        }
+
+        $('#transitionModal').on('show.bs.modal', function (event) {
+            var modal = $(this)
+            var link = $(event.relatedTarget)
+            var document = link.closest('.coreapi-document')
+            var href = link.attr('href')
+            var trans = link.data('trans')
+            var fields = splitFields(link.data('fields'))
+            var method = {
+                'follow': 'GET',
+                'action': 'POST',
+                'create': 'POST',
+                'update': 'PUT',
+                'delete': 'DELETE'
+            }[trans]
+            var hasParameters = fields.length > 0
+
+            // Update the modal content.
+            setModalFieldsInput(modal, fields)
+            setModalText(modal, link, document)
+
+            // Update the submit event to handle the transition.
+            $('#transitionButton').unbind('click')
+            $('#transitionButton').click(function(){
+                var options = {
+                    'url': href,
+                    'type': method,
+                    'dataType': 'html',
+                }
+
+                if (hasParameters && method === 'GET') {
+                    // GET parameters are represented as querystring parameters.
+                    options['data'] = JSON.parse(modal.find('.field-input').val())
+                } else if (hasParameters) {
+                    // Everything else is JSON encoded.
+                    options['data'] = modal.find('.field-input').val()
+                    options['contentType'] = 'application/json'
+                }
+
+                options['success'] = function(data) {
+                    if (trans === 'create' || trans === 'follow') {
+                        // Replace the topmost document.
+                        var newDocument = $(data).find('.coreapi-document').first()
+                        var top = $('body').find('.coreapi-document').first()
+                        top.replaceWith(newDocument)
+                    } else if (trans === 'action' || trans === 'update') {
+                        // Replace the active document.
+                        var newDocument = $(data).find('.coreapi-document').first()
+                        document.replaceWith(newDocument)
+                    } else if (trans === 'delete') {
+                        // Remove the active document
+                        var row = document.closest('tr')
+                        var container = row.closest('table')
+                        if (container.length) {
+                            // If this was contained by a parent then remove its row.
+                            row.remove()
+                            // If the deleted element was in an array,
+                            // then update the indexes on all the elements.
+                            if (container.hasClass('coreapi-array')) {
+                                container.find('> tbody > tr > th').each(function(counter){
+                                    $(this).text(counter)
+                                })
+                            }
+                        } else {
+                            // If this was the topmost element, then remove it entirely.
+                            var top = $('body').find('.coreapi-document').first()
+                            top.remove()
+                        }
+                    }
+                    modal.modal('hide')
+                }
+
+                options['error'] = function(request, status, error) {
+                    // Handle Core API error responses.
+                    var data = request.responseText
+                    var errors = $(data).find('.coreapi-error').first()
+                    errors.removeClass('coreapi-error')
+                    errors.addClass('errors')
+                    if (errors.length) {
+                        $('body').find('.errors').replaceWith(errors)
+                        return
+                    }
+
+                    // Handle any other miscellanous error cases.
+                    alert('Request error ' + status + ' - ' + data)
+                }
+
+                // Unparameterized GET requests simply change the URL.
+                // Everything else makes an AJAX request.
+                // There's more work we could do here to keep the URL in the
+                // location bar correct between transitions.
+                if (method === 'GET' && !hasParameters) {
+                    window.location = href
+                } else {
+                    $.ajax(options)
+                }
+            })
+        })
     </script>
   </body>
 </html>
