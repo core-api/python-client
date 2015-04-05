@@ -56,6 +56,7 @@
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.11.3/jquery-ui.min.js"></script>
     <script>
         $('#transitionModal .field-input').bind('input propertychange', function() {
             // Disable the transition modal button, on invalid JSON content.
@@ -149,28 +150,32 @@
                         var newDocument = $(data).find('.coreapi-document').first()
                         var top = $('body').find('.coreapi-document').first()
                         top.replaceWith(newDocument)
+                        newDocument.find('td, th').effect("highlight", 1000)
                     } else if (trans === 'action' || trans === 'update') {
                         // Replace the active document.
                         var newDocument = $(data).find('.coreapi-document').first()
                         document.replaceWith(newDocument)
+                        newDocument.find('td, th').effect("highlight", 1000)
                     } else if (trans === 'delete') {
                         // Remove the active document
                         var row = document.closest('tr')
                         var container = row.closest('table')
                         if (container.length) {
                             // If this was contained by a parent then remove its row.
-                            row.remove()
-                            // If the deleted element was in an array,
-                            // then update the indexes on all the elements.
-                            if (container.hasClass('coreapi-array')) {
-                                container.find('> tbody > tr > th').each(function(counter){
-                                    $(this).text(counter)
-                                })
-                            }
+                            row.fadeOut(1000, function() {
+                                row.remove();
+                                if (container.hasClass('coreapi-array')) {
+                                    container.find('> tbody > tr > th').each(function(counter){
+                                        $(this).text(counter)
+                                    })
+                                }
+                            });
                         } else {
                             // If this was the topmost element, then remove it entirely.
                             var top = $('body').find('.coreapi-document').first()
-                            top.remove()
+                            top.fadeOut(1000, function() {
+                                top.remove();
+                            });
                         }
                     }
                     modal.modal('hide')
