@@ -195,13 +195,18 @@ def _get_registered_codec(content_type=None):
         )
 
 
-def _render_html(node, base_url=None):
+def _render_html(node, url=None, key=None):
+    if isinstance(node, (Document, Link)):
+        url = urlparse.urljoin(url, node.url)
+
     if isinstance(node, Document):
         template = env.get_template('document.html')
     elif isinstance(node, Object):
         template = env.get_template('object.html')
     elif isinstance(node, Array):
         template = env.get_template('array.html')
+    elif isinstance(node, Link):
+        template = env.get_template('link.html')
     elif isinstance(node, Error):
         template = env.get_template('error.html')
     elif node in (True, False, None):
@@ -210,12 +215,9 @@ def _render_html(node, base_url=None):
     elif isinstance(node, (float, int)):
         return "<code>%s</code>" % node
     else:
-        return node
+        return "<span>%s</span>" % node
 
-    return template.render(
-        node=node, render=_render_html,
-        base_url=base_url, urljoin=urlparse.urljoin
-    )
+    return template.render(node=node, render=_render_html, url=url, key=key)
 
 
 class JSONCodec(object):

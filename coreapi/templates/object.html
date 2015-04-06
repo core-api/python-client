@@ -4,7 +4,7 @@
         <tr><th>{{ key }}</th><td>{{ render(value) }}</td></tr>
         {% endfor %}
         {% for key, value in node.links.items() %}
-        <tr><th colspan=2><a href="{{ value.url }}">{{ key }}</a></th></tr>
+        <tr><th colspan=2>{{ render(value, url, key ) }}</th></tr>
         {% endfor %}
     </tbody>
 </table>
