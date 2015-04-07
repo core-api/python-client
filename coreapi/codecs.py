@@ -11,8 +11,7 @@ import jinja2
 import json
 
 
-env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
-
+# JSON encoding
 
 def _escape_key(string):
     """
@@ -178,48 +177,6 @@ def _primative_to_document(data, base_url=None):
     return data
 
 
-def _get_registered_codec(content_type=None):
-    """
-    Given the value of a 'Content-Type' header, return the appropriate
-    codec registered to handle it.
-    """
-    if content_type is None:
-        return JSONCodec
-
-    content_type = content_type.split(';')[0].strip().lower()
-    try:
-        return REGISTERED_CODECS[content_type]
-    except KeyError:
-        raise ParseError(
-            "Cannot parse unsupported content type '%s'" % content_type
-        )
-
-
-def _render_html(node, url=None, key=None):
-    if isinstance(node, (Document, Link)):
-        url = urlparse.urljoin(url, node.url)
-
-    if isinstance(node, Document):
-        template = env.get_template('document.html')
-    elif isinstance(node, Object):
-        template = env.get_template('object.html')
-    elif isinstance(node, Array):
-        template = env.get_template('array.html')
-    elif isinstance(node, Link):
-        template = env.get_template('link.html')
-    elif isinstance(node, Error):
-        template = env.get_template('error.html')
-    elif node in (True, False, None):
-        value = {True: 'true', False: 'false', None: 'null'}[node]
-        return "<code>%s</code>" % value
-    elif isinstance(node, (float, int)):
-        return "<code>%s</code>" % node
-    else:
-        return "<span>%s</span>" % node
-
-    return template.render(node=node, render=_render_html, url=url, key=key)
-
-
 class JSONCodec(object):
     def load(self, bytes, base_url=None):
         """
@@ -257,13 +214,75 @@ class JSONCodec(object):
         return force_bytes(json.dumps(data, **options))
 
 
+# HTML encoding
+
+env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
+
+
+def _render_html(node, url=None, key=None):
+    if isinstance(node, (Document, Link)):
+        url = urlparse.urljoin(url, node.url)
+
+    if isinstance(node, Document):
+        template = env.get_template('document.html')
+    elif isinstance(node, Object):
+        template = env.get_template('object.html')
+    elif isinstance(node, Array):
+        template = env.get_template('array.html')
+    elif isinstance(node, Link):
+        template = env.get_template('link.html')
+    elif isinstance(node, Error):
+        template = env.get_template('error.html')
+    elif node in (True, False, None):
+        value = {True: 'true', False: 'false', None: 'null'}[node]
+        return "<code>%s</code>" % value
+    elif isinstance(node, (float, int)):
+        return "<code>%s</code>" % node
+    else:
+        return "<span>%s</span>" % node
+
+    return template.render(node=node, render=_render_html, url=url, key=key)
+
+
 class HTMLCodec(object):
     def dump(self, document):
         template = env.get_template('index.html')
         return template.render(document=document, render=_render_html)
 
 
+# Codec negotiation
+
+def _get_registered_codec(content_type=None):
+    """
+    Given the value of a 'Content-Type' header, return the appropriate
+    codec registered to handle it.
+    """
+    if content_type is None:
+        return JSONCodec
+
+    content_type = content_type.split(';')[0].strip().lower()
+    try:
+        codec = REGISTERED_CODECS[content_type]
+    except KeyError:
+        raise ParseError(
+            "Cannot parse unsupported content type '%s'" % content_type
+        )
+
+    if not hasattr(codec, 'load'):
+        raise ParseError(
+            "Cannot parse content type '%s'. This implementation only "
+            "supports rendering for that content." % content_type
+        )
+
+    return codec
+
+
 REGISTERED_CODECS = {
     'application/vnd.coreapi+json': JSONCodec,
-    'application/json': JSONCodec
+    'application/json': JSONCodec,
+    'application/vnd.coreapi+html': HTMLCodec,
+    'text/html': HTMLCodec
 }
+
+
+ACCEPT_HEADER = 'application/vnd.coreapi+json, application/json'

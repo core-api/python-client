@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import Document, Link, Error, JSONCodec, ParseError, required
+from coreapi import Document, Link, Error, JSONCodec, HTMLCodec, ParseError, required
 from coreapi.codecs import _document_to_primative, _primative_to_document
 from coreapi.codecs import _get_registered_codec
 import pytest
@@ -8,6 +8,11 @@ import pytest
 @pytest.fixture
 def json_codec():
     return JSONCodec()
+
+
+@pytest.fixture
+def html_codec():
+    return HTMLCodec()
 
 
 @pytest.fixture
@@ -164,7 +169,7 @@ def test_link_encodings(json_codec):
 }"""
 
 
-# Tests for graceful ommissions.
+# Tests for graceful omissions.
 
 def test_invalid_document_meta_ignored(json_codec):
     doc = json_codec.load(b'{"_type": "document", "_meta": 1, "a": 1}')
@@ -213,3 +218,49 @@ def test_get_supported_content_type_with_parameters():
 def test_get_unsupported_content_type():
     with pytest.raises(ParseError):
         _get_registered_codec('application/csv')
+
+
+def test_get_render_only_content_type():
+    with pytest.raises(ParseError):
+        _get_registered_codec('text/html')
+
+
+# Tests for HTML rendering
+
+def test_html_document_rendering(html_codec):
+    doc = Document({'string': 'abc', 'int': 123, 'bool': True})
+    content = html_codec.dump(doc)
+    assert 'coreapi-document' in content
+    assert '<span>abc</span>' in content
+    assert '<code>123</code>' in content
+    assert '<code>true</code>' in content
+
+
+def test_html_object_rendering(html_codec):
+    doc = Document({'object': {'a': 1, 'b': 2}})
+    content = html_codec.dump(doc)
+    assert 'coreapi-object' in content
+    assert '<th>a</th>' in content
+    assert '<th>b</th>' in content
+
+
+def test_html_array_rendering(html_codec):
+    doc = Document({'array': [1, 2]})
+    content = html_codec.dump(doc)
+    assert 'coreapi-array' in content
+    assert '<th>0</th>' in content
+    assert '<th>1</th>' in content
+
+
+def test_html_link_rendering(html_codec):
+    doc = Document({'link': Link(url='/test/')})
+    content = html_codec.dump(doc)
+    assert 'coreapi-link' in content
+    assert 'href="/test/"' in content
+
+
+def test_html_error_rendering(html_codec):
+    doc = Error(['something failed'])
+    content = html_codec.dump(doc)
+    assert 'coreapi-error' in content
+    assert 'something failed' in content

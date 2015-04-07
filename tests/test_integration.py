@@ -35,7 +35,7 @@ def test_dump(document):
 
 
 def test_get(monkeypatch):
-    def mockreturn(method, url):
+    def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -45,7 +45,7 @@ def test_get(monkeypatch):
 
 
 def test_follow(monkeypatch, document):
-    def mockreturn(method, url):
+    def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -55,7 +55,7 @@ def test_follow(monkeypatch, document):
 
 
 def test_error(monkeypatch, document):
-    def mockreturn(method, url):
+    def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "error", "message": ["failed"]}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)

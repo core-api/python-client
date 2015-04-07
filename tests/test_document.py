@@ -488,3 +488,17 @@ def test_keys_should_be_valid_indexes(doc):
 def test_keys_should_access_a_link(doc):
     with pytest.raises(ValueError):
         doc.action(['dict'])
+
+
+# Documents and Objects have `.data` and `.links` attributes
+
+def test_document_data_and_links_properties():
+    doc = Document({'a': 1, 'b': 2, 'c': Link(), 'd': Link()})
+    assert sorted(list(doc.data.keys())) == ['a', 'b']
+    assert sorted(list(doc.links.keys())) == ['c', 'd']
+
+
+def test_object_data_and_links_properties():
+    obj = Object({'a': 1, 'b': 2, 'c': Link(), 'd': Link()})
+    assert sorted(list(obj.data.keys())) == ['a', 'b']
+    assert sorted(list(obj.links.keys())) == ['c', 'd']

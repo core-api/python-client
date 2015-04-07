@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from coreapi.compat import urlparse
-from coreapi.codecs import _get_registered_codec
+from coreapi.codecs import _get_registered_codec, ACCEPT_HEADER
 from coreapi.exceptions import TransportError
 import requests
 import json
@@ -42,15 +42,25 @@ class HTTPTransport(object):
 
         if parameters and method == 'GET':
             opts = {
-                'params': parameters
+                'params': parameters,
+                'headers': {
+                    'accept': ACCEPT_HEADER
+                }
             }
         elif parameters:
             opts = {
                 'data': json.dumps(parameters),
-                'headers': {'content-type': 'application/json'}
+                'headers': {
+                    'content-type': 'application/json',
+                    'accept': ACCEPT_HEADER
+                }
             }
         else:
-            opts = {}
+            opts = {
+                'headers': {
+                    'accept': ACCEPT_HEADER
+                }
+            }
 
         response = requests.request(method, url, **opts)
         if not response.content:
