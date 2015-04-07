@@ -283,7 +283,7 @@ def negotiate_encoder(accept=None):
     content type and codec registered to encode the response content.
     """
     if accept is None:
-        key, codec_class = REGISTERED_CODECS.items()[0]
+        key, codec_class = list(REGISTERED_CODECS.items())[0]
         return key, codec_class()
 
     media_types = set([
@@ -300,7 +300,7 @@ def negotiate_encoder(accept=None):
             return key, codec_class()
 
     if '*/*' in media_types:
-        key, codec_class = REGISTERED_CODECS.items()[0]
+        key, codec_class = list(REGISTERED_CODECS.items())[0]
         return key, codec_class()
 
     raise NotAcceptable()
