@@ -10,6 +10,13 @@ class ParseError(Exception):
     pass
 
 
+class NotAcceptable(Exception):
+    """
+    Raised when the client 'Accept' header could not be satisfied.
+    """
+    pass
+
+
 class TransportError(Exception):
     """
     Raised when the transport layer fails to make a request or get a response.

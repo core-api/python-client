@@ -6,9 +6,12 @@ from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.document import _transition_types, _default_transition_type
 from coreapi.document import _graceful_relative_url
-from coreapi.exceptions import ParseError
+from coreapi.exceptions import ParseError, NotAcceptable
+import jinja2
 import json
 
+
+# JSON encoding
 
 def _escape_key(string):
     """
@@ -174,23 +177,6 @@ def _primative_to_document(data, base_url=None):
     return data
 
 
-def _get_registered_codec(content_type=None):
-    """
-    Given the value of a 'Content-Type' header, return the appropriate
-    codec registered to handle it.
-    """
-    if content_type is None:
-        return JSONCodec
-
-    content_type = content_type.split(';')[0].strip().lower()
-    try:
-        return REGISTERED_CODECS[content_type]
-    except KeyError:
-        raise ParseError(
-            "Cannot parse unsupported content type '%s'" % content_type
-        )
-
-
 class JSONCodec(object):
     def load(self, bytes, base_url=None):
         """
@@ -228,7 +214,104 @@ class JSONCodec(object):
         return force_bytes(json.dumps(data, **options))
 
 
-REGISTERED_CODECS = {
-    'application/vnd.coreapi+json': JSONCodec,
-    'application/json': JSONCodec
-}
+# HTML encoding
+
+env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
+
+
+def _render_html(node, url=None, key=None):
+    if isinstance(node, (Document, Link)):
+        url = urlparse.urljoin(url, node.url)
+
+    if isinstance(node, Document):
+        template = env.get_template('document.html')
+    elif isinstance(node, Object):
+        template = env.get_template('object.html')
+    elif isinstance(node, Array):
+        template = env.get_template('array.html')
+    elif isinstance(node, Link):
+        template = env.get_template('link.html')
+    elif isinstance(node, Error):
+        template = env.get_template('error.html')
+    elif node in (True, False, None):
+        value = {True: 'true', False: 'false', None: 'null'}[node]
+        return "<code>%s</code>" % value
+    elif isinstance(node, (float, int)):
+        return "<code>%s</code>" % node
+    else:
+        return "<span>%s</span>" % node
+
+    return template.render(node=node, render=_render_html, url=url, key=key)
+
+
+class HTMLCodec(object):
+    def dump(self, document, verbose=None):
+        template = env.get_template('index.html')
+        return template.render(document=document, render=_render_html)
+
+
+# Codec negotiation
+
+def negotiate_decoder(content_type=None):
+    """
+    Given the value of a 'Content-Type' header, return the appropriate
+    codec registered to decode the request content.
+    """
+    if content_type is None:
+        return JSONCodec()
+
+    content_type = content_type.split(';')[0].strip().lower()
+    try:
+        codec_class = REGISTERED_CODECS[content_type]
+    except KeyError:
+        raise ParseError(
+            "Cannot parse unsupported content type '%s'" % content_type
+        )
+
+    if not hasattr(codec_class, 'load'):
+        raise ParseError(
+            "Cannot parse content type '%s'. This implementation only "
+            "supports rendering for that content." % content_type
+        )
+
+    return codec_class()
+
+
+def negotiate_encoder(accept=None):
+    """
+    Given the value of a 'Accept' header, return a two tuple of the appropriate
+    content type and codec registered to encode the response content.
+    """
+    if accept is None:
+        key, codec_class = list(REGISTERED_CODECS.items())[0]
+        return key, codec_class()
+
+    media_types = set([
+        item.split(';')[0].strip().lower()
+        for item in accept.split(',')
+    ])
+
+    for key, codec_class in REGISTERED_CODECS.items():
+        if key in media_types:
+            return key, codec_class()
+
+    for key, codec_class in REGISTERED_CODECS.items():
+        if key.split('/')[0] + '/*' in media_types:
+            return key, codec_class()
+
+    if '*/*' in media_types:
+        key, codec_class = list(REGISTERED_CODECS.items())[0]
+        return key, codec_class()
+
+    raise NotAcceptable()
+
+
+REGISTERED_CODECS = OrderedDict([
+    ('application/vnd.coreapi+json', JSONCodec),
+    ('application/json', JSONCodec),
+    ('application/vnd.coreapi+html', HTMLCodec),
+    ('text/html', HTMLCodec)
+])
+
+
+ACCEPT_HEADER = 'application/vnd.coreapi+json, application/json'

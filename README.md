@@ -87,7 +87,7 @@ To save or load documents into raw bytestrings, use `dump()` and `load()`.
 
 For example, to save a document to disk.
 
-    content = coreapi.dump(doc)
+    content_type, content = coreapi.dump(doc)
     file = open('doc.json', 'wb')
     file.write(content)
     file.close()

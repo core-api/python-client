@@ -44,7 +44,7 @@ setup(
     author='Tom Christie',
     author_email='tom@tomchristie.com',
     packages=get_packages('coreapi'),
-    install_requires=['requests'],
+    install_requires=['requests', 'jinja2>=2.7'],
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',

@@ -36,7 +36,7 @@ def test_missing_hostname():
 # Test basic transition types.
 
 def test_follow(monkeypatch, http):
-    def mockreturn(method, url):
+    def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -49,7 +49,7 @@ def test_follow(monkeypatch, http):
 
 
 def test_follow_with_parameters(monkeypatch, http):
-    def mockreturn(method, url, params):
+    def mockreturn(method, url, params, headers):
         insert = params['example'].encode('utf-8')
         return MockResponse(
             b'{"_type": "document", "example": "' + insert + b'"}'
@@ -81,7 +81,7 @@ def test_create(monkeypatch, http):
 
 
 def test_delete(monkeypatch, http):
-    def mockreturn(method, url):
+    def mockreturn(method, url, headers):
         return MockResponse(b'')
 
     monkeypatch.setattr(requests, 'request', mockreturn)

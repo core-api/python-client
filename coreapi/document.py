@@ -312,6 +312,20 @@ class Document(Mapping):
     def title(self):
         return self._title
 
+    @property
+    def data(self):
+        return {
+            key: value for key, value in self._data.items()
+            if not isinstance(value, Link)
+        }
+
+    @property
+    def links(self):
+        return {
+            key: value for key, value in self._data.items()
+            if isinstance(value, Link)
+        }
+
     def action(self, keys, **kwargs):
         """
         Perform an action by calling one of the links in the document tree.
@@ -391,6 +405,20 @@ class Object(Mapping):
 
     def __str__(self):
         return _document_str(self)
+
+    @property
+    def data(self):
+        return {
+            key: value for key, value in self._data.items()
+            if not isinstance(value, Link)
+        }
+
+    @property
+    def links(self):
+        return {
+            key: value for key, value in self._data.items()
+            if isinstance(value, Link)
+        }
 
 
 class Array(Sequence):
