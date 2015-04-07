@@ -31,7 +31,9 @@ def test_load():
 
 
 def test_dump(document):
-    assert dump(document) == encoded
+    content_type, content = dump(document)
+    assert content_type == 'application/vnd.coreapi+json'
+    assert content == encoded
 
 
 def test_get(monkeypatch):

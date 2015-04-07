@@ -6,7 +6,7 @@ from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.document import _transition_types, _default_transition_type
 from coreapi.document import _graceful_relative_url
-from coreapi.exceptions import ParseError
+from coreapi.exceptions import ParseError, NotAcceptable
 import jinja2
 import json
 
@@ -245,44 +245,73 @@ def _render_html(node, url=None, key=None):
 
 
 class HTMLCodec(object):
-    def dump(self, document):
+    def dump(self, document, verbose=None):
         template = env.get_template('index.html')
         return template.render(document=document, render=_render_html)
 
 
 # Codec negotiation
 
-def _get_registered_codec(content_type=None):
+def negotiate_decoder(content_type=None):
     """
     Given the value of a 'Content-Type' header, return the appropriate
-    codec registered to handle it.
+    codec registered to decode the request content.
     """
     if content_type is None:
-        return JSONCodec
+        return JSONCodec()
 
     content_type = content_type.split(';')[0].strip().lower()
     try:
-        codec = REGISTERED_CODECS[content_type]
+        codec_class = REGISTERED_CODECS[content_type]
     except KeyError:
         raise ParseError(
             "Cannot parse unsupported content type '%s'" % content_type
         )
 
-    if not hasattr(codec, 'load'):
+    if not hasattr(codec_class, 'load'):
         raise ParseError(
             "Cannot parse content type '%s'. This implementation only "
             "supports rendering for that content." % content_type
         )
 
-    return codec
+    return codec_class()
 
 
-REGISTERED_CODECS = {
-    'application/vnd.coreapi+json': JSONCodec,
-    'application/json': JSONCodec,
-    'application/vnd.coreapi+html': HTMLCodec,
-    'text/html': HTMLCodec
-}
+def negotiate_encoder(accept=None):
+    """
+    Given the value of a 'Accept' header, return a two tuple of the appropriate
+    content type and codec registered to encode the response content.
+    """
+    if accept is None:
+        key, codec_class = REGISTERED_CODECS.items()[0]
+        return key, codec_class()
+
+    media_types = set([
+        item.split(';')[0].strip().lower()
+        for item in accept.split(',')
+    ])
+
+    for key, codec_class in REGISTERED_CODECS.items():
+        if key in media_types:
+            return key, codec_class()
+
+    for key, codec_class in REGISTERED_CODECS.items():
+        if key.split('/')[0] + '/*' in media_types:
+            return key, codec_class()
+
+    if '*/*' in media_types:
+        key, codec_class = REGISTERED_CODECS.items()[0]
+        return key, codec_class()
+
+    raise NotAcceptable()
+
+
+REGISTERED_CODECS = OrderedDict([
+    ('application/vnd.coreapi+json', JSONCodec),
+    ('application/json', JSONCodec),
+    ('application/vnd.coreapi+html', HTMLCodec),
+    ('text/html', HTMLCodec)
+])
 
 
 ACCEPT_HEADER = 'application/vnd.coreapi+json, application/json'
