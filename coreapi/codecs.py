@@ -193,11 +193,11 @@ class JSONCodec(object):
 
         return doc
 
-    def dump(self, document, verbose=False):
+    def dump(self, document, indent=False):
         """
         Takes a document and returns a bytestring.
         """
-        if verbose:
+        if indent:
             options = {
                 'ensure_ascii': False,
                 'indent': 4,
@@ -219,7 +219,10 @@ class JSONCodec(object):
 env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
 
 
-def _render_html(node, url=None, key=None):
+def _render_html(node, url=None, key=None, path=''):
+    if key:
+        path += key + '.'
+
     if isinstance(node, (Document, Link)):
         url = urlparse.urljoin(url, node.url)
 
@@ -241,13 +244,13 @@ def _render_html(node, url=None, key=None):
     else:
         return "<span>%s</span>" % node.replace('\n', '<br/>')
 
-    return template.render(node=node, render=_render_html, url=url, key=key)
+    return template.render(node=node, render=_render_html, url=url, key=key, path=path)
 
 
 class HTMLCodec(object):
-    def dump(self, document, verbose=None):
+    def dump(self, document, extra_css=None):
         template = env.get_template('index.html')
-        return template.render(document=document, render=_render_html)
+        return template.render(document=document, render=_render_html, extra_css=extra_css)
 
 
 # Codec negotiation

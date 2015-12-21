@@ -7,7 +7,7 @@ from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.transport import transition
 
 
-__version__ = '0.6.1'
+__version__ = '0.6.2'
 __all__ = [
     'JSONCodec', 'HTMLCodec', 'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
@@ -23,9 +23,9 @@ def load(bytestring, content_type=None):
     return codec.load(bytestring)
 
 
-def dump(document, accept=None, verbose=False):
+def dump(document, accept=None, **kwargs):
     content_type, codec = negotiate_encoder(accept)
-    content = codec.dump(document, verbose=verbose)
+    content = codec.dump(document, **kwargs)
     return content_type, content
 
 
