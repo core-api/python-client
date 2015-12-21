@@ -239,7 +239,7 @@ def _render_html(node, url=None, key=None):
     elif isinstance(node, (float, int)):
         return "<code>%s</code>" % node
     else:
-        return "<span>%s</span>" % node
+        return "<span>%s</span>" % node.replace('\n', '<br/>')
 
     return template.render(node=node, render=_render_html, url=url, key=key)
 

@@ -179,6 +179,11 @@
                         }
                     }
                     modal.modal('hide')
+                    // Update the URL
+                    var link = $('body').find('.coreapi-document thead a').first();
+                    var title = link.text();
+                    var href = link.attr('href');
+                    history.replaceState(null, title, href);
                 }
 
                 options['error'] = function(request, status, error) {
@@ -198,8 +203,6 @@
 
                 // Unparameterized GET requests simply change the URL.
                 // Everything else makes an AJAX request.
-                // There's more work we could do here to keep the URL in the
-                // location bar correct between transitions.
                 if (method === 'GET' && !hasParameters) {
                     window.location = href
                 } else {
