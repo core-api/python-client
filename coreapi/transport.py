@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from coreapi.compat import urlparse
 from coreapi.codecs import negotiate_decoder, ACCEPT_HEADER
 from coreapi.exceptions import TransportError
+import logging
 import requests
 import json
 
@@ -14,6 +15,9 @@ _http_method_map = {
     'update': 'PUT',
     'delete': 'DELETE'
 }
+
+
+logger = logging.getLogger('coreapi.transport')
 
 
 def transition(url, trans=None, parameters=None):
@@ -62,6 +66,7 @@ class HTTPTransport(object):
                 }
             }
 
+        self.log_request(method, url, opts)
         response = requests.request(method, url, **opts)
         if not response.content:
             return None
@@ -69,6 +74,19 @@ class HTTPTransport(object):
         content_type = response.headers.get('content-type')
         codec = negotiate_decoder(content_type)
         return codec.load(response.content, base_url=url)
+
+    def log_request(self, method, url, opts):
+        params = opts.get('params', {})
+        headers = opts.get('headers', {})
+        data = opts.get('data', '')
+        url = requests.Request(method, url, params=params).prepare().url
+        headers_string = '\n'.join([
+            '%s: %s' % (key, value)
+            for key, value in headers.items()
+        ])
+        body_string = '\n' + data if data else ''
+        message = "HTTP %s %s\n%s\n%s" % (method, url, headers_string, body_string)
+        print message
 
 
 REGISTERED_SCHEMES = {

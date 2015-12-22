@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import Mapping, OrderedDict, Sequence, namedtuple
 from coreapi.compat import string_types
 from coreapi.exceptions import ErrorMessage
+import json
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
@@ -100,12 +101,6 @@ def _document_repr(node):
     return repr(node)
 
 
-def _repr(item):
-    if isinstance(item, string_types):
-        return repr(item).lstrip('u')
-    return repr(item)
-
-
 def _document_str(node, indent=0, base_url=None):
     """
     Return a verbose, indented representation of a Document or other primative.
@@ -125,7 +120,7 @@ def _document_str(node, indent=0, base_url=None):
 
         head = '<%s %s>' % (
             node.title.strip() or 'Document',
-            _repr(node.url)
+            json.dumps(node.url)
         )
         return head if (not body) else head + '\n' + body
 
@@ -158,7 +153,7 @@ def _document_str(node, indent=0, base_url=None):
     elif isinstance(node, Link):
         return 'link(%s)' % node._fields_as_string()
 
-    return _repr(node)
+    return json.dumps(node)
 
 
 def dotted_path_to_list(doc, path):
