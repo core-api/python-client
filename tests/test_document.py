@@ -1,5 +1,7 @@
 # coding: utf-8
-from coreapi import required, remove, replace, deep_remove, deep_replace
+from coreapi import (
+    required, remove, replace, deep_remove, deep_replace, dotted_path_to_list
+)
 from coreapi import Array, Document, Object, Link, Error
 import pytest
 
@@ -275,28 +277,28 @@ def test_error_repr(error):
 def test_document_str(doc):
     assert str(doc) == _dedent("""
         <Example 'http://example.org'>
-            'dict': {
-                'key': 'value'
-            },
-            'integer': 123,
-            'list': [
+            dict: {
+                key: 'value'
+            }
+            integer: 123
+            list: [
                 1,
                 2,
                 3
-            ],
-            'nested': {
-                'child': link()
-            },
-            'link': link(required, [optional])
+            ]
+            nested: {
+                child()
+            }
+            link(required, [optional])
     """)
 
 
 def test_object_str(obj):
     assert str(obj) == _dedent("""
         {
-            'key': 'value',
-            'nested': {
-                'abc': 123
+            key: 'value'
+            nested: {
+                abc: 123
             }
         }
     """)
@@ -306,13 +308,13 @@ def test_array_str(array):
     assert str(array) == _dedent("""
         [
             {
-                'a': 1
+                a: 1
             },
             {
-                'b': 2
+                b: 2
             },
             {
-                'c': 3
+                c: 3
             }
         ]
     """)
@@ -329,7 +331,7 @@ def test_error_str(error):
     """)
 
 
-def test_graceful_relative_urls():
+def test_document_urls():
     doc = Document(url='http://example.org/', title='Example', content={
         'a': Document(title='Full', url='http://example.com/123'),
         'b': Document(title='Path', url='http://example.org/123'),
@@ -337,9 +339,9 @@ def test_graceful_relative_urls():
     })
     assert str(doc) == _dedent("""
         <Example 'http://example.org/'>
-            'a': <Full 'http://example.com/123'>,
-            'b': <Path '/123'>,
-            'c': <None>
+            a: <Full 'http://example.com/123'>
+            b: <Path 'http://example.org/123'>
+            c: <None 'http://example.org/'>
     """)
 
 
@@ -470,9 +472,9 @@ def test_link_with_invalid_parameter(link):
 
 # Invalid calls to '.action()' should error.
 
-def test_keys_should_be_a_list(doc):
+def test_keys_should_be_a_list_or_dotted_string(doc):
     with pytest.raises(TypeError):
-        doc.action('nested')
+        doc.action(True)
 
 
 def test_keys_should_be_a_list_of_strings_or_ints(doc):
@@ -482,12 +484,32 @@ def test_keys_should_be_a_list_of_strings_or_ints(doc):
 
 def test_keys_should_be_valid_indexes(doc):
     with pytest.raises(KeyError):
-        doc.action(['dummy'])
+        doc.action('dummy')
 
 
 def test_keys_should_access_a_link(doc):
     with pytest.raises(ValueError):
-        doc.action(['dict'])
+        doc.action('dict')
+
+
+# Test dotted path notation maps to list of keys correctly.
+
+def test_dotted_path_notation():
+    doc = Document({'rows': [Document({'edit': Link()})]})
+    keys = dotted_path_to_list(doc, 'rows.0.edit')
+    assert keys == ['rows', 0, 'edit']
+
+
+def test_dotted_path_notation_with_invalid_array_lookup():
+    doc = Document({'rows': [Document({'edit': Link()})]})
+    keys = dotted_path_to_list(doc, 'rows.zero.edit')
+    assert keys == ['rows', 'zero', 'edit']
+
+
+def test_dotted_path_notation_with_invalid_key():
+    doc = Document({'rows': [Document({'edit': Link()})]})
+    keys = dotted_path_to_list(doc, 'dummy.0.edit')
+    assert keys == ['dummy', '0', 'edit']
 
 
 # Documents and Objects have `.data` and `.links` attributes
