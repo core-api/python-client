@@ -333,17 +333,15 @@ class Document(Mapping):
 
     @property
     def data(self):
-        items = sorted(self._data.items(), key=_key_sorting)
         return OrderedDict([
-            (key, value) for key, value in items
+            (key, value) for key, value in self.items()
             if not isinstance(value, Link)
         ])
 
     @property
     def links(self):
-        items = sorted(self._data.items(), key=_key_sorting)
         return OrderedDict([
-            (key, value) for key, value in items
+            (key, value) for key, value in self.items()
             if isinstance(value, Link)
         ])
 
@@ -433,17 +431,15 @@ class Object(Mapping):
 
     @property
     def data(self):
-        items = sorted(self._data.items(), key=_key_sorting)
         return OrderedDict([
-            (key, value) for key, value in self._data.items()
+            (key, value) for key, value in self.items()
             if not isinstance(value, Link)
         ])
 
     @property
     def links(self):
-        items = sorted(self._data.items(), key=_key_sorting)
         return OrderedDict([
-            (key, value) for key, value in self._data.items()
+            (key, value) for key, value in self.items()
             if isinstance(value, Link)
         ])
 
