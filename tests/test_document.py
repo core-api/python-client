@@ -276,9 +276,9 @@ def test_error_repr(error):
 
 def test_document_str(doc):
     assert str(doc) == _dedent("""
-        <Example 'http://example.org'>
+        <Example "http://example.org">
             dict: {
-                key: 'value'
+                key: "value"
             }
             integer: 123
             list: [
@@ -296,7 +296,7 @@ def test_document_str(doc):
 def test_object_str(obj):
     assert str(obj) == _dedent("""
         {
-            key: 'value'
+            key: "value"
             nested: {
                 abc: 123
             }
@@ -338,10 +338,10 @@ def test_document_urls():
         'c': Document(title='None', url='http://example.org/')
     })
     assert str(doc) == _dedent("""
-        <Example 'http://example.org/'>
-            a: <Full 'http://example.com/123'>
-            b: <Path 'http://example.org/123'>
-            c: <None 'http://example.org/'>
+        <Example "http://example.org/">
+            a: <Full "http://example.com/123">
+            b: <Path "http://example.org/123">
+            c: <None "http://example.org/">
     """)
 
 
