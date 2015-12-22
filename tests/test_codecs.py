@@ -137,7 +137,7 @@ def test_compact_style(json_codec):
 
 def test_verbose_style(json_codec):
     doc = Document(content={'a': 123, 'b': 456})
-    bytes = json_codec.dump(doc, verbose=True)
+    bytes = json_codec.dump(doc, indent=True)
     assert bytes == b"""{
     "_type": "document",
     "a": 123,
@@ -154,7 +154,7 @@ def test_link_encodings(json_codec):
             fields=['optional', required('required')]
         )
     })
-    bytes = json_codec.dump(doc, verbose=True)
+    bytes = json_codec.dump(doc, indent=True)
     assert bytes == b"""{
     "_type": "document",
     "link": {
