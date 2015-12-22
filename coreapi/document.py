@@ -433,17 +433,19 @@ class Object(Mapping):
 
     @property
     def data(self):
-        return {
-            key: value for key, value in self._data.items()
+        items = sorted(self._data.items(), key=_key_sorting)
+        return OrderedDict([
+            (key, value) for key, value in self._data.items()
             if not isinstance(value, Link)
-        }
+        ])
 
     @property
     def links(self):
-        return {
-            key: value for key, value in self._data.items()
+        items = sorted(self._data.items(), key=_key_sorting)
+        return OrderedDict([
+            (key, value) for key, value in self._data.items()
             if isinstance(value, Link)
-        }
+        ])
 
 
 class Array(Sequence):
