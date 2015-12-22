@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from collections import Mapping, Sequence, namedtuple
-from coreapi.compat import string_types, urlparse
+from collections import Mapping, OrderedDict, Sequence, namedtuple
+from coreapi.compat import string_types
 from coreapi.exceptions import ErrorMessage
 
 
@@ -74,23 +74,6 @@ def _key_sorting(item):
     return (0, key)
 
 
-def _graceful_relative_url(base_url, url):
-    """
-    Return a graceful link for a URL relative to a base URL.
-
-    * If they are the same, return an empty string.
-    * If the have the same scheme and hostname, return the path & query params.
-    * Otherwise return the full URL.
-    """
-    if url == base_url:
-        return ''
-    base_prefix = '%s://%s' % urlparse.urlparse(base_url or '')[0:2]
-    url_prefix = '%s://%s' % urlparse.urlparse(url or '')[0:2]
-    if base_prefix == url_prefix and url_prefix != '://':
-        return url[len(url_prefix):]
-    return url
-
-
 def _document_repr(node):
     """
     Return the representation of a Document or other primative
@@ -117,6 +100,12 @@ def _document_repr(node):
     return repr(node)
 
 
+def _repr(item):
+    if isinstance(item, string_types):
+        return repr(item).lstrip('u')
+    return repr(item)
+
+
 def _document_str(node, indent=0, base_url=None):
     """
     Return a verbose, indented representation of a Document or other primative.
@@ -125,16 +114,18 @@ def _document_str(node, indent=0, base_url=None):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
-        body = ',\n'.join([
-            body_indent + repr(key) + ': ' +
-            _document_str(value, indent + 1, base_url=node.url)
-            for key, value in node.items()
+        body = '\n'.join([
+            body_indent + str(key) + ': ' +
+            _document_str(value, indent + 1, base_url=base_url)
+            for key, value in node.data.items()
+        ] + [
+            body_indent + str(key) + '(' + value._fields_as_string() + ')'
+            for key, value in node.links.items()
         ])
 
-        url = _graceful_relative_url(base_url, node.url)
-        head = '<%s%s>' % (
+        head = '<%s %s>' % (
             node.title.strip() or 'Document',
-            ' ' + repr(url) if url else ''
+            _repr(node.url)
         )
         return head if (not body) else head + '\n' + body
 
@@ -142,10 +133,13 @@ def _document_str(node, indent=0, base_url=None):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
-        body = ',\n'.join([
-            body_indent + repr(key) + ': ' +
+        body = '\n'.join([
+            body_indent + str(key) + ': ' +
             _document_str(value, indent + 1, base_url=base_url)
-            for key, value in node.items()
+            for key, value in node.data.items()
+        ] + [
+            body_indent + str(key) + '(' + value._fields_as_string() + ')'
+            for key, value in node.links.items()
         ])
 
         return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
@@ -164,7 +158,32 @@ def _document_str(node, indent=0, base_url=None):
     elif isinstance(node, Link):
         return 'link(%s)' % node._fields_as_string()
 
-    return repr(node)
+    return _repr(node)
+
+
+def dotted_path_to_list(doc, path):
+    """
+    Given a document and a string dotted notation like 'rows.123.edit",
+    return a list of keys,such as ['rows', 123, 'edit'].
+    """
+    keys = path.split('.')
+    active = doc
+    for idx, key in enumerate(keys):
+        # Coerce array lookups to integers.
+        if isinstance(active, Array):
+            try:
+                key = int(key)
+                keys[idx] = key
+            except:
+                pass
+
+        # Descend through the document, so we can correctly identify
+        # any nested array lookups.
+        try:
+            active = active[key]
+        except (KeyError, IndexError, ValueError, TypeError):
+            break
+    return keys
 
 
 # The field class, as used by Link objects:
@@ -314,25 +333,31 @@ class Document(Mapping):
 
     @property
     def data(self):
-        return {
-            key: value for key, value in self._data.items()
+        items = sorted(self._data.items(), key=_key_sorting)
+        return OrderedDict([
+            (key, value) for key, value in items
             if not isinstance(value, Link)
-        }
+        ])
 
     @property
     def links(self):
-        return {
-            key: value for key, value in self._data.items()
+        items = sorted(self._data.items(), key=_key_sorting)
+        return OrderedDict([
+            (key, value) for key, value in items
             if isinstance(value, Link)
-        }
+        ])
 
     def action(self, keys, **kwargs):
         """
         Perform an action by calling one of the links in the document tree.
         Returns a new document, or `None` if the current document was removed.
         """
+        if isinstance(keys, string_types):
+            keys = dotted_path_to_list(self, keys)
+
         if not isinstance(keys, (list, tuple)):
-            raise TypeError("'keys' must be a list of strings.")
+            msg = "'keys' must be a dot seperated string or a list of strings."
+            raise TypeError(msg)
         if any([
             not isinstance(key, string_types) and not isinstance(key, int)
             for key in keys

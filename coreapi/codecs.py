@@ -5,13 +5,29 @@ from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.document import _transition_types, _default_transition_type
-from coreapi.document import _graceful_relative_url
 from coreapi.exceptions import ParseError, NotAcceptable
 import jinja2
 import json
 
 
 # JSON encoding
+
+def _graceful_relative_url(base_url, url):
+    """
+    Return a graceful link for a URL relative to a base URL.
+
+    * If they are the same, return an empty string.
+    * If the have the same scheme and hostname, return the path & query params.
+    * Otherwise return the full URL.
+    """
+    if url == base_url:
+        return ''
+    base_prefix = '%s://%s' % urlparse.urlparse(base_url or '')[0:2]
+    url_prefix = '%s://%s' % urlparse.urlparse(url or '')[0:2]
+    if base_prefix == url_prefix and url_prefix != '://':
+        return url[len(url_prefix):]
+    return url
+
 
 def _escape_key(string):
     """
