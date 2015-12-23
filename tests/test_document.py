@@ -1,7 +1,5 @@
 # coding: utf-8
-from coreapi import (
-    required, remove, replace, deep_remove, deep_replace, dotted_path_to_list
-)
+from coreapi import required, dotted_path_to_list
 from coreapi import Array, Document, Object, Link, Error
 import pytest
 
@@ -139,50 +137,50 @@ def test_document_lists_coerced_to_arrays(doc):
     assert isinstance(doc['list'], Array)
 
 
-# The `remove` and `replace` functions return new instances.
+# The `delete` and `set` methods return new instances.
 
-def test_document_remove(doc):
-    new = remove(doc, 'integer')
+def test_document_delete(doc):
+    new = doc.delete('integer')
     assert doc is not new
     assert set(new.keys()) == set(doc.keys()) - set(['integer'])
     for key in new.keys():
         assert doc[key] is new[key]
 
 
-def test_document_replace(doc):
-    new = replace(doc, 'integer', 456)
+def test_document_set(doc):
+    new = doc.set('integer', 456)
     assert doc is not new
     assert set(new.keys()) == set(doc.keys())
     for key in set(new.keys()) - set(['integer']):
         assert doc[key] is new[key]
 
 
-def test_object_remove(obj):
-    new = remove(obj, 'key')
+def test_object_delete(obj):
+    new = obj.delete('key')
     assert obj is not new
     assert set(new.keys()) == set(obj.keys()) - set(['key'])
     for key in new.keys():
         assert obj[key] is new[key]
 
 
-def test_object_replace(obj):
-    new = replace(obj, 'key', 456)
+def test_object_set(obj):
+    new = obj.set('key', 456)
     assert obj is not new
     assert set(new.keys()) == set(obj.keys())
     for key in set(new.keys()) - set(['key']):
         assert obj[key] is new[key]
 
 
-def test_array_remove(array):
-    new = remove(array, 1)
+def test_array_delete(array):
+    new = array.delete(1)
     assert array is not new
     assert len(new) == len(array) - 1
     assert new[0] is array[0]
     assert new[1] is array[2]
 
 
-def test_array_replace(array):
-    new = replace(array, 1, 456)
+def test_array_set(array):
+    new = array.set(1, 456)
     assert array is not new
     assert len(new) == len(array)
     assert new[0] is array[0]
@@ -190,55 +188,29 @@ def test_array_replace(array):
     assert new[2] is array[2]
 
 
-# The `deep_remove` and `deep_replace` functions return new instances.
+# The `delete_in` and `set_in` functions return new instances.
 
-def test_deep_remove():
+def test_delete_in():
     nested = Object({'key': [{'abc': 123}, {'def': 456}], 'other': 0})
 
-    assert deep_remove(nested, ['key', 0]) == {'key': [{'def': 456}], 'other': 0}
-    assert deep_remove(nested, ['key']) == {'other': 0}
-    assert deep_remove(nested, []) is None
+    assert nested.delete_in(['key', 0]) == {'key': [{'def': 456}], 'other': 0}
+    assert nested.delete_in(['key']) == {'other': 0}
+    assert nested.delete_in([]) is None
 
 
-def test_deep_replace():
+def test_set_in():
     nested = Object({'key': [{'abc': 123}, {'def': 456}], 'other': 0})
     insert = Object({'xyz': 789})
 
     assert (
-        deep_replace(nested, ['key', 0], insert) ==
+        nested.set_in(['key', 0], insert) ==
         {'key': [{'xyz': 789}, {'def': 456}], 'other': 0}
     )
     assert (
-        deep_replace(nested, ['key'], insert) ==
+        nested.set_in(['key'], insert) ==
         {'key': {'xyz': 789}, 'other': 0}
     )
-    assert deep_replace(nested, [], insert) == {'xyz': 789}
-
-
-# The `remove` and `replace` functions raise TypeError on incorrect types.
-
-def test_remove_type_error():
-    node = {'key': 'value'}
-    with pytest.raises(TypeError):
-        remove(node, 'key')
-
-
-def test_replace_type_error():
-    node = {'key': 'value'}
-    with pytest.raises(TypeError):
-        replace(node, 'key', 123)
-
-
-def test_deep_remove_type_error():
-    node = {'key': 'value'}
-    with pytest.raises(TypeError):
-        deep_remove(node, ['key'])
-
-
-def test_deep_replace_type_error():
-    node = {'key': 'value'}
-    with pytest.raises(TypeError):
-        deep_replace(node, ['key'], 123)
+    assert nested.set_in([], insert) == {'xyz': 789}
 
 
 # Container types have a uniquely identifying representation.
