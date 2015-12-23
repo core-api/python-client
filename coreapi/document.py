@@ -494,17 +494,14 @@ class Error(object):
         return list(self._messages)
 
     def __setattr__(self, key, value):
-        if key in ('_messages'):
+        if key.startswith('_'):
             return object.__setattr__(self, key, value)
         raise TypeError("'Error' object does not support property assignment")
 
     def __eq__(self, other):
-        return (
-            (
-                isinstance(other, Error) and
-                (self.messages == other.messages)
-            ) or self.messages == other
-        )
+        if isinstance(other, Error):
+            return self.messages == other.messages
+        return self.messages == other
 
     def __repr__(self):
         return 'Error(%s)' % repr(list(self.messages))
