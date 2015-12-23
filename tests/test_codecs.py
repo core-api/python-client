@@ -1,7 +1,7 @@
 # coding: utf-8
 from coreapi.codecs import JSONCodec, HTMLCodec
-from coreapi.codecs import _document_to_primative, _primative_to_document
 from coreapi.codecs import negotiate_decoder, negotiate_encoder
+from coreapi.codecs.json_codec import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, required
 from coreapi.exceptions import ParseError, NotAcceptable
 import pytest
