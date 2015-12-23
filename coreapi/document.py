@@ -1,13 +1,22 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from collections import Mapping, OrderedDict, Sequence, namedtuple
+from collections import OrderedDict, namedtuple
 from coreapi.compat import string_types
 from coreapi.exceptions import ErrorMessage
+import itypes
 import json
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
 _default_transition_type = 'follow'
+
+
+def _to_immutable(value):
+    if isinstance(value, dict):
+        return Object(value)
+    elif isinstance(value, list):
+        return Array(value)
+    return value
 
 
 def _default_link_func(document, link, **parameters):
@@ -17,31 +26,6 @@ def _default_link_func(document, link, **parameters):
     """
     from coreapi.transport import transition
     return transition(link.url, link.trans, parameters=parameters)
-
-
-def _make_immutable(value):
-    """
-    Coerce standard python container types into our immutable primatives.
-    Used when instantiating documents.
-
-    Eg. Document({"meta": {"title": ...}, "notes": [...]})
-
-    Notice that in the above style the instantiation is written as
-    regular Python dicts, lists, but once we have the object it
-    will consist of immutable container types.
-    """
-    if isinstance(value, dict):
-        return Object(value)
-    elif isinstance(value, (list, tuple)):
-        return Array(value)
-    elif (
-        value is None or
-        isinstance(value, string_types) or
-        isinstance(value, (int, float, bool, Document, Object, Array, Link))
-    ):
-        return value
-
-    raise TypeError("Invalid type in document. Got '%s'." % type(value))
 
 
 def _validate_parameter(value):
@@ -190,85 +174,9 @@ def required(name):
     return Field(name, required=True)
 
 
-# Functions for returning a modified copy of an immutable primative:
-
-def remove(node, key):
-    """
-    Return a new immutable container type, with the given key removed.
-    """
-    if isinstance(node, (Document, Object)):
-        data = dict(node._data)
-    elif isinstance(node, Array):
-        data = list(node._data)
-    else:
-        raise TypeError(
-            "Expected Core API container type. Got '%s'." % type(node)
-        )
-
-    data.pop(key)
-    if isinstance(node, Document):
-        return type(node)(url=node.url, title=node.title, content=data)
-    return type(node)(data)
-
-
-def replace(node, key, value):
-    """
-    Return a new immutable container type, with the given key removed.
-    """
-    if isinstance(node, (Document, Object)):
-        data = dict(node)
-    elif isinstance(node, Array):
-        data = list(node)
-    else:
-        raise TypeError(
-            "Expected Core API container type. Got '%s'." % type(node)
-        )
-
-    data[key] = value
-    if isinstance(node, Document):
-        return type(node)(url=node.url, title=node.title, content=data)
-    return type(node)(data)
-
-
-def deep_remove(node, keys):
-    """
-    Return a new immutable container type, with the given nested key removed.
-    """
-    if not isinstance(node, (Array, Document, Object)):
-        raise TypeError("Expected Core API container type.")
-
-    if not keys:
-        return None
-    elif len(keys) == 1:
-        return remove(node, keys[0])
-
-    key = keys[0]
-    next = node[key]
-    child = deep_remove(next, keys[1:])
-    return replace(node, key, child)
-
-
-def deep_replace(node, keys, value):
-    """
-    Return a new immutable container type, with the given nested key replaced.
-    """
-    if not isinstance(node, (Array, Document, Object)):
-        raise TypeError("Expected Core API container type.")
-
-    if not keys:
-        return value
-    elif len(keys) == 1:
-        return replace(node, keys[0], value)
-
-    key = keys[0]
-    next = node[key]
-    child = deep_replace(next, keys[1:], value)
-    return replace(node, key, child)
-
-
 # The Core API primatives:
 
-class Document(Mapping):
+class Document(itypes.Dict):
     """
     The Core API document type.
 
@@ -278,7 +186,12 @@ class Document(Mapping):
 
     def __init__(self, url=None, title=None, content=None):
         if title is None and content is None and isinstance(url, dict):
-            url, content = None, url
+            # If a single positional argument is set and is a dictionary,
+            # treat it as the document content.
+            content = url
+            url = None
+
+        data = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
             raise TypeError("'url' must be a string.")
@@ -286,31 +199,21 @@ class Document(Mapping):
             raise TypeError("'title' must be a string.")
         if content is not None and not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
-        if content is not None and any([
-            not isinstance(key, string_types) for key in content.keys()
-        ]):
+        if any([not isinstance(key, string_types) for key in data.keys()]):
             raise TypeError('Document keys must be strings.')
+        if any([not isinstance(value, primative_types) for value in data.values()]):
+            raise TypeError('Document values must be primatives.')
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
-        self._data = {} if (content is None) else {
-            key: _make_immutable(value) for key, value in content.items()
-        }
+        self._data = {key: _to_immutable(value) for key, value in data.items()}
 
-    def __setattr__(self, key, value):
-        if key in ('_data', '_url', '_title'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Document' object does not support property assignment")
-
-    def __getitem__(self, key):
-        return self._data[key]
+    def clone(self, data):
+        return Document(self.url, self.title, data)
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
-
-    def __len__(self):
-        return len(self._data)
 
     def __repr__(self):
         return _document_repr(self)
@@ -387,36 +290,23 @@ class Document(Mapping):
         if link.trans in ('follow', 'create'):
             return ret
         elif ret is None:
-            return deep_remove(self, document_keys)
-        return deep_replace(self, document_keys, ret)
+            return self.delete_in(document_keys)
+        return self.set_in(document_keys, ret)
 
 
-class Object(Mapping):
+class Object(itypes.Dict):
     """
     An immutable mapping of strings to values.
     """
     def __init__(self, *args, **kwargs):
         data = dict(*args, **kwargs)
-        for key, value in data.items():
-            if not isinstance(key, string_types):
-                raise TypeError('Object keys must be strings.')
-            data[key] = _make_immutable(value)
-        self._data = data
-
-    def __setattr__(self, key, value):
-        if key == '_data':
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Object' object does not support property assignment")
-
-    def __getitem__(self, key):
-        return self._data[key]
+        if any([not isinstance(key, string_types) for key in data.keys()]):
+            raise TypeError('Object keys must be strings.')
+        self._data = {key: _to_immutable(value) for key, value in data.items()}
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
-
-    def __len__(self):
-        return len(self._data)
 
     def __repr__(self):
         return 'Object(%s)' % _document_repr(self)
@@ -439,37 +329,15 @@ class Object(Mapping):
         ])
 
 
-class Array(Sequence):
+class Array(itypes.List):
     """
     An immutable list type container.
     """
     def __init__(self, *args):
-        self._data = [
-            _make_immutable(value)
-            for value in list(*args)
-        ]
-        if any([isinstance(item, Link) for item in self._data]):
+        data = list(*args)
+        if any([isinstance(item, Link) for item in data]):
             raise TypeError("Array may not contain 'Link' items.")
-
-    def __setattr__(self, key, value):
-        if key == '_data':
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Array' object does not support property assignment")
-
-    def __getitem__(self, key):
-        return self._data[key]
-
-    def __iter__(self):
-        return iter(self._data)
-
-    def __len__(self):
-        return len(self._data)
-
-    def __eq__(self, other):
-        return (
-            (isinstance(other, Array) and (self._data == other._data)) or
-            self._data == other
-        )
+        self._data = [_to_immutable(value) for value in data]
 
     def __repr__(self):
         return 'Array(%s)' % _document_repr(self)
@@ -585,7 +453,7 @@ class Link(object):
         return self._func(document=document, link=self, **parameters)
 
     def __setattr__(self, key, value):
-        if key in ('_url', '_trans', '_fields', '_func'):
+        if key.startswith('_'):
             return object.__setattr__(self, key, value)
         raise TypeError("'Link' object does not support property assignment")
 
@@ -645,3 +513,9 @@ class Error(object):
         return '<Error>' + ''.join([
             '\n    * %s' % repr(message) for message in self.messages
         ])
+
+
+primative_types = string_types + (
+    type(None), int, float, bool, list, dict,
+    Document, Object, Array, Link
+)

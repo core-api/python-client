@@ -2,7 +2,6 @@
 from coreapi.codecs import JSONCodec, HTMLCodec
 from coreapi.codecs import negotiate_encoder, negotiate_decoder
 from coreapi.document import Array, Document, Link, Object, Error, required
-from coreapi.document import remove, replace, deep_remove, deep_replace
 from coreapi.document import dotted_path_to_list
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.transport import transition

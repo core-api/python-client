@@ -10,19 +10,19 @@ now = datetime.datetime.now()
 # Transition functions.
 
 def follow(document, link):
-    return Document({'new': 123})
+    return Document(title='new', content={'new': 123})
 
 
 def action(document, link, **parameters):
-    return Document({'new': 123, 'param': parameters.get('param')})
+    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
 
 
 def create(document, link, **parameters):
-    return Document({'new': 123, 'param': parameters.get('param')})
+    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
 
 
 def update(document, link, **parameters):
-    return Document({'new': 123, 'param': parameters.get('param')})
+    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
 
 
 def delete(document, link, **parameters):
@@ -31,7 +31,7 @@ def delete(document, link, **parameters):
 
 @pytest.fixture
 def doc():
-    return Document(content={
+    return Document(title='original', content={
         'nested': Document(content={
             'follow': Link(trans='follow', func=follow),
             'action': Link(trans='action', fields=['param'], func=action),
@@ -47,26 +47,31 @@ def doc():
 def test_follow(doc):
     new = doc.action(['nested', 'follow'])
     assert new == {'new': 123}
+    assert new.title == 'new'
 
 
 def test_action(doc):
     new = doc.action(['nested', 'action'], param=123)
     assert new == {'nested': {'new': 123, 'param': 123}}
+    assert new.title == 'original'
 
 
 def test_create(doc):
     new = doc.action(['nested', 'create'], param=456)
     assert new == {'new': 123, 'param': 456}
+    assert new.title == 'new'
 
 
 def test_update(doc):
     new = doc.action(['nested', 'update'], param=789)
     assert new == {'nested': {'new': 123, 'param': 789}}
+    assert new.title == 'original'
 
 
 def test_delete(doc):
     new = doc.action(['nested', 'delete'])
     assert new == {}
+    assert new.title == 'original'
 
 
 # Test invalid parameters.
