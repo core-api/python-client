@@ -3,26 +3,17 @@ from coreapi.document import Document, Link, Array, Object, Error
 import json
 
 
-class PlainTextCodec(object):
-    """
-    A plaintext representation of a Document, intended for readability.
-    """
-
-    def dump(self, node):
-        return to_plaintext(node)
-
-
-def to_plaintext(node, indent=0, base_url=None):
+def _to_plaintext(node, indent=0, base_url=None):
     if isinstance(node, Document):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
         body = '\n'.join([
             body_indent + str(key) + ': ' +
-            to_plaintext(value, indent + 1, base_url=base_url)
+            _to_plaintext(value, indent + 1, base_url=base_url)
             for key, value in node.data.items()
         ] + [
-            body_indent + str(key) + '(' + fields_to_plaintext(value) + ')'
+            body_indent + str(key) + '(' + _fields_to_plaintext(value) + ')'
             for key, value in node.links.items()
         ])
 
@@ -38,10 +29,10 @@ def to_plaintext(node, indent=0, base_url=None):
 
         body = '\n'.join([
             body_indent + str(key) + ': ' +
-            to_plaintext(value, indent + 1, base_url=base_url)
+            _to_plaintext(value, indent + 1, base_url=base_url)
             for key, value in node.data.items()
         ] + [
-            body_indent + str(key) + '(' + fields_to_plaintext(value) + ')'
+            body_indent + str(key) + '(' + _fields_to_plaintext(value) + ')'
             for key, value in node.links.items()
         ])
 
@@ -52,14 +43,14 @@ def to_plaintext(node, indent=0, base_url=None):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + to_plaintext(value, indent + 1, base_url=base_url)
+            body_indent + _to_plaintext(value, indent + 1, base_url=base_url)
             for value in node
         ])
 
         return '[]' if (not body) else '[\n' + body + '\n' + head_indent + ']'
 
     elif isinstance(node, Link):
-        return 'link(%s)' % fields_to_plaintext(node)
+        return 'link(%s)' % _fields_to_plaintext(node)
 
     elif isinstance(node, Error):
         return '<Error>' + ''.join([
@@ -69,9 +60,18 @@ def to_plaintext(node, indent=0, base_url=None):
     return json.dumps(node)
 
 
-def fields_to_plaintext(link):
+def _fields_to_plaintext(link):
     return ', '.join([
         field.name for field in link.fields if field.required
     ] + [
         '[%s]' % field.name for field in link.fields if not field.required
     ])
+
+
+class PlainTextCodec(object):
+    """
+    A plaintext representation of a Document, intended for readability.
+    """
+
+    def dump(self, node):
+        return _to_plaintext(node)
