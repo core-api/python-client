@@ -4,7 +4,6 @@ from collections import OrderedDict, namedtuple
 from coreapi.compat import string_types
 from coreapi.exceptions import ErrorMessage
 import itypes
-import json
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
@@ -26,6 +25,16 @@ def _default_link_func(document, link, **parameters):
     """
     from coreapi.transport import transition
     return transition(link.url, link.trans, parameters=parameters)
+
+
+def _repr(node):
+    from coreapi.codecs.python import PythonCodec
+    return PythonCodec().dump(node)
+
+
+def _str(node):
+    from coreapi.codecs.plaintext import PlainTextCodec
+    return PlainTextCodec().dump(node)
 
 
 def _validate_parameter(value):
@@ -57,87 +66,6 @@ def _key_sorting(item):
     if isinstance(value, Link):
         return (1, key)
     return (0, key)
-
-
-def _document_repr(node):
-    """
-    Return the representation of a Document or other primative
-    in plain python style. Only the outermost element gets the
-    class wrapper.
-    """
-    if isinstance(node, Document):
-        content = ', '.join([
-            '%s: %s' % (repr(key), _document_repr(value))
-            for key, value in node.items()
-        ])
-        return 'Document(url=%s, title=%s, content={%s})' % (
-            repr(node.url), repr(node.title), content
-        )
-    elif isinstance(node, Object):
-        return '{%s}' % ', '.join([
-            '%s: %s' % (repr(key), _document_repr(value))
-            for key, value in node.items()
-        ])
-    elif isinstance(node, Array):
-        return '[%s]' % ', '.join([
-            _document_repr(value) for value in node
-        ])
-    return repr(node)
-
-
-def _document_str(node, indent=0, base_url=None):
-    """
-    Return a verbose, indented representation of a Document or other primative.
-    """
-    if isinstance(node, Document):
-        head_indent = '    ' * indent
-        body_indent = '    ' * (indent + 1)
-
-        body = '\n'.join([
-            body_indent + str(key) + ': ' +
-            _document_str(value, indent + 1, base_url=base_url)
-            for key, value in node.data.items()
-        ] + [
-            body_indent + str(key) + '(' + value._fields_as_string() + ')'
-            for key, value in node.links.items()
-        ])
-
-        head = '<%s %s>' % (
-            node.title.strip() or 'Document',
-            json.dumps(node.url)
-        )
-        return head if (not body) else head + '\n' + body
-
-    elif isinstance(node, Object):
-        head_indent = '    ' * indent
-        body_indent = '    ' * (indent + 1)
-
-        body = '\n'.join([
-            body_indent + str(key) + ': ' +
-            _document_str(value, indent + 1, base_url=base_url)
-            for key, value in node.data.items()
-        ] + [
-            body_indent + str(key) + '(' + value._fields_as_string() + ')'
-            for key, value in node.links.items()
-        ])
-
-        return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
-
-    elif isinstance(node, Array):
-        head_indent = '    ' * indent
-        body_indent = '    ' * (indent + 1)
-
-        body = ',\n'.join([
-            body_indent + _document_str(value, indent + 1, base_url=base_url)
-            for value in node
-        ])
-
-        return '[]' if (not body) else '[\n' + body + '\n' + head_indent + ']'
-
-    elif isinstance(node, Link):
-        return 'link(%s)' % node._fields_as_string()
-
-    return json.dumps(node)
 
 
 def dotted_path_to_list(doc, path):
@@ -216,10 +144,10 @@ class Document(itypes.Dict):
         return iter([key for key, value in items])
 
     def __repr__(self):
-        return _document_repr(self)
+        return _repr(self)
 
     def __str__(self):
-        return _document_str(self)
+        return _str(self)
 
     @property
     def url(self):
@@ -309,10 +237,10 @@ class Object(itypes.Dict):
         return iter([key for key, value in items])
 
     def __repr__(self):
-        return 'Object(%s)' % _document_repr(self)
+        return _repr(self)
 
     def __str__(self):
-        return _document_str(self)
+        return _str(self)
 
     @property
     def data(self):
@@ -340,10 +268,10 @@ class Array(itypes.List):
         self._data = [_to_immutable(value) for value in data]
 
     def __repr__(self):
-        return 'Array(%s)' % _document_repr(self)
+        return _repr(self)
 
     def __str__(self):
-        return _document_str(self)
+        return _str(self)
 
 
 class Link(object):
@@ -417,34 +345,6 @@ class Link(object):
         for value in parameters.values():
             _validate_parameter(value)
 
-    def _fields_as_string(self):
-        """
-        Return the fields as a string containing all the field names,
-        indicating which fields are required and which are optional.
-
-        In this display we order fields with required fields first.
-
-        For example: "text, [completed]"
-        """
-        return ', '.join([
-            field.name for field in self.fields if field.required
-        ] + [
-            '[%s]' % field.name for field in self.fields if not field.required
-        ])
-
-    def _fields_as_repr(self):
-        """
-        Return the fields as a repr string.
-
-        For example: "required('text'), 'completed'"
-        """
-        return ', '.join([
-            'required(%s)' % repr(field.name)
-            if field.required else
-            repr(field.name)
-            for field in self.fields
-        ])
-
     def _transition(self, document, **parameters):
         """
         Call a link and return a new document or other media.
@@ -466,15 +366,10 @@ class Link(object):
         )
 
     def __repr__(self):
-        args = "url=%s" % repr(self.url)
-        if self.trans != _default_transition_type:
-            args += ", trans=%s" % repr(self.trans)
-        if self.fields:
-            args += ", fields=[%s]" % self._fields_as_repr()
-        return "Link(%s)" % args
+        return _repr(self)
 
     def __str__(self):
-        return _document_str(self)
+        return _str(self)
 
 
 class Error(object):
@@ -504,12 +399,10 @@ class Error(object):
         return self.messages == other
 
     def __repr__(self):
-        return 'Error(%s)' % repr(list(self.messages))
+        return _repr(self)
 
     def __str__(self):
-        return '<Error>' + ''.join([
-            '\n    * %s' % repr(message) for message in self.messages
-        ])
+        return _str(self)
 
 
 primative_types = string_types + (
