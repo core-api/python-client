@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.exceptions import ParseError, NotAcceptable
-from coreapi.codecs.html_codec import HTMLCodec
+from coreapi.codecs.html import HTMLCodec
 from coreapi.codecs.json_codec import JSONCodec
 
 

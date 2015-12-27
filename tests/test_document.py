@@ -239,6 +239,11 @@ def test_array_repr(array):
     assert eval(repr(array)) == array
 
 
+def test_link_repr(link):
+    assert repr(link) == "Link(url='/', trans='action', fields=[required('required'), 'optional'])"
+    assert eval(repr(link)) == link
+
+
 def test_error_repr(error):
     assert repr(error) == "Error(['failed'])"
     assert eval(repr(error)) == error
