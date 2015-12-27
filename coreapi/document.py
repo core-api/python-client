@@ -7,7 +7,6 @@ import itypes
 
 
 _transition_types = ('follow', 'action', 'create', 'update', 'delete')
-_default_transition_type = 'follow'
 
 
 def _to_immutable(value):

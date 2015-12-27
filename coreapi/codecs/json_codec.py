@@ -3,7 +3,7 @@ from collections import OrderedDict
 from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
-from coreapi.document import _transition_types, _default_transition_type
+from coreapi.document import _transition_types
 from coreapi.exceptions import ParseError
 import json
 
@@ -75,7 +75,7 @@ def _document_to_primative(node, base_url=None):
         url = _graceful_relative_url(base_url, node.url)
         if url:
             ret['url'] = url
-        if node.trans != _default_transition_type:
+        if node.trans != 'follow':
             ret['trans'] = node.trans
         if node.fields:
             # Use short format for optional fields, long format for required.
