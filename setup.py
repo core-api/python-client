@@ -54,9 +54,9 @@ if sys.argv[-1] == 'publish':
 setup(
     name='coreapi',
     version=version,
-    url='http://coreapi.org',
+    url='http://www.coreapi.org',
     license='BSD',
-    description='Hypermedia driven object interfaces.',
+    description='Hypermedia driven Web APIs.',
     author='Tom Christie',
     author_email='tom@tomchristie.com',
     packages=get_packages('coreapi'),
