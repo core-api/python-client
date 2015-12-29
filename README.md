@@ -129,5 +129,5 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 [core-api]: https://github.com/core-api/core-api/
 [build-status-image]: https://secure.travis-ci.org/core-api/python-client.svg?branch=master
 [travis]: http://travis-ci.org/core-api/python-client?branch=master
-[pypi-version]: https://pypip.in/version/coreapi/badge.svg
+[pypi-version]: https://img.shields.io/pypi/v/coreapi.svg
 [pypi]: https://pypi.python.org/pypi/coreapi
