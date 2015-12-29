@@ -30,6 +30,11 @@ def read_from_store():
     return coreapi.load(content)
 
 
+def dump_to_console(doc):
+    codec = coreapi.codecs.PlainTextCodec()
+    return codec.dump(doc, colorize=True)
+
+
 @click.group(invoke_without_command=True, help='Command line client for interacting with CoreAPI services.\n\nVisit http://www.coreapi.org for more information.')
 @click.option('--version', is_flag=True, help='Display the package version number.')
 @click.pass_context
@@ -47,7 +52,7 @@ def client(ctx, version):
 @click.argument('url')
 def get(url):
     doc = coreapi.get(url)
-    click.echo(doc)
+    click.echo(dump_to_console(doc))
     write_to_store(doc)
 
 
@@ -77,7 +82,7 @@ def show(path):
             doc = doc[key]
         if isinstance(doc, (bool, type(None))):
             doc = {True: 'true', False: 'false', None: 'null'}[doc]
-    click.echo(doc)
+    click.echo(dump_to_console(doc))
 
 
 @click.command(help='Interact with the current document, given a PATH to a link.')
@@ -99,7 +104,7 @@ def action(path, fields):
         return
 
     doc = doc.action(path, **kwargs)
-    click.echo(doc)
+    click.echo(dump_to_console(doc))
     write_to_store(doc)
 
 

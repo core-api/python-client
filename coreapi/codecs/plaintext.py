@@ -1,26 +1,39 @@
 from __future__ import unicode_literals
 from coreapi.document import Document, Link, Array, Object, Error
+import click
 import json
 
 
-def _to_plaintext(node, indent=0, base_url=None):
+def _colorize_document(text):
+    return click.style(text, fg='green')  # pragma: nocover
+
+
+def _colorize_keys(text):
+    return click.style(text, fg='cyan')  # pragma: nocover
+
+
+def _to_plaintext(node, indent=0, base_url=None, colorize=False):
+    colorize_document = _colorize_document if colorize else lambda x: x
+    colorize_keys = _colorize_keys if colorize else lambda x: x
+
     if isinstance(node, Document):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
         body = '\n'.join([
-            body_indent + str(key) + ': ' +
-            _to_plaintext(value, indent + 1, base_url=base_url)
+            body_indent + colorize_keys(str(key) + ': ') +
+            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
             for key, value in node.data.items()
         ] + [
-            body_indent + str(key) + '(' + _fields_to_plaintext(value) + ')'
+            body_indent + colorize_keys(str(key) + '(') +
+            _fields_to_plaintext(value, colorize=colorize) + colorize_keys(')')
             for key, value in node.links.items()
         ])
 
-        head = '<%s %s>' % (
+        head = colorize_document('<%s %s>' % (
             node.title.strip() or 'Document',
             json.dumps(node.url)
-        )
+        ))
         return head if (not body) else head + '\n' + body
 
     elif isinstance(node, Object):
@@ -29,10 +42,10 @@ def _to_plaintext(node, indent=0, base_url=None):
 
         body = '\n'.join([
             body_indent + str(key) + ': ' +
-            _to_plaintext(value, indent + 1, base_url=base_url)
+            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
             for key, value in node.data.items()
         ] + [
-            body_indent + str(key) + '(' + _fields_to_plaintext(value) + ')'
+            body_indent + str(key) + '(' + _fields_to_plaintext(value, colorize=colorize) + ')'
             for key, value in node.links.items()
         ])
 
@@ -43,7 +56,7 @@ def _to_plaintext(node, indent=0, base_url=None):
         body_indent = '    ' * (indent + 1)
 
         body = ',\n'.join([
-            body_indent + _to_plaintext(value, indent + 1, base_url=base_url)
+            body_indent + _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
             for value in node
         ])
 
@@ -60,8 +73,10 @@ def _to_plaintext(node, indent=0, base_url=None):
     return json.dumps(node)
 
 
-def _fields_to_plaintext(link):
-    return ', '.join([
+def _fields_to_plaintext(link, colorize=False):
+    colorize_keys = _colorize_keys if colorize else lambda x: x
+
+    return colorize_keys(', ').join([
         field.name for field in link.fields if field.required
     ] + [
         '[%s]' % field.name for field in link.fields if not field.required
@@ -73,5 +88,5 @@ class PlainTextCodec(object):
     A plaintext representation of a Document, intended for readability.
     """
 
-    def dump(self, node):
-        return _to_plaintext(node)
+    def dump(self, node, colorize=False):
+        return _to_plaintext(node, colorize=colorize)

@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi.codecs import JSONCodec, HTMLCodec
+from coreapi.codecs import JSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
 from coreapi.codecs import negotiate_encoder, negotiate_decoder
 from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.document import dotted_path_to_list
@@ -7,11 +7,11 @@ from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.transport import transition
 
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 __all__ = [
-    'JSONCodec', 'HTMLCodec', 'negotiate_encoder', 'negotiate_decoder',
+    'JSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
-    'remove', 'replace', 'deep_remove', 'deep_replace',
     'dotted_path_to_list',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
     'HTTPTransport',
