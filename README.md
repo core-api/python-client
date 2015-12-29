@@ -5,7 +5,7 @@ Python client library for [Core API][core-api].
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
 
-**Requirements**: Python 2.7, 3.3, 3.4.
+**Requirements**: Python 2.7, 3.3+
 
 **Test coverage**: 100%
 
