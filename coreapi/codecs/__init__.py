@@ -4,6 +4,14 @@ from collections import OrderedDict
 from coreapi.exceptions import ParseError, NotAcceptable
 from coreapi.codecs.html import HTMLCodec
 from coreapi.codecs.json_codec import JSONCodec
+from coreapi.codecs.plaintext import PlainTextCodec
+from coreapi.codecs.python import PythonCodec
+
+
+__all__ = [
+    'JSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'negotiate_encoder', 'negotiate_decoder'
+]
 
 
 # Codec negotiation
