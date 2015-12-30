@@ -5,11 +5,14 @@ import jinja2
 
 
 env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
+env.filters.update({
+    'is_link': lambda x: isinstance(x, Link),
+})
 
 
 def _render_html(node, url=None, key=None, path=''):
     if key:
-        path += key + '.'
+        path += "%s." % key
 
     if isinstance(node, (Document, Link)):
         url = urlparse.urljoin(url, node.url)

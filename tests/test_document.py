@@ -388,11 +388,6 @@ def test_object_keys_must_be_strings():
         Object(content={0: 123})
 
 
-def test_array_may_not_contain_links():
-    with pytest.raises(TypeError):
-        Array([Link()])
-
-
 def test_error_messages_must_be_list():
     with pytest.raises(TypeError):
         Error(123)

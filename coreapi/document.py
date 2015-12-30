@@ -261,10 +261,7 @@ class Array(itypes.List):
     An immutable list type container.
     """
     def __init__(self, *args):
-        data = list(*args)
-        if any([isinstance(item, Link) for item in data]):
-            raise TypeError("Array may not contain 'Link' items.")
-        self._data = [_to_immutable(value) for value in data]
+        self._data = [_to_immutable(value) for value in list(*args)]
 
     def __repr__(self):
         return _repr(self)
