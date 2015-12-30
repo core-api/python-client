@@ -41,11 +41,12 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False):
         body_indent = '    ' * (indent + 1)
 
         body = '\n'.join([
-            body_indent + str(key) + ': ' +
+            body_indent + colorize_keys(str(key)) + ': ' +
             _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
             for key, value in node.data.items()
         ] + [
-            body_indent + str(key) + '(' + _fields_to_plaintext(value, colorize=colorize) + ')'
+            body_indent + colorize_keys(str(key) + '(') +
+            _fields_to_plaintext(value, colorize=colorize) + colorize_keys(')')
             for key, value in node.links.items()
         ])
 
@@ -63,7 +64,11 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False):
         return '[]' if (not body) else '[\n' + body + '\n' + head_indent + ']'
 
     elif isinstance(node, Link):
-        return 'link(%s)' % _fields_to_plaintext(node)
+        return (
+            colorize_keys('link(') +
+            _fields_to_plaintext(node, colorize=colorize) +
+            colorize_keys(')')
+        )
 
     elif isinstance(node, Error):
         return '<Error>' + ''.join([

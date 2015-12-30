@@ -1,7 +1,11 @@
 <table class="coreapi-array table table-striped table-condensed">
     <tbody>
         {% for value in node %}
+        {% if value|is_link %}
+        <tr id="{{ path }}{{ key }}"><th colspan=2>{{ render(value, url, loop.index0) }}</th></tr>
+        {% else %}
         <tr id="{{ path }}{{ key }}"><th>{{ loop.index0 }}</th><td>{{ render(value, path=path) }}</td></tr>
+        {% endif %}
         {% endfor %}
     </tbody>
 </table>
