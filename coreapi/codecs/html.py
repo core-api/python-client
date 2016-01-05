@@ -27,7 +27,7 @@ def _render_html(node, url=None, key=None, path=''):
         template = env.get_template('link.html')
     elif isinstance(node, Error):
         template = env.get_template('error.html')
-    elif node in (True, False, None):
+    elif node is None or isinstance(node, bool):
         value = {True: 'true', False: 'false', None: 'null'}[node]
         return "<code>%s</code>" % value
     elif isinstance(node, (float, int)):
