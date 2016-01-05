@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi.codecs import JSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
+from coreapi.codecs import CoreJSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
 from coreapi.codecs import negotiate_encoder, negotiate_decoder
 from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.document import dotted_path_to_list
@@ -9,7 +9,7 @@ from coreapi.transport import transition
 
 __version__ = '1.0.4'
 __all__ = [
-    'JSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
     'dotted_path_to_list',

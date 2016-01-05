@@ -189,7 +189,7 @@ def _primative_to_document(data, base_url=None):
     return data
 
 
-class JSONCodec(object):
+class CoreJSONCodec(object):
     def load(self, bytes, base_url=None):
         """
         Takes a bytestring and returns a document.

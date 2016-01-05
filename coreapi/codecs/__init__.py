@@ -3,13 +3,13 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.exceptions import ParseError, NotAcceptable
 from coreapi.codecs.html import HTMLCodec
-from coreapi.codecs.corejson import JSONCodec
+from coreapi.codecs.corejson import CoreJSONCodec
 from coreapi.codecs.plaintext import PlainTextCodec
 from coreapi.codecs.python import PythonCodec
 
 
 __all__ = [
-    'JSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder'
 ]
 
@@ -22,7 +22,7 @@ def negotiate_decoder(content_type=None):
     codec registered to decode the request content.
     """
     if content_type is None:
-        return JSONCodec()
+        return CoreJSONCodec()
 
     content_type = content_type.split(';')[0].strip().lower()
     try:
@@ -71,9 +71,7 @@ def negotiate_encoder(accept=None):
 
 
 REGISTERED_CODECS = OrderedDict([
-    ('application/vnd.coreapi+json', JSONCodec),
-    ('application/json', JSONCodec),
-    ('application/vnd.coreapi+html', HTMLCodec),
+    ('application/vnd.coreapi+json', CoreJSONCodec),
     ('text/html', HTMLCodec)
 ])
 
