@@ -115,7 +115,7 @@
             var link = $(event.relatedTarget)
             var document = link.closest('.coreapi-document')
             var href = link.attr('href')
-            var method = link.data('method').toUpperCase()
+            var method = link.data('action').toUpperCase()
             var transition = link.data('transition')
             var fields = splitFields(link.data('fields'))
             var hasParameters = fields.length > 0
