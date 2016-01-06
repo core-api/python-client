@@ -427,23 +427,6 @@ def test_link_field_items_must_be_valid():
         Link(fields=[123])
 
 
-# Links correctly validate required and optional parameters.
-
-def test_link_with_correct_parameters(link):
-    link._validate(required=123)
-    link._validate(required=123, optional=456)
-
-
-def test_link_missing_required_parameter(link):
-    with pytest.raises(ValueError):
-        link._validate(optional=456)
-
-
-def test_link_with_invalid_parameter(link):
-    with pytest.raises(ValueError):
-        link._validate(required=123, unknown=123)
-
-
 # Invalid calls to '.action()' should error.
 
 def test_keys_should_be_a_list_or_dotted_string(doc):
