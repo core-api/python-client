@@ -150,7 +150,8 @@ def test_verbose_style(json_codec):
 def test_link_encodings(json_codec):
     doc = Document(content={
         'link': Link(
-            trans='action',
+            action='post',
+            transition='inline',
             fields=['optional', required('required')]
         )
     })
@@ -159,7 +160,8 @@ def test_link_encodings(json_codec):
     "_type": "document",
     "link": {
         "_type": "link",
-        "trans": "action",
+        "action": "post",
+        "transition": "inline",
         "fields": [
             "optional",
             {

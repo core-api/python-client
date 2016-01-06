@@ -33,11 +33,11 @@ def delete(document, link, **parameters):
 def doc():
     return Document(title='original', content={
         'nested': Document(content={
-            'follow': Link(trans='follow', func=follow),
-            'action': Link(trans='action', fields=['param'], func=action),
-            'create': Link(trans='create', fields=['param'], func=create),
-            'update': Link(trans='update', fields=['param'], func=update),
-            'delete': Link(trans='delete', func=delete)
+            'follow': Link(action='get', func=follow),
+            'action': Link(action='post', transition='inline', fields=['param'], func=action),
+            'create': Link(action='post', fields=['param'], func=create),
+            'update': Link(action='put', fields=['param'], func=update),
+            'delete': Link(action='delete', func=delete)
         })
     })
 

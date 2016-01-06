@@ -6,9 +6,6 @@ from coreapi.exceptions import ErrorMessage
 import itypes
 
 
-_transition_types = ('follow', 'action', 'create', 'update', 'delete')
-
-
 def _to_immutable(value):
     if isinstance(value, dict):
         return Object(value)
@@ -23,7 +20,7 @@ def _default_link_func(document, link, **parameters):
     to the HTTP transport layer.
     """
     from coreapi.transport import transition
-    return transition(link.url, link.trans, parameters=parameters)
+    return transition(link.url, link.action, parameters=parameters)
 
 
 def _repr(node):
@@ -207,18 +204,22 @@ class Document(itypes.Dict):
         link = node
 
         # Perform the action, and return a new document.
-        ret = link._transition(document, **kwargs)
+        ret = link._call(document, **kwargs)
 
         # If we got an error response back, raise an exception.
         if isinstance(ret, Error):
             raise ErrorMessage(ret.messages)
 
         # Return the new document or other media.
-        if link.trans in ('follow', 'create'):
-            return ret
-        elif ret is None:
-            return self.delete_in(document_keys)
-        return self.set_in(document_keys, ret)
+        transition = link.transition
+        if not transition and link.action.lower() in ('put', 'patch', 'delete'):
+            transition = 'inline'
+
+        if transition == 'inline':
+            if ret is None:
+                return self.delete_in(document_keys)
+            return self.set_in(document_keys, ret)
+        return ret
 
 
 class Object(itypes.Dict):
@@ -274,13 +275,13 @@ class Link(object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, trans=None, fields=None, func=None):
+    def __init__(self, url=None, action=None, transition=None, fields=None, func=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
-        if (trans is not None) and (not isinstance(trans, string_types)):
-            raise TypeError("Argument 'trans' must be a string.")
-        if (trans is not None) and (trans not in _transition_types):
-            raise ValueError('Invalid transition type for link "%s".' % trans)
+        if (action is not None) and (not isinstance(action, string_types)):
+            raise TypeError("Argument 'action' must be a string.")
+        if (transition is not None) and (not isinstance(transition, string_types)):
+            raise TypeError("Argument 'transition' must be a string.")
         if (fields is not None) and (not isinstance(fields, list)):
             raise TypeError("Argument 'fields' must be a list.")
         if (fields is not None) and any([
@@ -290,7 +291,8 @@ class Link(object):
             raise TypeError("Argument 'fields' must be a list of strings or fields.")
 
         self._url = '' if (url is None) else url
-        self._trans = 'follow' if (trans is None) else trans
+        self._action = '' if (action is None) else action
+        self._transition = '' if (transition is None) else transition
         self._fields = () if (fields is None) else tuple([
             item if isinstance(item, Field) else Field(item, required=False)
             for item in fields
@@ -302,8 +304,12 @@ class Link(object):
         return self._url
 
     @property
-    def trans(self):
-        return self._trans
+    def action(self):
+        return self._action
+
+    @property
+    def transition(self):
+        return self._transition
 
     @property
     def fields(self):
@@ -341,7 +347,7 @@ class Link(object):
         for value in parameters.values():
             _validate_parameter(value)
 
-    def _transition(self, document, **parameters):
+    def _call(self, document, **parameters):
         """
         Call a link and return a new document or other media.
         """
@@ -357,7 +363,8 @@ class Link(object):
         return (
             isinstance(other, Link) and
             self.url == other.url and
-            self.trans == other.trans and
+            self.action == other.action and
+            self.transition == other.transition and
             set(self.fields) == set(other.fields)
         )
 

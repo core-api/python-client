@@ -16,7 +16,7 @@ _http_method_map = {
 }
 
 
-def transition(url, trans=None, parameters=None):
+def transition(url, action=None, parameters=None):
     url_components = urlparse.urlparse(url)
     scheme = url_components.scheme.lower()
     netloc = url_components.netloc
@@ -33,12 +33,12 @@ def transition(url, trans=None, parameters=None):
         raise TransportError('Unknown URL scheme "%s".' % scheme)
 
     transport = transport_class()
-    return transport.transition(url, trans, parameters)
+    return transport.transition(url, action, parameters)
 
 
 class HTTPTransport(object):
-    def transition(self, url, trans=None, parameters=None):
-        method = _http_method_map[trans]
+    def transition(self, url, action=None, parameters=None):
+        method = 'GET' if (action is None) else action.upper()
 
         if parameters and method == 'GET':
             opts = {

@@ -25,8 +25,10 @@ def _to_repr(node):
 
     elif isinstance(node, Link):
         args = "url=%s" % repr(node.url)
-        if node.trans != 'follow':
-            args += ", trans=%s" % repr(node.trans)
+        if node.action:
+            args += ", action=%s" % repr(node.action)
+        if node.transition:
+            args += ", transition=%s" % repr(node.transition)
         if node.fields:
             fields_repr = ', '.join([
                 'required(%s)' % repr(field.name)
@@ -48,7 +50,7 @@ class PythonCodec(object):
     A Python representation of a Document, for use with '__repr__'.
     """
 
-    def dump(self, node):
+    def dump(self, node, **kwargs):
         # Object and Array only have the class name wrapper if they
         # are the outermost element.
         if isinstance(node, Object):

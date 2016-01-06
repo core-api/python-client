@@ -93,5 +93,5 @@ class PlainTextCodec(object):
     A plaintext representation of a Document, intended for readability.
     """
 
-    def dump(self, node, colorize=False):
+    def dump(self, node, colorize=False, **kwargs):
         return _to_plaintext(node, colorize=colorize)

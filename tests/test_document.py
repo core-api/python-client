@@ -15,7 +15,8 @@ def doc():
             'list': [1, 2, 3],
             'link': Link(
                 url='/',
-                trans='action',
+                action='post',
+                transition='inline',
                 fields=['optional', required('required')]
             ),
             'nested': {'child': Link(url='/123')}
@@ -36,7 +37,7 @@ def array():
 def link():
     return Link(
         url='/',
-        trans='action',
+        action='post',
         fields=[required('required'), 'optional']
     )
 
@@ -222,7 +223,7 @@ def test_document_repr(doc):
         "'integer': 123, "
         "'list': [1, 2, 3], "
         "'nested': {'child': Link(url='/123')}, "
-        "'link': Link(url='/', trans='action', "
+        "'link': Link(url='/', action='post', transition='inline', "
         "fields=['optional', required('required')])"
         "})"
     )
@@ -240,7 +241,7 @@ def test_array_repr(array):
 
 
 def test_link_repr(link):
-    assert repr(link) == "Link(url='/', trans='action', fields=[required('required'), 'optional'])"
+    assert repr(link) == "Link(url='/', action='post', fields=[required('required'), 'optional'])"
     assert eval(repr(link)) == link
 
 
@@ -331,7 +332,8 @@ def test_document_equality(doc):
         'list': [1, 2, 3],
         'link': Link(
             url='/',
-            trans='action',
+            action='post',
+            transition='inline',
             fields=['optional', required('required')]
         ),
         'nested': {'child': Link(url='/123')}
@@ -405,14 +407,14 @@ def test_link_url_must_be_string():
         Link(url=123)
 
 
-def test_link_trans_must_be_string():
+def test_link_action_must_be_string():
     with pytest.raises(TypeError):
-        Link(trans=123)
+        Link(action=123)
 
 
-def test_link_trans_must_be_valid():
-    with pytest.raises(ValueError):
-        Link(trans='fail')
+def test_link_transition_must_be_string():
+    with pytest.raises(TypeError):
+        Link(transition=123)
 
 
 def test_link_fields_must_be_list():
