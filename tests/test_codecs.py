@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi.codecs import JSONCodec, HTMLCodec
+from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.codecs import negotiate_decoder, negotiate_encoder
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, required
@@ -9,7 +9,7 @@ import pytest
 
 @pytest.fixture
 def json_codec():
-    return JSONCodec()
+    return CoreJSONCodec()
 
 
 @pytest.fixture
@@ -150,7 +150,8 @@ def test_verbose_style(json_codec):
 def test_link_encodings(json_codec):
     doc = Document(content={
         'link': Link(
-            trans='action',
+            action='post',
+            transition='inline',
             fields=['optional', required('required')]
         )
     })
@@ -159,7 +160,8 @@ def test_link_encodings(json_codec):
     "_type": "document",
     "link": {
         "_type": "link",
-        "trans": "action",
+        "action": "post",
+        "transition": "inline",
         "fields": [
             "optional",
             {
@@ -206,15 +208,15 @@ def test_invalid_message_field_ignored(json_codec):
 # Tests for 'Content-Type' header lookup.
 
 def test_get_default_decoder():
-    assert isinstance(negotiate_decoder(), JSONCodec)
+    assert isinstance(negotiate_decoder(), CoreJSONCodec)
 
 
 def test_get_supported_decoder():
-    assert isinstance(negotiate_decoder('application/json'), JSONCodec)
+    assert isinstance(negotiate_decoder('application/vnd.coreapi+json'), CoreJSONCodec)
 
 
 def test_get_supported_decoder_with_parameters():
-    assert isinstance(negotiate_decoder('application/json; verison=1.0'), JSONCodec)
+    assert isinstance(negotiate_decoder('application/vnd.coreapi+json; verison=1.0'), CoreJSONCodec)
 
 
 def test_get_unsupported_decoder():
@@ -230,28 +232,24 @@ def test_get_render_only_decoder():
 # Tests for 'Accept' header lookup.
 
 def test_get_default_encoder():
-    content_type, codec = negotiate_encoder()
-    assert content_type == 'application/vnd.coreapi+json'
-    assert isinstance(codec, JSONCodec)
+    codec = negotiate_encoder()
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_encoder_preference():
-    content_type, codec = negotiate_encoder(
+    codec = negotiate_encoder(
         accept='text/html; q=1.0, application/vnd.coreapi+json; q=1.0'
     )
-    assert content_type == 'application/vnd.coreapi+json'
-    assert isinstance(codec, JSONCodec)
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_accepted_encoder():
-    content_type, codec = negotiate_encoder(accept='application/json')
-    assert content_type == 'application/json'
-    assert isinstance(codec, JSONCodec)
+    codec = negotiate_encoder(accept='application/vnd.coreapi+json')
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_underspecified_encoder():
-    content_type, codec = negotiate_encoder(accept='text/*')
-    assert content_type == 'text/html'
+    codec = negotiate_encoder(accept='text/*')
     assert isinstance(codec, HTMLCodec)
 
 
@@ -261,9 +259,8 @@ def test_get_unsupported_encoder():
 
 
 def test_get_unsupported_encoder_with_fallback():
-    content_type, codec = negotiate_encoder(accept='application/csv, */*')
-    assert content_type == 'application/vnd.coreapi+json'
-    assert isinstance(codec, JSONCodec)
+    codec = negotiate_encoder(accept='application/csv, */*')
+    assert isinstance(codec, CoreJSONCodec)
 
 
 # Tests for HTML rendering

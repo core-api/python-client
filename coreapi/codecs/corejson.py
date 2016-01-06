@@ -3,7 +3,6 @@ from collections import OrderedDict
 from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
-from coreapi.document import _transition_types
 from coreapi.exceptions import ParseError
 import json
 
@@ -75,8 +74,10 @@ def _document_to_primative(node, base_url=None):
         url = _graceful_relative_url(base_url, node.url)
         if url:
             ret['url'] = url
-        if node.trans != 'follow':
-            ret['trans'] = node.trans
+        if node.action:
+            ret['action'] = node.action
+        if node.transition:
+            ret['transition'] = node.transition
         if node.fields:
             # Use short format for optional fields, long format for required.
             ret['fields'] = [
@@ -111,6 +112,7 @@ def _primative_to_document(data, base_url=None):
     and return a Core API document.
     """
     if isinstance(data, dict) and data.get('_type') == 'document':
+        # Document
         meta = data.get('_meta', {})
         if not isinstance(meta, dict):
             meta = {}
@@ -131,14 +133,19 @@ def _primative_to_document(data, base_url=None):
         })
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
+        # Link
         url = data.get('url', '')
         if not isinstance(url, string_types):
             url = ''
         url = urlparse.urljoin(base_url, url)
 
-        trans = data.get('trans')
-        if not isinstance(trans, string_types) or (trans not in _transition_types):
-            trans = None
+        action = data.get('action')
+        if not isinstance(action, string_types):
+            action = ''
+
+        transition = data.get('transition')
+        if not isinstance(transition, string_types):
+            transition = ''
 
         fields = data.get('fields', [])
         if not isinstance(fields, list):
@@ -159,9 +166,10 @@ def _primative_to_document(data, base_url=None):
                 for item in fields
             ]
 
-        return Link(url=url, trans=trans, fields=fields)
+        return Link(url=url, action=action, transition=transition, fields=fields)
 
     elif isinstance(data, dict) and data.get('_type') == 'error':
+        # Error
         messages = data.get('messages', [])
         if not isinstance(messages, list):
             messages = []
@@ -175,6 +183,7 @@ def _primative_to_document(data, base_url=None):
         return Error(messages)
 
     elif isinstance(data, dict):
+        # Map
         return Object({
             _unescape_key(key): _primative_to_document(value, base_url)
             for key, value in data.items()
@@ -182,14 +191,18 @@ def _primative_to_document(data, base_url=None):
         })
 
     elif isinstance(data, list):
+        # Array
         return Array([
             _primative_to_document(item, base_url) for item in data
         ])
 
+    # String, Integer, Number, Boolean, null.
     return data
 
 
-class JSONCodec(object):
+class CoreJSONCodec(object):
+    media_type = 'application/vnd.coreapi+json'
+
     def load(self, bytes, base_url=None):
         """
         Takes a bytestring and returns a document.
@@ -205,7 +218,7 @@ class JSONCodec(object):
 
         return doc
 
-    def dump(self, document, indent=False):
+    def dump(self, document, indent=False, **kwargs):
         """
         Takes a document and returns a bytestring.
         """

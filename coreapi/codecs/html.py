@@ -7,6 +7,7 @@ import jinja2
 env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
 env.filters.update({
     'is_link': lambda x: isinstance(x, Link),
+    'is_plain_link': lambda x: x.action.upper() in ('GET', '') and not x.fields,
 })
 
 
@@ -39,6 +40,8 @@ def _render_html(node, url=None, key=None, path=''):
 
 
 class HTMLCodec(object):
-    def dump(self, document, extra_css=None):
+    media_type = 'text/html'
+
+    def dump(self, document, extra_css=None, **kwargs):
         template = env.get_template('index.html')
         return template.render(document=document, render=_render_html, extra_css=extra_css)

@@ -35,7 +35,7 @@ def test_missing_hostname():
 
 # Test basic transition types.
 
-def test_follow(monkeypatch, http):
+def test_get(monkeypatch, http):
     def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
@@ -43,12 +43,12 @@ def test_follow(monkeypatch, http):
 
     doc = http.transition(
         url='http://example.org',
-        trans='follow'
+        action='get'
     )
     assert doc == {'example': 123}
 
 
-def test_follow_with_parameters(monkeypatch, http):
+def test_get_with_parameters(monkeypatch, http):
     def mockreturn(method, url, params, headers):
         insert = params['example'].encode('utf-8')
         return MockResponse(
@@ -59,13 +59,13 @@ def test_follow_with_parameters(monkeypatch, http):
 
     doc = http.transition(
         url='http://example.org',
-        trans='follow',
+        action='get',
         parameters={'example': 'abc'}
     )
     assert doc == {'example': 'abc'}
 
 
-def test_create(monkeypatch, http):
+def test_post(monkeypatch, http):
     def mockreturn(method, url, data, headers):
         insert = data.encode('utf-8')
         return MockResponse(b'{"_type": "document", "data": ' + insert + b'}')
@@ -74,7 +74,7 @@ def test_create(monkeypatch, http):
 
     doc = http.transition(
         url='http://example.org',
-        trans='action',
+        action='post',
         parameters={'example': 'abc'}
     )
     assert doc == {'data': {'example': 'abc'}}
@@ -88,6 +88,6 @@ def test_delete(monkeypatch, http):
 
     doc = http.transition(
         url='http://example.org',
-        trans='delete'
+        action='delete'
     )
     assert doc is None

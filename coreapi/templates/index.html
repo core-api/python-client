@@ -115,16 +115,20 @@
             var link = $(event.relatedTarget)
             var document = link.closest('.coreapi-document')
             var href = link.attr('href')
-            var trans = link.data('trans')
+            var method = link.data('action').toUpperCase()
+            var transition = link.data('transition')
             var fields = splitFields(link.data('fields'))
-            var method = {
-                'follow': 'GET',
-                'action': 'POST',
-                'create': 'POST',
-                'update': 'PUT',
-                'delete': 'DELETE'
-            }[trans]
             var hasParameters = fields.length > 0
+
+            if (transition === '') {
+                if (method === 'PUT' || method === 'PATCH' || method == 'DELETE') {
+                    transition = 'inline'
+                } else {
+                    transition = 'follow'
+                }
+            } else if (transition !== 'inline' && transition !== 'follow') {
+                transition = 'follow'
+            }
 
             // Update the modal content.
             setModalFieldsInput(modal, fields)
@@ -149,18 +153,18 @@
                 }
 
                 options['success'] = function(data) {
-                    if (trans === 'create' || trans === 'follow') {
+                    if (transition === 'follow') {
                         // Replace the topmost document.
                         var newDocument = $(data).find('.coreapi-document').first()
                         var top = $('body').find('.coreapi-document').first()
                         top.replaceWith(newDocument)
                         newDocument.find('td, th').effect("highlight", 1000)
-                    } else if (trans === 'action' || trans === 'update') {
+                    } else if (transition === 'inline' && data) {
                         // Replace the active document.
                         var newDocument = $(data).find('.coreapi-document').first()
                         document.replaceWith(newDocument)
                         newDocument.find('td, th').effect("highlight", 1000)
-                    } else if (trans === 'delete') {
+                    } else {
                         // Remove the active document
                         var row = document.closest('tr')
                         var container = row.closest('table')
