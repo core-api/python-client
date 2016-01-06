@@ -48,7 +48,7 @@ def negotiate_encoder(accept=None):
     """
     if accept is None:
         key, codec_class = list(REGISTERED_CODECS.items())[0]
-        return key, codec_class()
+        return codec_class()
 
     media_types = set([
         item.split(';')[0].strip().lower()
@@ -57,15 +57,15 @@ def negotiate_encoder(accept=None):
 
     for key, codec_class in REGISTERED_CODECS.items():
         if key in media_types:
-            return key, codec_class()
+            return codec_class()
 
     for key, codec_class in REGISTERED_CODECS.items():
         if key.split('/')[0] + '/*' in media_types:
-            return key, codec_class()
+            return codec_class()
 
     if '*/*' in media_types:
         key, codec_class = list(REGISTERED_CODECS.items())[0]
-        return key, codec_class()
+        return codec_class()
 
     raise NotAcceptable()
 

@@ -201,6 +201,8 @@ def _primative_to_document(data, base_url=None):
 
 
 class CoreJSONCodec(object):
+    media_type = 'application/vnd.coreapi+json'
+
     def load(self, bytes, base_url=None):
         """
         Takes a bytestring and returns a document.

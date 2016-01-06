@@ -232,28 +232,24 @@ def test_get_render_only_decoder():
 # Tests for 'Accept' header lookup.
 
 def test_get_default_encoder():
-    content_type, codec = negotiate_encoder()
-    assert content_type == 'application/vnd.coreapi+json'
+    codec = negotiate_encoder()
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_encoder_preference():
-    content_type, codec = negotiate_encoder(
+    codec = negotiate_encoder(
         accept='text/html; q=1.0, application/vnd.coreapi+json; q=1.0'
     )
-    assert content_type == 'application/vnd.coreapi+json'
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_accepted_encoder():
-    content_type, codec = negotiate_encoder(accept='application/vnd.coreapi+json')
-    assert content_type == 'application/vnd.coreapi+json'
+    codec = negotiate_encoder(accept='application/vnd.coreapi+json')
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_underspecified_encoder():
-    content_type, codec = negotiate_encoder(accept='text/*')
-    assert content_type == 'text/html'
+    codec = negotiate_encoder(accept='text/*')
     assert isinstance(codec, HTMLCodec)
 
 
@@ -263,8 +259,7 @@ def test_get_unsupported_encoder():
 
 
 def test_get_unsupported_encoder_with_fallback():
-    content_type, codec = negotiate_encoder(accept='application/csv, */*')
-    assert content_type == 'application/vnd.coreapi+json'
+    codec = negotiate_encoder(accept='application/csv, */*')
     assert isinstance(codec, CoreJSONCodec)
 
 

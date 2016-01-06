@@ -92,6 +92,7 @@ class PlainTextCodec(object):
     """
     A plaintext representation of a Document, intended for readability.
     """
+    media_type = 'text/plain'
 
     def dump(self, node, colorize=False, **kwargs):
         return _to_plaintext(node, colorize=colorize)

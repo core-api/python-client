@@ -25,9 +25,9 @@ def load(bytestring, content_type=None):
 
 
 def dump(document, accept=None, **kwargs):
-    content_type, codec = negotiate_encoder(accept)
+    codec = negotiate_encoder(accept)
     content = codec.dump(document, **kwargs)
-    return content_type, content
+    return codec.media_type, content
 
 
 def get(url):
