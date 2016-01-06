@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict, namedtuple
 from coreapi.compat import string_types
 from coreapi.exceptions import ErrorMessage
+from coreapi.validation import validate_parameters
 import itypes
 
 
@@ -31,26 +32,6 @@ def _repr(node):
 def _str(node):
     from coreapi.codecs.plaintext import PlainTextCodec
     return PlainTextCodec().dump(node)
-
-
-def _validate_parameter(value):
-    """
-    When calling a link parameters must be primatives or Document instances.
-    """
-    if isinstance(value, (dict)):
-        if any([not isinstance(key, string_types) for key in value.keys()]):
-            raise TypeError("Invalid parameter. Dictionary keys must be strings.")
-        [_validate_parameter(item) for item in value.values()]
-    elif isinstance(value, (list, tuple)):
-        [_validate_parameter(item) for item in value]
-    elif (
-        value is None or
-        isinstance(value, string_types) or
-        isinstance(value, (int, float, bool))
-    ):
-        pass
-    else:
-        raise TypeError("Invalid parameter type. Got '%s'." % type(value))
 
 
 def _key_sorting(item):
@@ -315,43 +296,11 @@ class Link(object):
     def fields(self):
         return self._fields
 
-    def _validate(self, **parameters):
-        """
-        Ensure that parameters passed to the link are correct.
-
-        Raises a `ValueError` if any parameters do not validate.
-        """
-        provided = set(parameters.keys())
-        required = set([
-            field.name for field in self.fields if field.required
-        ])
-        optional = set([
-            field.name for field in self.fields if not field.required
-        ])
-
-        # Determine any parameter names supplied that are not valid.
-        unexpected = provided - (optional | required)
-        unexpected = ['"' + item + '"' for item in sorted(unexpected)]
-        if unexpected:
-            prefix = len(unexpected) > 1 and 'parameters ' or 'parameter '
-            raise ValueError('Unknown ' + prefix + ', '.join(unexpected))
-
-        # Determine if any required field names not supplied.
-        missing = required - provided
-        missing = ['"' + item + '"' for item in sorted(missing)]
-        if missing:
-            prefix = len(missing) > 1 and 'parameters ' or 'parameter '
-            raise ValueError('Missing required ' + prefix + ', '.join(missing))
-
-        # Ensure all parameter values are valid types.
-        for value in parameters.values():
-            _validate_parameter(value)
-
     def _call(self, document, **parameters):
         """
         Call a link and return a new document or other media.
         """
-        self._validate(**parameters)
+        validate_parameters(self, parameters)
         return self._func(document=document, link=self, **parameters)
 
     def __setattr__(self, key, value):
