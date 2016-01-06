@@ -7,6 +7,7 @@ import jinja2
 env = jinja2.Environment(loader=jinja2.PackageLoader('coreapi', 'templates'))
 env.filters.update({
     'is_link': lambda x: isinstance(x, Link),
+    'is_plain_link': lambda x: x.action.upper() in ('GET', '') and not x.fields,
 })
 
 
