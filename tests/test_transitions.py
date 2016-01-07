@@ -1,6 +1,5 @@
 # coding: utf-8
-from coreapi import action, Document, Link, HTTPTransport, Session
-import datetime
+from coreapi import Document, Link, HTTPTransport, Session
 import pytest
 
 
@@ -18,7 +17,6 @@ class MockTransport(HTTPTransport):
         return self.handle_inline_replacements(document, link, link_ancestors)
 
 
-now = datetime.datetime.now()
 session = Session(codecs=[], transports=[MockTransport()])
 
 
@@ -65,25 +63,3 @@ def test_delete(doc):
     new = session.action(doc, ['nested', 'delete'])
     assert new == {}
     assert new.title == 'original'
-
-
-# Test invalid parameters.
-
-def test_invalid_type(doc):
-    with pytest.raises(TypeError):
-        action(doc, ['nested', 'update'], param=now)
-
-
-def test_invalid_type_in_list(doc):
-    with pytest.raises(TypeError):
-        action(doc, ['nested', 'update'], param=[now])
-
-
-def test_invalid_type_in_dict(doc):
-    with pytest.raises(TypeError):
-        action(doc, ['nested', 'update'], param=[{"a": now}])
-
-
-def test_invalid_key_in_dict(doc):
-    with pytest.raises(TypeError):
-        action(doc, ['nested', 'update'], param=[{1: "a"}])

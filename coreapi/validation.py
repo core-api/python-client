@@ -15,9 +15,11 @@ def validate_is_primative(value):
             raise TypeError("Invalid parameter. Dictionary keys must be strings.")
         for item in value.values():
             validate_is_primative(item)
+        return
     elif isinstance(value, (list, tuple)):
         for item in value:
             validate_is_primative(item)
+        return
     elif (
         value is None or
         isinstance(value, string_types) or
