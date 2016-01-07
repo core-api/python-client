@@ -1,53 +1,22 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi.compat import urlparse
-from coreapi.codecs import ACCEPT_HEADER
-from coreapi.exceptions import TransportError
-from coreapi.sessions import DefaultSession
 import requests
 import json
 
 
-_http_method_map = {
-    'follow': 'GET',
-    'action': 'POST',
-    'create': 'POST',
-    'update': 'PUT',
-    'delete': 'DELETE'
-}
-
-
-def transition(url, action=None, parameters=None):
-    url_components = urlparse.urlparse(url)
-    scheme = url_components.scheme.lower()
-    netloc = url_components.netloc
-
-    if not scheme:
-        raise TransportError('URL missing scheme "%s".' % url)
-
-    if not netloc:
-        raise TransportError('URL missing hostname "%s".' % url)
-
-    try:
-        transport_class = REGISTERED_SCHEMES[scheme]
-    except KeyError:
-        raise TransportError('Unknown URL scheme "%s".' % scheme)
-
-    transport = transport_class()
-    return transport.transition(url, action, parameters)
-
-
 class HTTPTransport(object):
     def transition(self, url, action=None, parameters=None):
+        from coreapi.sessions import DefaultSession
         session = DefaultSession()
 
         method = 'GET' if (action is None) else action.upper()
+        accept = session.get_accept_header()
 
         if parameters and method == 'GET':
             opts = {
                 'params': parameters,
                 'headers': {
-                    'accept': ACCEPT_HEADER
+                    'accept': accept
                 }
             }
         elif parameters:
@@ -55,13 +24,13 @@ class HTTPTransport(object):
                 'data': json.dumps(parameters),
                 'headers': {
                     'content-type': 'application/json',
-                    'accept': ACCEPT_HEADER
+                    'accept': accept
                 }
             }
         else:
             opts = {
                 'headers': {
-                    'accept': ACCEPT_HEADER
+                    'accept': accept
                 }
             }
 
@@ -72,9 +41,3 @@ class HTTPTransport(object):
         content_type = response.headers.get('content-type')
         codec = session.negotiate_decoder(content_type)
         return codec.load(response.content, base_url=url)
-
-
-REGISTERED_SCHEMES = {
-    'http': HTTPTransport,
-    'https': HTTPTransport
-}

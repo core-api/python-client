@@ -4,7 +4,6 @@ from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.document import dotted_path_to_list
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.sessions import DefaultSession
-from coreapi.transport import transition
 
 
 __version__ = '1.1.0'
@@ -29,6 +28,11 @@ def negotiate_decoder(content_type=None):
     return session.negotiate_decoder(content_type)
 
 
+def get(url):
+    session = DefaultSession()
+    return session.transition(url, 'get')
+
+
 def load(bytestring, content_type=None):
     codec = negotiate_decoder(content_type)
     return codec.load(bytestring)
@@ -38,7 +42,3 @@ def dump(document, accept=None, **kwargs):
     codec = negotiate_encoder(accept)
     content = codec.dump(document, **kwargs)
     return codec.media_type, content
-
-
-def get(url):
-    return transition(url, 'follow')

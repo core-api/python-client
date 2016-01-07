@@ -1,6 +1,8 @@
 from collections import OrderedDict
 from coreapi.codecs import CoreJSONCodec, HTMLCodec
-from coreapi.exceptions import ParseError, NotAcceptable
+from coreapi.compat import urlparse
+from coreapi.transport import HTTPTransport
+from coreapi.exceptions import NotAcceptable, ParseError, TransportError
 
 
 class DefaultSession(object):
@@ -8,6 +10,13 @@ class DefaultSession(object):
         ('application/vnd.coreapi+json', CoreJSONCodec),
         ('text/html', HTMLCodec)
     ])
+    transports = {
+        'http': HTTPTransport,
+        'https': HTTPTransport
+    }
+
+    def get_accept_header(self):
+        return ', '.join(self.codecs.keys())
 
     def negotiate_decoder(self, content_type=None):
         """
@@ -60,3 +69,22 @@ class DefaultSession(object):
             return codec_class()
 
         raise NotAcceptable()
+
+    def transition(self, url, action=None, parameters=None):
+        url_components = urlparse.urlparse(url)
+        scheme = url_components.scheme.lower()
+        netloc = url_components.netloc
+
+        if not scheme:
+            raise TransportError('URL missing scheme "%s".' % url)
+
+        if not netloc:
+            raise TransportError('URL missing hostname "%s".' % url)
+
+        try:
+            transport_class = self.transports[scheme]
+        except KeyError:
+            raise TransportError('Unknown URL scheme "%s".' % scheme)
+
+        transport = transport_class()
+        return transport.transition(url, action, parameters)

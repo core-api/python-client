@@ -20,8 +20,9 @@ def _default_link_func(document, link, **parameters):
     When calling a link the default behavior is to call through
     to the HTTP transport layer.
     """
-    from coreapi.transport import transition
-    return transition(link.url, link.action, parameters=parameters)
+    from coreapi.sessions import DefaultSession
+    session = DefaultSession()
+    return session.transition(link.url, link.action, parameters=parameters)
 
 
 def _repr(node):
