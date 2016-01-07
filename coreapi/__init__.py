@@ -1,9 +1,9 @@
 # coding: utf-8
 from coreapi.codecs import CoreJSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
-from coreapi.codecs import negotiate_encoder, negotiate_decoder
 from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.document import dotted_path_to_list
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
+from coreapi.sessions import DefaultSession
 from coreapi.transport import transition
 
 
@@ -17,6 +17,16 @@ __all__ = [
     'HTTPTransport',
     'load', 'dump', 'get'
 ]
+
+
+def negotiate_encoder(accept=None):
+    session = DefaultSession()
+    return session.negotiate_encoder(accept)
+
+
+def negotiate_decoder(content_type=None):
+    session = DefaultSession()
+    return session.negotiate_decoder(content_type)
 
 
 def load(bytestring, content_type=None):

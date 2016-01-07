@@ -1,8 +1,9 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from coreapi.compat import urlparse
-from coreapi.codecs import negotiate_decoder, ACCEPT_HEADER
+from coreapi.codecs import ACCEPT_HEADER
 from coreapi.exceptions import TransportError
+from coreapi.sessions import DefaultSession
 import requests
 import json
 
@@ -38,6 +39,8 @@ def transition(url, action=None, parameters=None):
 
 class HTTPTransport(object):
     def transition(self, url, action=None, parameters=None):
+        session = DefaultSession()
+
         method = 'GET' if (action is None) else action.upper()
 
         if parameters and method == 'GET':
@@ -67,7 +70,7 @@ class HTTPTransport(object):
             return None
 
         content_type = response.headers.get('content-type')
-        codec = negotiate_decoder(content_type)
+        codec = session.negotiate_decoder(content_type)
         return codec.load(response.content, base_url=url)
 
 
