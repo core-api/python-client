@@ -1,4 +1,3 @@
-from collections import OrderedDict
 from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.compat import urlparse
 from coreapi.transport import HTTPTransport
@@ -6,67 +5,60 @@ from coreapi.exceptions import NotAcceptable, ParseError, TransportError
 
 
 class DefaultSession(object):
-    codecs = OrderedDict([
-        ('application/vnd.coreapi+json', CoreJSONCodec),
-        ('text/html', HTMLCodec)
-    ])
+    codecs = [CoreJSONCodec(), HTMLCodec()]
     transports = [HTTPTransport()]
 
     def get_accept_header(self):
         """
         Return an 'Accept' header for the given codecs.
         """
-        return ', '.join(self.codecs.keys())
+        return ', '.join([codec.media_type for codec in self.codecs])
 
     def negotiate_decoder(self, content_type=None):
         """
         Given the value of a 'Content-Type' header, return the appropriate
         codec registered to decode the request content.
         """
+        decoders = [codec for codec in self.codecs if hasattr(codec, 'load')]
+
         if content_type is None:
-            return CoreJSONCodec()
+            return decoders[0]
 
         content_type = content_type.split(';')[0].strip().lower()
-        try:
-            codec_class = self.codecs[content_type]
-        except KeyError:
-            raise ParseError(
-                "Cannot parse unsupported content type '%s'" % content_type
-            )
+        for codec in decoders:
+            if codec.media_type == content_type:
+                break
+        else:
+            msg = "Cannot parse unsupported content type '%s'" % content_type
+            raise ParseError(msg)
 
-        if not hasattr(codec_class, 'load'):
-            raise ParseError(
-                "Cannot parse content type '%s'. This implementation only "
-                "supports rendering for that content." % content_type
-            )
-
-        return codec_class()
+        return codec
 
     def negotiate_encoder(self, accept=None):
         """
         Given the value of a 'Accept' header, return a two tuple of the appropriate
         content type and codec registered to encode the response content.
         """
-        if accept is None:
-            key, codec_class = list(self.codecs.items())[0]
-            return codec_class()
+        encoders = [codec for codec in self.codecs if hasattr(codec, 'dump')]
 
-        media_types = set([
+        if accept is None:
+            return encoders[0]
+
+        acceptable = set([
             item.split(';')[0].strip().lower()
             for item in accept.split(',')
         ])
 
-        for key, codec_class in self.codecs.items():
-            if key in media_types:
-                return codec_class()
+        for codec in encoders:
+            if codec.media_type in acceptable:
+                return codec
 
-        for key, codec_class in self.codecs.items():
-            if key.split('/')[0] + '/*' in media_types:
-                return codec_class()
+        for codec in encoders:
+            if codec.media_type.split('/')[0] + '/*' in acceptable:
+                return codec
 
-        if '*/*' in media_types:
-            key, codec_class = list(self.codecs.items())[0]
-            return codec_class()
+        if '*/*' in acceptable:
+            return encoders[0]
 
         raise NotAcceptable()
 
