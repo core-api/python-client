@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from coreapi import Error, ErrorMessage
+from coreapi.compat import urlparse
 import requests
 import itypes
 import json
@@ -15,6 +16,13 @@ class BaseTransport(itypes.Object):
 
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
+
+    def __init__(self, credentials=None):
+        self._credentials = itypes.Dict(credentials or {})
+
+    @property
+    def credentials(self):
+        return self._credentials
 
     def transition(self, link, params=None, session=None, link_ancestors=None):
         if session is None:
@@ -57,6 +65,12 @@ class HTTPTransport(BaseTransport):
                     'accept': accept
                 }
             }
+
+        if self.credentials:
+            url_components = urlparse.urlparse(url)
+            host = url_components.netloc
+            if host in self.credentials:
+                opts['headers']['authorization'] = self.credentials[host]
 
         return requests.request(method, url, **opts)
 

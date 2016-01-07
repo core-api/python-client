@@ -86,3 +86,24 @@ def test_delete(monkeypatch, http):
     link = Link(url='http://example.org', action='delete')
     doc = http.transition(link)
     assert doc is None
+
+
+# Test credentials
+
+def test_credentials(monkeypatch):
+    def mockreturn(method, url, headers):
+        return MockResponse(headers.get('authorization', ''))
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+    transport = HTTPTransport(credentials=credentials)
+    session = get_default_session()
+
+    # Requests to example.org include credentials.
+    response = transport.make_http_request(session, 'http://example.org/123')
+    assert response.content == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
+
+    # Requests to other.org do not include credentials.
+    response = transport.make_http_request(session, 'http://other.org/123')
+    assert response.content == ''
