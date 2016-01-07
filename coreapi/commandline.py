@@ -153,8 +153,6 @@ def action(path, fields):
         key, value = field.split('=', 1)
         kwargs[key] = value
 
-    keys = dotted_path_to_list(doc, path[0])
-
     try:
         doc = read_from_store()
     except NoDocument:
@@ -162,6 +160,7 @@ def action(path, fields):
         return
 
     session = get_session()
+    keys = dotted_path_to_list(doc, path[0])
     doc = session.action(doc, keys, **kwargs)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
