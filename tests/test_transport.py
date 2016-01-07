@@ -1,6 +1,6 @@
 # coding: utf-8
+from coreapi import get_default_session
 from coreapi.exceptions import TransportError
-from coreapi.sessions import DefaultSession
 from coreapi.transport import HTTPTransport
 import pytest
 import requests
@@ -20,19 +20,19 @@ class MockResponse(object):
 # Test transport errors.
 
 def test_unknown_scheme():
-    session = DefaultSession()
+    session = get_default_session()
     with pytest.raises(TransportError):
         session.transition('ftp://example.org')
 
 
 def test_missing_scheme():
-    session = DefaultSession()
+    session = get_default_session()
     with pytest.raises(TransportError):
         session.transition('example.org')
 
 
 def test_missing_hostname():
-    session = DefaultSession()
+    session = get_default_session()
     with pytest.raises(TransportError):
         session.transition('http://')
 

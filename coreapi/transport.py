@@ -8,8 +8,8 @@ class HTTPTransport(object):
     schemes = ['http', 'https']
 
     def transition(self, url, action=None, parameters=None):
-        from coreapi.sessions import DefaultSession
-        session = DefaultSession()
+        from coreapi import get_default_session
+        session = get_default_session()
 
         method = 'GET' if (action is None) else action.upper()
         accept = session.get_accept_header()

@@ -1,12 +1,12 @@
-from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.compat import urlparse
-from coreapi.transport import HTTPTransport
 from coreapi.exceptions import NotAcceptable, ParseError, TransportError
+import itypes
 
 
-class DefaultSession(object):
-    codecs = [CoreJSONCodec(), HTMLCodec()]
-    transports = [HTTPTransport()]
+class Session(object):
+    def __init__(self, codecs, transports):
+        self.codecs = itypes.List(codecs)
+        self.transports = itypes.List(transports)
 
     def get_accept_header(self):
         """
