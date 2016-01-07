@@ -1,4 +1,5 @@
 from coreapi.compat import string_types, urlparse
+from coreapi.document import Link
 from coreapi.exceptions import NotAcceptable, ParseError, TransportError
 from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
@@ -105,6 +106,11 @@ class Session(itypes.Object):
             raise TransportError("Unsupported URL scheme '%s'." % scheme)
 
         return transport
+
+    def get(self, url):
+        transport = self.determine_transport(url)
+        link = Link(url, action='get')
+        return transport.transition(link, session=self)
 
     def action(self, document, keys, **params):
         if isinstance(keys, string_types):

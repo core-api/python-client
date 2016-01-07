@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi import Error, ErrorMessage
+from coreapi import Error, ErrorMessage, TransportError
 from coreapi.compat import urlparse
 import requests
 import itypes
