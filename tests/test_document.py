@@ -1,6 +1,7 @@
 # coding: utf-8
-from coreapi import required, dotted_path_to_list
+from coreapi import action, required
 from coreapi import Array, Document, Object, Link, Error
+from coreapi.utils import dotted_path_to_list
 import pytest
 
 
@@ -431,22 +432,22 @@ def test_link_field_items_must_be_valid():
 
 def test_keys_should_be_a_list_or_dotted_string(doc):
     with pytest.raises(TypeError):
-        doc.action(True)
+        action(doc, True)
 
 
 def test_keys_should_be_a_list_of_strings_or_ints(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', {}])
+        action(doc, ['nested', {}])
 
 
 def test_keys_should_be_valid_indexes(doc):
     with pytest.raises(KeyError):
-        doc.action('dummy')
+        action(doc, 'dummy')
 
 
 def test_keys_should_access_a_link(doc):
     with pytest.raises(ValueError):
-        doc.action('dict')
+        action(doc, 'dict')
 
 
 # Test dotted path notation maps to list of keys correctly.

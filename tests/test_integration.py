@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get, load, dump, Link, ErrorMessage
+from coreapi import action, get, load, dump, Link, ErrorMessage
 import requests
 import pytest
 
@@ -52,7 +52,7 @@ def test_follow(monkeypatch, document):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = document.action(['next'])
+    doc = action(document, ['next'])
     assert doc == {'example': 123}
 
 
@@ -63,4 +63,4 @@ def test_error(monkeypatch, document):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     with pytest.raises(ErrorMessage):
-        document.action(['next'])
+        action(document, ['next'])

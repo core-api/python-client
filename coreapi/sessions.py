@@ -1,5 +1,8 @@
-from coreapi.compat import urlparse
-from coreapi.exceptions import NotAcceptable, ParseError, TransportError
+from coreapi.compat import string_types, urlparse
+from coreapi.document import Error
+from coreapi.exceptions import ErrorMessage, NotAcceptable, ParseError, TransportError
+from coreapi.utils import dotted_path_to_list
+from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
 
@@ -83,7 +86,7 @@ class Session(itypes.Object):
         msg = "Unsupported media in Accept header '%s'" % accept
         raise NotAcceptable(msg)
 
-    def transition(self, url, action=None, parameters=None):
+    def transition(self, url, action=None, params=None):
         url_components = urlparse.urlparse(url)
         scheme = url_components.scheme.lower()
         netloc = url_components.netloc
@@ -100,4 +103,31 @@ class Session(itypes.Object):
         else:
             raise TransportError("Unsupported URL scheme '%s'." % scheme)
 
-        return transport.transition(url, action, parameters)
+        return transport.transition(url, action, params)
+
+    def action(self, document, keys, **params):
+        if isinstance(keys, string_types):
+            keys = dotted_path_to_list(document, keys)
+
+        # Validate the keys and link parameters.
+        link, link_ancestors = validate_keys_to_link(document, keys)
+        validate_parameters(link, params)
+
+        # Perform the action, and return a new document.
+        new_document = self.transition(link.url, link.action, params)
+
+        # If we got an error response back, raise an exception.
+        if isinstance(new_document, Error):
+            raise ErrorMessage(new_document.messages)
+
+        # Return the new document or other media.
+        transition = link.transition
+        if not transition and link.action.lower() in ('put', 'patch', 'delete'):
+            transition = 'inline'
+
+        if transition == 'inline':
+            keys_to_link_parent = link_ancestors[-1].keys
+            if new_document is None:
+                return document.delete_in(keys_to_link_parent)
+            return document.set_in(keys_to_link_parent, new_document)
+        return new_document

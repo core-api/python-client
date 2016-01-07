@@ -64,7 +64,7 @@ def test_get_with_parameters(monkeypatch, http):
     doc = http.transition(
         url='http://example.org',
         action='get',
-        parameters={'example': 'abc'}
+        params={'example': 'abc'}
     )
     assert doc == {'example': 'abc'}
 
@@ -79,7 +79,7 @@ def test_post(monkeypatch, http):
     doc = http.transition(
         url='http://example.org',
         action='post',
-        parameters={'example': 'abc'}
+        params={'example': 'abc'}
     )
     assert doc == {'data': {'example': 'abc'}}
 

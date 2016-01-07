@@ -15,23 +15,23 @@ class BaseTransport(itypes.Object):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def transition(self, url, action=None, parameters=None):
+    def transition(self, url, action=None, params=None):
         from coreapi import get_default_session
         session = get_default_session()
 
         method = 'GET' if (action is None) else action.upper()
         accept = session.get_accept_header()
 
-        if parameters and method == 'GET':
+        if params and method == 'GET':
             opts = {
-                'params': parameters,
+                'params': params,
                 'headers': {
                     'accept': accept
                 }
             }
-        elif parameters:
+        elif params:
             opts = {
-                'data': json.dumps(parameters),
+                'data': json.dumps(params),
                 'headers': {
                     'content-type': 'application/json',
                     'accept': accept
