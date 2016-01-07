@@ -21,7 +21,7 @@ To install, use pip.
 
 ### Retrieving and inspecting documents
 
-To initially access a Core API interface, use the `get()` method.
+To initially access a Core API interface, use the `get()` function.
 
     >>> import coreapi
     >>> doc = coreapi.get('http://coreapi.herokuapp.com')
@@ -60,22 +60,26 @@ You can also inspect the document URL and title.
 
 ### Interacting with documents
 
-Documents in the Python Core API library are immutable objects. To perform a transition we call the `.action()` method and assign the resulting new document.
+Documents in the Python Core API library are immutable objects. To perform a transition we use the `.action()` function and assign the resulting new document.
 
-    >>> doc = doc.action(['add_note'], description='My new note.')
+    >>> doc = coreapi.action(doc, ['add_note'], description='My new note.')
 
-The first argument to `.action()` is a list of strings or integers, indexing the link to act on. Any extra keyword arguments are passed as parameters to the link.
+The arguments to `.action()` are:
 
-Transitions may update of the document tree.
+* The existing document.
+* A string or list of strings or integers, indexing the link to act on.
+* Any parameters to use when the acting on the link.
 
-    >>> doc = doc.action(['notes', 0, 'edit'], complete=True)
+Transitions may update part of the document tree.
+
+    >>> doc = coreapi.action(doc, ['notes', 0, 'edit'], complete=True)
     >>> doc['notes'][0]['complete']
     True
 
 Or they may remove part of the document tree.
 
     >>> while doc['notes']:
-    >>>     doc = doc.action(['notes', 0, 'delete'])
+    >>>     doc = coreapi.action(doc, ['notes', 0, 'delete'])
     >>> len(doc['notes'])
     0
 
