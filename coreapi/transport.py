@@ -43,7 +43,10 @@ class HTTPTransport(BaseTransport):
         """
         Make an HTTP request and return an HTTP response.
         """
-        method = 'GET' if (action is None) else action.upper()
+        if not action:
+            method = 'GET'
+        else:
+            method = action.upper()
         accept = session.get_accept_header()
 
         if params and method == 'GET':
