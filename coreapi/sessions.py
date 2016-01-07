@@ -1,6 +1,5 @@
 from coreapi.compat import string_types, urlparse
-from coreapi.document import Error
-from coreapi.exceptions import ErrorMessage, NotAcceptable, ParseError, TransportError
+from coreapi.exceptions import NotAcceptable, ParseError, TransportError
 from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
@@ -117,20 +116,4 @@ class Session(itypes.Object):
 
         # Perform the action, and return a new document.
         transport = self.determine_transport(link.url)
-        new_document = transport.transition(link.url, link.action, params)
-
-        # If we got an error response back, raise an exception.
-        if isinstance(new_document, Error):
-            raise ErrorMessage(new_document.messages)
-
-        # Return the new document or other media.
-        transition = link.transition
-        if not transition and link.action.lower() in ('put', 'patch', 'delete'):
-            transition = 'inline'
-
-        if transition == 'inline':
-            keys_to_link_parent = link_ancestors[-1].keys
-            if new_document is None:
-                return document.delete_in(keys_to_link_parent)
-            return document.set_in(keys_to_link_parent, new_document)
-        return new_document
+        return transport.transition(link, params, session=self, link_ancestors=link_ancestors)

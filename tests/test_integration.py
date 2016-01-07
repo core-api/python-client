@@ -19,6 +19,7 @@ class MockResponse(object):
     def __init__(self, content):
         self.content = content
         self.headers = {}
+        self.url = 'http://example.org'
 
 
 # Basic integration tests.

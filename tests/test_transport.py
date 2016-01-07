@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get_default_session
+from coreapi import get_default_session, Link
 from coreapi.exceptions import TransportError
 from coreapi.transport import HTTPTransport
 import pytest
@@ -15,6 +15,7 @@ class MockResponse(object):
     def __init__(self, content):
         self.content = content
         self.headers = {}
+        self.url = 'http://example.org'
 
 
 # Test transport errors.
@@ -45,10 +46,8 @@ def test_get(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='get'
-    )
+    link = Link(url='http://example.org', action='get')
+    doc = http.transition(link)
     assert doc == {'example': 123}
 
 
@@ -61,11 +60,8 @@ def test_get_with_parameters(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='get',
-        params={'example': 'abc'}
-    )
+    link = Link(url='http://example.org', action='get')
+    doc = http.transition(link, params={'example': 'abc'})
     assert doc == {'example': 'abc'}
 
 
@@ -76,11 +72,8 @@ def test_post(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='post',
-        params={'example': 'abc'}
-    )
+    link = Link(url='http://example.org', action='post')
+    doc = http.transition(link, params={'example': 'abc'})
     assert doc == {'data': {'example': 'abc'}}
 
 
@@ -90,8 +83,6 @@ def test_delete(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='delete'
-    )
+    link = Link(url='http://example.org', action='delete')
+    doc = http.transition(link)
     assert doc is None

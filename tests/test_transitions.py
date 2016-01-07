@@ -1,18 +1,21 @@
 # coding: utf-8
-from coreapi import action, Document, Link, BaseTransport, Session
+from coreapi import action, Document, Link, HTTPTransport, Session
 import datetime
 import pytest
 
 
-class MockTransport(BaseTransport):
+class MockTransport(HTTPTransport):
     schemes = ['mock']
 
-    def transition(self, url, action=None, params=None):
-        if action == 'get':
-            return Document(title='new', content={'new': 123})
-        elif action in ('put', 'post'):
-            return Document(title='new', content={'new': 123, 'param': params.get('param')})
-        return None
+    def transition(self, link, params=None, session=None, link_ancestors=None):
+        if link.action == 'get':
+            document = Document(title='new', content={'new': 123})
+        elif link.action in ('put', 'post'):
+            document = Document(title='new', content={'new': 123, 'param': params.get('param')})
+        else:
+            document = None
+
+        return self.handle_inline_replacements(document, link, link_ancestors)
 
 
 now = datetime.datetime.now()

@@ -41,7 +41,8 @@ def negotiate_decoder(content_type=None):
 def get(url):
     session = _default_session
     transport = session.determine_transport(url)
-    return transport.transition(url, 'get')
+    link = Link(url, action='get')
+    return transport.transition(link, session=session)
 
 
 def action(document, keys, **params):

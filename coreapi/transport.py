@@ -1,5 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
+from coreapi import Error, ErrorMessage
 import requests
 import itypes
 import json
@@ -8,17 +9,30 @@ import json
 class BaseTransport(itypes.Object):
     schemes = None
 
-    def transition(self, url, action=None, parameters=None):
+    def transition(self, link, params=None, session=None, link_ancestors=None):
         raise NotImplementedError()  # pragma: nocover
 
 
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def transition(self, url, action=None, params=None):
-        from coreapi import get_default_session
-        session = get_default_session()
+    def transition(self, link, params=None, session=None, link_ancestors=None):
+        if session is None:
+            from coreapi import get_default_session
+            session = get_default_session()
 
+        response = self.make_http_request(session, link.url, link.action, params)
+        document = self.load_document(session, response)
+
+        if isinstance(document, Error):
+            raise ErrorMessage(document.messages)
+
+        if link_ancestors:
+            document = self.handle_inline_replacements(document, link, link_ancestors)
+
+        return document
+
+    def make_http_request(self, session, url, action=None, params=None):
         method = 'GET' if (action is None) else action.upper()
         accept = session.get_accept_header()
 
@@ -44,10 +58,24 @@ class HTTPTransport(BaseTransport):
                 }
             }
 
-        response = requests.request(method, url, **opts)
+        return requests.request(method, url, **opts)
+
+    def load_document(self, session, response):
         if not response.content:
             return None
-
         content_type = response.headers.get('content-type')
         codec = session.negotiate_decoder(content_type)
-        return codec.load(response.content, base_url=url)
+        return codec.load(response.content, base_url=response.url)
+
+    def handle_inline_replacements(self, document, link, link_ancestors):
+        transition_type = link.transition
+        if not transition_type and link.action.lower() in ('put', 'patch', 'delete'):
+            transition_type = 'inline'
+
+        if transition_type == 'inline':
+            root = link_ancestors[0].document
+            keys_to_link_parent = link_ancestors[-1].keys
+            if document is None:
+                return root.delete_in(keys_to_link_parent)
+            return root.set_in(keys_to_link_parent, document)
+        return document
