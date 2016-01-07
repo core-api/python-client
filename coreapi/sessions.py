@@ -1,7 +1,6 @@
 from coreapi.compat import string_types, urlparse
 from coreapi.document import Error
 from coreapi.exceptions import ErrorMessage, NotAcceptable, ParseError, TransportError
-from coreapi.utils import dotted_path_to_list
 from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
@@ -107,7 +106,7 @@ class Session(itypes.Object):
 
     def action(self, document, keys, **params):
         if isinstance(keys, string_types):
-            keys = dotted_path_to_list(document, keys)
+            keys = [keys]
 
         # Validate the keys and link parameters.
         link, link_ancestors = validate_keys_to_link(document, keys)

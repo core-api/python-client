@@ -8,6 +8,31 @@ class NoDocument(Exception):
     pass
 
 
+def dotted_path_to_list(doc, path):
+    """
+    Given a document and a string dotted notation like 'rows.123.edit",
+    return a list of keys,such as ['rows', 123, 'edit'].
+    """
+    keys = path.split('.')
+    active = doc
+    for idx, key in enumerate(keys):
+        # Coerce array lookups to integers.
+        if isinstance(active, coreapi.Array):
+            try:
+                key = int(key)
+                keys[idx] = key
+            except:
+                pass
+
+        # Descend through the document, so we can correctly identify
+        # any nested array lookups.
+        try:
+            active = active[key]
+        except (KeyError, IndexError, ValueError, TypeError):
+            break
+    return keys
+
+
 def get_store_path():
     return os.path.join(os.path.expanduser('~'), '.coreapi')
 
@@ -77,7 +102,7 @@ def show(path):
         if len(path) > 1:
             click.echo('Too many arguments.')
             sys.exit(1)
-        keys = coreapi.dotted_path_to_list(doc, path[0])
+        keys = dotted_path_to_list(doc, path[0])
         for key in keys:
             doc = doc[key]
         if isinstance(doc, (bool, type(None))):
