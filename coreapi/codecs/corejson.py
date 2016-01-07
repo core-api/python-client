@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
+from coreapi.codecs.base import BaseCodec
 from coreapi.compat import string_types, force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
@@ -200,7 +201,7 @@ def _primative_to_document(data, base_url=None):
     return data
 
 
-class CoreJSONCodec(object):
+class CoreJSONCodec(BaseCodec):
     media_type = 'application/vnd.coreapi+json'
 
     def load(self, bytes, base_url=None):

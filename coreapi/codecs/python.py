@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from coreapi.codecs.base import BaseCodec
 from coreapi.document import Document, Link, Array, Object, Error
 
 
@@ -45,7 +46,7 @@ def _to_repr(node):
     return repr(node)
 
 
-class PythonCodec(object):
+class PythonCodec(BaseCodec):
     """
     A Python representation of a Document, for use with '__repr__'.
     """

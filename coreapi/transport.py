@@ -1,10 +1,18 @@
 # coding: utf-8
 from __future__ import unicode_literals
 import requests
+import itypes
 import json
 
 
-class HTTPTransport(object):
+class BaseTransport(itypes.Object):
+    schemes = None
+
+    def transition(self, url, action=None, parameters=None):
+        raise NotImplementedError()  # pragma: nocover
+
+
+class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
     def transition(self, url, action=None, parameters=None):

@@ -253,7 +253,7 @@ class Array(itypes.List):
         return _str(self)
 
 
-class Link(object):
+class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
@@ -304,11 +304,6 @@ class Link(object):
         validate_parameters(self, parameters)
         return self._func(document=document, link=self, **parameters)
 
-    def __setattr__(self, key, value):
-        if key.startswith('_'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Link' object does not support property assignment")
-
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
@@ -325,7 +320,7 @@ class Link(object):
         return _str(self)
 
 
-class Error(object):
+class Error(itypes.Object):
     """
     Represents an error message or messages from a Core API interface.
     """
@@ -340,11 +335,6 @@ class Error(object):
     @property
     def messages(self):
         return list(self._messages)
-
-    def __setattr__(self, key, value):
-        if key.startswith('_'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Error' object does not support property assignment")
 
     def __eq__(self, other):
         if isinstance(other, Error):

@@ -3,10 +3,34 @@ from coreapi.exceptions import NotAcceptable, ParseError, TransportError
 import itypes
 
 
-class Session(object):
+class Session(itypes.Object):
     def __init__(self, codecs, transports):
-        self.codecs = itypes.List(codecs)
-        self.transports = itypes.List(transports)
+        self._codecs = itypes.List(codecs)
+        self._transports = itypes.List(transports)
+        self._decoders = [
+            codec for codec in codecs
+            if not getattr(codec.load, 'not_implemented', False)
+        ]
+        self._encoders = [
+            codec for codec in codecs
+            if not getattr(codec.dump, 'not_implemented', False)
+        ]
+
+    @property
+    def codecs(self):
+        return self._codecs
+
+    @property
+    def encoders(self):
+        return self._encoders
+
+    @property
+    def decoders(self):
+        return self._decoders
+
+    @property
+    def transports(self):
+        return self._transports
 
     def get_accept_header(self):
         """
@@ -19,13 +43,11 @@ class Session(object):
         Given the value of a 'Content-Type' header, return the appropriate
         codec registered to decode the request content.
         """
-        decoders = [codec for codec in self.codecs if hasattr(codec, 'load')]
-
         if content_type is None:
-            return decoders[0]
+            return self.decoders[0]
 
         content_type = content_type.split(';')[0].strip().lower()
-        for codec in decoders:
+        for codec in self.decoders:
             if codec.media_type == content_type:
                 break
         else:
@@ -39,26 +61,24 @@ class Session(object):
         Given the value of a 'Accept' header, return a two tuple of the appropriate
         content type and codec registered to encode the response content.
         """
-        encoders = [codec for codec in self.codecs if hasattr(codec, 'dump')]
-
         if accept is None:
-            return encoders[0]
+            return self.encoders[0]
 
         acceptable = set([
             item.split(';')[0].strip().lower()
             for item in accept.split(',')
         ])
 
-        for codec in encoders:
+        for codec in self.encoders:
             if codec.media_type in acceptable:
                 return codec
 
-        for codec in encoders:
+        for codec in self.encoders:
             if codec.media_type.split('/')[0] + '/*' in acceptable:
                 return codec
 
         if '*/*' in acceptable:
-            return encoders[0]
+            return self.encoders[0]
 
         msg = "Unsupported media in Accept header '%s'" % accept
         raise NotAcceptable(msg)
