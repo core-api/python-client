@@ -58,7 +58,7 @@ def get_session():
     path = get_credentials_path()
     if os.path.exists(path) and os.path.isfile(path):
         store = open(path, 'rb')
-        credentials = json.loads(store)
+        credentials = json.loads(store.read())
         store.close()
         return coreapi.get_session(credentials)
     return coreapi.get_default_session()
@@ -103,8 +103,8 @@ def client(ctx, version):
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
 def get(url):
-    coreapi = get_session()
-    doc = coreapi.get(url)
+    session = get_session()
+    doc = session.get(url)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
@@ -159,8 +159,8 @@ def action(path, fields):
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
-    coreapi = get_session()
-    doc = coreapi.action(doc, path, **kwargs)
+    session = get_session()
+    doc = session.action(doc, path, **kwargs)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
