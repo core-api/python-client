@@ -10,12 +10,12 @@ class DefaultSession(object):
         ('application/vnd.coreapi+json', CoreJSONCodec),
         ('text/html', HTMLCodec)
     ])
-    transports = {
-        'http': HTTPTransport,
-        'https': HTTPTransport
-    }
+    transports = [HTTPTransport()]
 
     def get_accept_header(self):
+        """
+        Return an 'Accept' header for the given codecs.
+        """
         return ', '.join(self.codecs.keys())
 
     def negotiate_decoder(self, content_type=None):
@@ -81,10 +81,10 @@ class DefaultSession(object):
         if not netloc:
             raise TransportError('URL missing hostname "%s".' % url)
 
-        try:
-            transport_class = self.transports[scheme]
-        except KeyError:
+        for transport in self.transports:
+            if scheme in transport.schemes:
+                break
+        else:
             raise TransportError('Unknown URL scheme "%s".' % scheme)
 
-        transport = transport_class()
         return transport.transition(url, action, parameters)

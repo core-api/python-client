@@ -5,6 +5,8 @@ import json
 
 
 class HTTPTransport(object):
+    schemes = ['http', 'https']
+
     def transition(self, url, action=None, parameters=None):
         from coreapi.sessions import DefaultSession
         session = DefaultSession()

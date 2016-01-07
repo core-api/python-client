@@ -34,11 +34,13 @@ def get(url):
 
 
 def load(bytestring, content_type=None):
-    codec = negotiate_decoder(content_type)
+    session = DefaultSession()
+    codec = session.negotiate_decoder(content_type)
     return codec.load(bytestring)
 
 
 def dump(document, accept=None, **kwargs):
-    codec = negotiate_encoder(accept)
+    session = DefaultSession()
+    codec = session.negotiate_encoder(accept)
     content = codec.dump(document, **kwargs)
     return codec.media_type, content
