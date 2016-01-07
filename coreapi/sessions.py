@@ -1,8 +1,14 @@
-from coreapi.codecs import CoreJSONCodec, REGISTERED_CODECS
+from collections import OrderedDict
+from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.exceptions import ParseError, NotAcceptable
 
 
 class DefaultSession(object):
+    codecs = OrderedDict([
+        ('application/vnd.coreapi+json', CoreJSONCodec),
+        ('text/html', HTMLCodec)
+    ])
+
     def negotiate_decoder(self, content_type=None):
         """
         Given the value of a 'Content-Type' header, return the appropriate
@@ -13,7 +19,7 @@ class DefaultSession(object):
 
         content_type = content_type.split(';')[0].strip().lower()
         try:
-            codec_class = REGISTERED_CODECS[content_type]
+            codec_class = self.codecs[content_type]
         except KeyError:
             raise ParseError(
                 "Cannot parse unsupported content type '%s'" % content_type
@@ -33,7 +39,7 @@ class DefaultSession(object):
         content type and codec registered to encode the response content.
         """
         if accept is None:
-            key, codec_class = list(REGISTERED_CODECS.items())[0]
+            key, codec_class = list(self.codecs.items())[0]
             return codec_class()
 
         media_types = set([
@@ -41,16 +47,16 @@ class DefaultSession(object):
             for item in accept.split(',')
         ])
 
-        for key, codec_class in REGISTERED_CODECS.items():
+        for key, codec_class in self.codecs.items():
             if key in media_types:
                 return codec_class()
 
-        for key, codec_class in REGISTERED_CODECS.items():
+        for key, codec_class in self.codecs.items():
             if key.split('/')[0] + '/*' in media_types:
                 return codec_class()
 
         if '*/*' in media_types:
-            key, codec_class = list(REGISTERED_CODECS.items())[0]
+            key, codec_class = list(self.codecs.items())[0]
             return codec_class()
 
         raise NotAcceptable()
