@@ -1,75 +1,68 @@
 # coding: utf-8
-from coreapi import Document, Link
+from coreapi import action, Document, Link, HTTPTransport, Session
 import datetime
 import pytest
 
 
+class MockTransport(HTTPTransport):
+    schemes = ['mock']
+
+    def transition(self, link, params=None, session=None, link_ancestors=None):
+        if link.action == 'get':
+            document = Document(title='new', content={'new': 123})
+        elif link.action in ('put', 'post'):
+            document = Document(title='new', content={'new': 123, 'param': params.get('param')})
+        else:
+            document = None
+
+        return self.handle_inline_replacements(document, link, link_ancestors)
+
+
 now = datetime.datetime.now()
-
-
-# Transition functions.
-
-def follow(document, link):
-    return Document(title='new', content={'new': 123})
-
-
-def action(document, link, **parameters):
-    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
-
-
-def create(document, link, **parameters):
-    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
-
-
-def update(document, link, **parameters):
-    return Document(title='new', content={'new': 123, 'param': parameters.get('param')})
-
-
-def delete(document, link, **parameters):
-    return None
+session = Session(codecs=[], transports=[MockTransport()])
 
 
 @pytest.fixture
 def doc():
     return Document(title='original', content={
         'nested': Document(content={
-            'follow': Link(action='get', func=follow),
-            'action': Link(action='post', transition='inline', fields=['param'], func=action),
-            'create': Link(action='post', fields=['param'], func=create),
-            'update': Link(action='put', fields=['param'], func=update),
-            'delete': Link(action='delete', func=delete)
+            'follow': Link(url='mock://example.com', action='get'),
+            'action': Link(url='mock://example.com', action='post', transition='inline', fields=['param']),
+            'create': Link(url='mock://example.com', action='post', fields=['param']),
+            'update': Link(url='mock://example.com', action='put', fields=['param']),
+            'delete': Link(url='mock://example.com', action='delete')
         })
     })
 
 
 # Test valid transitions.
 
-def test_follow(doc):
-    new = doc.action(['nested', 'follow'])
+def test_get(doc):
+    new = session.action(doc, ['nested', 'follow'])
     assert new == {'new': 123}
     assert new.title == 'new'
 
 
-def test_action(doc):
-    new = doc.action(['nested', 'action'], param=123)
+def test_inline_post(doc):
+    new = session.action(doc, ['nested', 'action'], param=123)
     assert new == {'nested': {'new': 123, 'param': 123}}
     assert new.title == 'original'
 
 
-def test_create(doc):
-    new = doc.action(['nested', 'create'], param=456)
+def test_post(doc):
+    new = session.action(doc, ['nested', 'create'], param=456)
     assert new == {'new': 123, 'param': 456}
     assert new.title == 'new'
 
 
-def test_update(doc):
-    new = doc.action(['nested', 'update'], param=789)
+def test_put(doc):
+    new = session.action(doc, ['nested', 'update'], param=789)
     assert new == {'nested': {'new': 123, 'param': 789}}
     assert new.title == 'original'
 
 
 def test_delete(doc):
-    new = doc.action(['nested', 'delete'])
+    new = session.action(doc, ['nested', 'delete'])
     assert new == {}
     assert new.title == 'original'
 
@@ -78,19 +71,19 @@ def test_delete(doc):
 
 def test_invalid_type(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', 'update'], param=now)
+        action(doc, ['nested', 'update'], param=now)
 
 
 def test_invalid_type_in_list(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', 'update'], param=[now])
+        action(doc, ['nested', 'update'], param=[now])
 
 
 def test_invalid_type_in_dict(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', 'update'], param=[{"a": now}])
+        action(doc, ['nested', 'update'], param=[{"a": now}])
 
 
 def test_invalid_key_in_dict(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', 'update'], param=[{1: "a"}])
+        action(doc, ['nested', 'update'], param=[{1: "a"}])

@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from coreapi.codecs.base import BaseCodec
 from coreapi.compat import urlparse
 from coreapi.document import Document, Link, Array, Object, Error
 import jinja2
@@ -39,7 +40,7 @@ def _render_html(node, url=None, key=None, path=''):
     return template.render(node=node, render=_render_html, url=url, key=key, path=path)
 
 
-class HTMLCodec(object):
+class HTMLCodec(BaseCodec):
     media_type = 'text/html'
 
     def dump(self, document, extra_css=None, **kwargs):

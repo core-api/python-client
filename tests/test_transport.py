@@ -1,6 +1,7 @@
 # coding: utf-8
+from coreapi import get_default_session, Link
 from coreapi.exceptions import TransportError
-from coreapi.transport import transition, HTTPTransport
+from coreapi.transport import HTTPTransport
 import pytest
 import requests
 
@@ -14,23 +15,27 @@ class MockResponse(object):
     def __init__(self, content):
         self.content = content
         self.headers = {}
+        self.url = 'http://example.org'
 
 
 # Test transport errors.
 
 def test_unknown_scheme():
+    session = get_default_session()
     with pytest.raises(TransportError):
-        transition('ftp://example.org')
+        session.determine_transport('ftp://example.org')
 
 
 def test_missing_scheme():
+    session = get_default_session()
     with pytest.raises(TransportError):
-        transition('example.org')
+        session.determine_transport('example.org')
 
 
 def test_missing_hostname():
+    session = get_default_session()
     with pytest.raises(TransportError):
-        transition('http://')
+        session.determine_transport('http://')
 
 
 # Test basic transition types.
@@ -41,10 +46,8 @@ def test_get(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='get'
-    )
+    link = Link(url='http://example.org', action='get')
+    doc = http.transition(link)
     assert doc == {'example': 123}
 
 
@@ -57,11 +60,8 @@ def test_get_with_parameters(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='get',
-        parameters={'example': 'abc'}
-    )
+    link = Link(url='http://example.org', action='get')
+    doc = http.transition(link, params={'example': 'abc'})
     assert doc == {'example': 'abc'}
 
 
@@ -72,11 +72,8 @@ def test_post(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='post',
-        parameters={'example': 'abc'}
-    )
+    link = Link(url='http://example.org', action='post')
+    doc = http.transition(link, params={'example': 'abc'})
     assert doc == {'data': {'example': 'abc'}}
 
 
@@ -86,8 +83,27 @@ def test_delete(monkeypatch, http):
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
-    doc = http.transition(
-        url='http://example.org',
-        action='delete'
-    )
+    link = Link(url='http://example.org', action='delete')
+    doc = http.transition(link)
     assert doc is None
+
+
+# Test credentials
+
+def test_credentials(monkeypatch):
+    def mockreturn(method, url, headers):
+        return MockResponse(headers.get('authorization', ''))
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
+    transport = HTTPTransport(credentials=credentials)
+    session = get_default_session()
+
+    # Requests to example.org include credentials.
+    response = transport.make_http_request(session, 'http://example.org/123')
+    assert response.content == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
+
+    # Requests to other.org do not include credentials.
+    response = transport.make_http_request(session, 'http://other.org/123')
+    assert response.content == ''

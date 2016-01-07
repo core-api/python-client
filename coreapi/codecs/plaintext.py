@@ -1,4 +1,5 @@
 from __future__ import unicode_literals
+from coreapi.codecs.base import BaseCodec
 from coreapi.document import Document, Link, Array, Object, Error
 import click
 import json
@@ -88,7 +89,7 @@ def _fields_to_plaintext(link, colorize=False):
     ])
 
 
-class PlainTextCodec(object):
+class PlainTextCodec(BaseCodec):
     """
     A plaintext representation of a Document, intended for readability.
     """

@@ -2,8 +2,6 @@
 from __future__ import unicode_literals
 from collections import OrderedDict, namedtuple
 from coreapi.compat import string_types
-from coreapi.exceptions import ErrorMessage
-from coreapi.validation import validate_parameters
 import itypes
 
 
@@ -13,15 +11,6 @@ def _to_immutable(value):
     elif isinstance(value, list):
         return Array(value)
     return value
-
-
-def _default_link_func(document, link, **parameters):
-    """
-    When calling a link the default behavior is to call through
-    to the HTTP transport layer.
-    """
-    from coreapi.transport import transition
-    return transition(link.url, link.action, parameters=parameters)
 
 
 def _repr(node):
@@ -43,31 +32,6 @@ def _key_sorting(item):
     if isinstance(value, Link):
         return (1, key)
     return (0, key)
-
-
-def dotted_path_to_list(doc, path):
-    """
-    Given a document and a string dotted notation like 'rows.123.edit",
-    return a list of keys,such as ['rows', 123, 'edit'].
-    """
-    keys = path.split('.')
-    active = doc
-    for idx, key in enumerate(keys):
-        # Coerce array lookups to integers.
-        if isinstance(active, Array):
-            try:
-                key = int(key)
-                keys[idx] = key
-            except:
-                pass
-
-        # Descend through the document, so we can correctly identify
-        # any nested array lookups.
-        try:
-            active = active[key]
-        except (KeyError, IndexError, ValueError, TypeError):
-            break
-    return keys
 
 
 # The field class, as used by Link objects:
@@ -148,60 +112,6 @@ class Document(itypes.Dict):
             if isinstance(value, Link)
         ])
 
-    def action(self, keys, **kwargs):
-        """
-        Perform an action by calling one of the links in the document tree.
-        Returns a new document, or `None` if the current document was removed.
-        """
-        if isinstance(keys, string_types):
-            keys = dotted_path_to_list(self, keys)
-
-        if not isinstance(keys, (list, tuple)):
-            msg = "'keys' must be a dot seperated string or a list of strings."
-            raise TypeError(msg)
-        if any([
-            not isinstance(key, string_types) and not isinstance(key, int)
-            for key in keys
-        ]):
-            raise TypeError("'keys' must be a list of strings or ints.")
-
-        # Determine the link node being acted on, and its parent document.
-        # 'node' is the link we're calling the action for.
-        # 'document_keys' is the list of keys to the link's parent document.
-        node = self
-        document = self
-        document_keys = []
-        for idx, key in enumerate(keys, start=1):
-            node = node[key]
-            if isinstance(node, Document):
-                document = node
-                document_keys = keys[:idx]
-
-        # Ensure that we've correctly indexed into a link.
-        if not isinstance(node, Link):
-            raise ValueError(
-                "Can only call 'action' on a Link. Got type '%s'." % type(node)
-            )
-        link = node
-
-        # Perform the action, and return a new document.
-        ret = link._call(document, **kwargs)
-
-        # If we got an error response back, raise an exception.
-        if isinstance(ret, Error):
-            raise ErrorMessage(ret.messages)
-
-        # Return the new document or other media.
-        transition = link.transition
-        if not transition and link.action.lower() in ('put', 'patch', 'delete'):
-            transition = 'inline'
-
-        if transition == 'inline':
-            if ret is None:
-                return self.delete_in(document_keys)
-            return self.set_in(document_keys, ret)
-        return ret
-
 
 class Object(itypes.Dict):
     """
@@ -252,11 +162,11 @@ class Array(itypes.List):
         return _str(self)
 
 
-class Link(object):
+class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, transition=None, fields=None, func=None):
+    def __init__(self, url=None, action=None, transition=None, fields=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (action is not None) and (not isinstance(action, string_types)):
@@ -278,7 +188,6 @@ class Link(object):
             item if isinstance(item, Field) else Field(item, required=False)
             for item in fields
         ])
-        self._func = _default_link_func if func is None else func
 
     @property
     def url(self):
@@ -296,18 +205,6 @@ class Link(object):
     def fields(self):
         return self._fields
 
-    def _call(self, document, **parameters):
-        """
-        Call a link and return a new document or other media.
-        """
-        validate_parameters(self, parameters)
-        return self._func(document=document, link=self, **parameters)
-
-    def __setattr__(self, key, value):
-        if key.startswith('_'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Link' object does not support property assignment")
-
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
@@ -324,7 +221,7 @@ class Link(object):
         return _str(self)
 
 
-class Error(object):
+class Error(itypes.Object):
     """
     Represents an error message or messages from a Core API interface.
     """
@@ -339,11 +236,6 @@ class Error(object):
     @property
     def messages(self):
         return list(self._messages)
-
-    def __setattr__(self, key, value):
-        if key.startswith('_'):
-            return object.__setattr__(self, key, value)
-        raise TypeError("'Error' object does not support property assignment")
 
     def __eq__(self, other):
         if isinstance(other, Error):

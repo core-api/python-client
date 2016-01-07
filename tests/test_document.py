@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import required, dotted_path_to_list
+from coreapi import action, required
 from coreapi import Array, Document, Object, Link, Error
 import pytest
 
@@ -429,44 +429,24 @@ def test_link_field_items_must_be_valid():
 
 # Invalid calls to '.action()' should error.
 
-def test_keys_should_be_a_list_or_dotted_string(doc):
+def test_keys_should_be_a_list_or_string(doc):
     with pytest.raises(TypeError):
-        doc.action(True)
+        action(doc, True)
 
 
 def test_keys_should_be_a_list_of_strings_or_ints(doc):
     with pytest.raises(TypeError):
-        doc.action(['nested', {}])
+        action(doc, ['nested', {}])
 
 
 def test_keys_should_be_valid_indexes(doc):
     with pytest.raises(KeyError):
-        doc.action('dummy')
+        action(doc, 'dummy')
 
 
 def test_keys_should_access_a_link(doc):
     with pytest.raises(ValueError):
-        doc.action('dict')
-
-
-# Test dotted path notation maps to list of keys correctly.
-
-def test_dotted_path_notation():
-    doc = Document({'rows': [Document({'edit': Link()})]})
-    keys = dotted_path_to_list(doc, 'rows.0.edit')
-    assert keys == ['rows', 0, 'edit']
-
-
-def test_dotted_path_notation_with_invalid_array_lookup():
-    doc = Document({'rows': [Document({'edit': Link()})]})
-    keys = dotted_path_to_list(doc, 'rows.zero.edit')
-    assert keys == ['rows', 'zero', 'edit']
-
-
-def test_dotted_path_notation_with_invalid_key():
-    doc = Document({'rows': [Document({'edit': Link()})]})
-    keys = dotted_path_to_list(doc, 'dummy.0.edit')
-    assert keys == ['dummy', '0', 'edit']
+        action(doc, 'dict')
 
 
 # Documents and Objects have `.data` and `.links` attributes

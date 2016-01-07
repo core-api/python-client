@@ -1,5 +1,6 @@
 import click
 import coreapi
+import json
 import os
 import sys
 
@@ -8,8 +9,59 @@ class NoDocument(Exception):
     pass
 
 
+def dotted_path_to_list(doc, path):
+    """
+    Given a document and a string dotted notation like 'rows.123.edit",
+    return a list of keys,such as ['rows', 123, 'edit'].
+    """
+    keys = path.split('.')
+    active = doc
+    for idx, key in enumerate(keys):
+        # Coerce array lookups to integers.
+        if isinstance(active, coreapi.Array):
+            try:
+                key = int(key)
+                keys[idx] = key
+            except:
+                pass
+
+        # Descend through the document, so we can correctly identify
+        # any nested array lookups.
+        try:
+            active = active[key]
+        except (KeyError, IndexError, ValueError, TypeError):
+            break
+    return keys
+
+
+def get_credentials_path():
+    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
+    if os.path.isfile(directory):
+        os.remove(directory)
+        os.mkdir(directory)
+    elif not os.path.exists(directory):
+        os.mkdir(directory)
+    return os.path.join(directory, 'credentials.json')
+
+
 def get_store_path():
-    return os.path.join(os.path.expanduser('~'), '.coreapi')
+    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
+    if os.path.isfile(directory):
+        os.remove(directory)
+        os.mkdir(directory)
+    elif not os.path.exists(directory):
+        os.mkdir(directory)
+    return os.path.join(directory, 'document.json')
+
+
+def get_session():
+    path = get_credentials_path()
+    if os.path.exists(path) and os.path.isfile(path):
+        store = open(path, 'rb')
+        credentials = json.loads(store)
+        store.close()
+        return coreapi.get_session(credentials)
+    return coreapi.get_default_session()
 
 
 def write_to_store(doc):
@@ -51,17 +103,21 @@ def client(ctx, version):
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
 def get(url):
+    coreapi = get_session()
     doc = coreapi.get(url)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
 
-@click.command(help='Remove the current document.')
+@click.command(help='Remove the current document, and any stored credentials.')
 def clear():
     path = get_store_path()
     if os.path.exists(path):
         os.remove(path)
-    click.echo('Document cleared.')
+    path = get_credentials_path()
+    if os.path.exists(path):
+        os.remove(path)
+    click.echo('Cleared.')
 
 
 @click.command(help='Display the current document, or element at the given PATH.')
@@ -77,7 +133,7 @@ def show(path):
         if len(path) > 1:
             click.echo('Too many arguments.')
             sys.exit(1)
-        keys = coreapi.dotted_path_to_list(doc, path[0])
+        keys = dotted_path_to_list(doc, path[0])
         for key in keys:
             doc = doc[key]
         if isinstance(doc, (bool, type(None))):
@@ -103,7 +159,8 @@ def action(path, fields):
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
-    doc = doc.action(path, **kwargs)
+    coreapi = get_session()
+    doc = coreapi.action(doc, path, **kwargs)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
