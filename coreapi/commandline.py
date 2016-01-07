@@ -1,5 +1,6 @@
 import click
 import coreapi
+import json
 import os
 import sys
 
@@ -33,8 +34,34 @@ def dotted_path_to_list(doc, path):
     return keys
 
 
+def get_credentials_path():
+    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
+    if os.path.isfile(directory):
+        os.remove(directory)
+        os.mkdir(directory)
+    elif not os.path.exists(directory):
+        os.mkdir(directory)
+    return os.path.join(directory, 'credentials.json')
+
+
 def get_store_path():
-    return os.path.join(os.path.expanduser('~'), '.coreapi')
+    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
+    if os.path.isfile(directory):
+        os.remove(directory)
+        os.mkdir(directory)
+    elif not os.path.exists(directory):
+        os.mkdir(directory)
+    return os.path.join(directory, 'document.json')
+
+
+def get_session():
+    path = get_credentials_path()
+    if os.path.exists(path) and os.path.isfile(path):
+        store = open(path, 'rb')
+        credentials = json.loads(store)
+        store.close()
+        return coreapi.get_session(credentials)
+    return coreapi.get_default_session()
 
 
 def write_to_store(doc):
@@ -76,17 +103,21 @@ def client(ctx, version):
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
 def get(url):
+    coreapi = get_session()
     doc = coreapi.get(url)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
 
-@click.command(help='Remove the current document.')
+@click.command(help='Remove the current document, and any stored credentials.')
 def clear():
     path = get_store_path()
     if os.path.exists(path):
         os.remove(path)
-    click.echo('Document cleared.')
+    path = get_credentials_path()
+    if os.path.exists(path):
+        os.remove(path)
+    click.echo('Cleared.')
 
 
 @click.command(help='Display the current document, or element at the given PATH.')
@@ -128,7 +159,8 @@ def action(path, fields):
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
-    doc = doc.action(path, **kwargs)
+    coreapi = get_session()
+    doc = coreapi.action(doc, path, **kwargs)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 

@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import action, get, load, dump, Link, ErrorMessage
+from coreapi import get_session, action, get, load, dump, Link, ErrorMessage
 import requests
 import pytest
 
@@ -65,3 +65,9 @@ def test_error(monkeypatch, document):
 
     with pytest.raises(ErrorMessage):
         action(document, ['next'])
+
+
+def test_get_session():
+    session = get_session(credentials={'example.org': 'abc'})
+    assert len(session.transports) == 1
+    assert session.transports[0].credentials == {'example.org': 'abc'}

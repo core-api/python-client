@@ -18,13 +18,20 @@ __all__ = [
 
 
 _default_session = Session(
-    codecs=[CoreJSONCodec(), HTMLCodec()],
+    codecs=[CoreJSONCodec(), HTMLCodec(), PlainTextCodec()],
     transports=[HTTPTransport()]
 )
 
 
 def get_default_session():
     return _default_session
+
+
+def get_session(credentials):
+    return Session(
+        codecs=[CoreJSONCodec(), HTMLCodec(), PlainTextCodec()],
+        transports=[HTTPTransport(credentials=credentials)]
+    )
 
 
 def negotiate_encoder(accept=None):
