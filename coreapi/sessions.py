@@ -29,7 +29,7 @@ class DefaultSession(object):
             if codec.media_type == content_type:
                 break
         else:
-            msg = "Cannot parse unsupported content type '%s'" % content_type
+            msg = "Unsupported media in Content-Type header '%s'" % content_type
             raise ParseError(msg)
 
         return codec
@@ -60,7 +60,8 @@ class DefaultSession(object):
         if '*/*' in acceptable:
             return encoders[0]
 
-        raise NotAcceptable()
+        msg = "Unsupported media in Accept header '%s'" % accept
+        raise NotAcceptable(msg)
 
     def transition(self, url, action=None, parameters=None):
         url_components = urlparse.urlparse(url)
@@ -68,15 +69,15 @@ class DefaultSession(object):
         netloc = url_components.netloc
 
         if not scheme:
-            raise TransportError('URL missing scheme "%s".' % url)
+            raise TransportError("URL missing scheme '%s'." % url)
 
         if not netloc:
-            raise TransportError('URL missing hostname "%s".' % url)
+            raise TransportError("URL missing hostname '%s'." % url)
 
         for transport in self.transports:
             if scheme in transport.schemes:
                 break
         else:
-            raise TransportError('Unknown URL scheme "%s".' % scheme)
+            raise TransportError("Unsupported URL scheme '%s'." % scheme)
 
         return transport.transition(url, action, parameters)
