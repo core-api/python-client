@@ -6,12 +6,11 @@ from coreapi.sessions import Session
 from coreapi.transport import BaseTransport, HTTPTransport
 
 
-__version__ = '1.1.0'
+__version__ = '1.2.0'
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
-    'dotted_path_to_list',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
     'BaseTransport', 'HTTPTransport',
     'load', 'dump', 'get', 'get_default_session'

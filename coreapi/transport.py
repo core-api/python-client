@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi import Error, ErrorMessage, TransportError
+from coreapi import Error, ErrorMessage
 from coreapi.compat import urlparse
 import requests
 import itypes
@@ -31,7 +31,6 @@ class HTTPTransport(BaseTransport):
 
         response = self.make_http_request(session, link.url, link.action, params)
         document = self.load_document(session, response)
-
         if isinstance(document, Error):
             raise ErrorMessage(document.messages)
 
@@ -41,6 +40,9 @@ class HTTPTransport(BaseTransport):
         return document
 
     def make_http_request(self, session, url, action=None, params=None):
+        """
+        Make an HTTP request and return an HTTP response.
+        """
         method = 'GET' if (action is None) else action.upper()
         accept = session.get_accept_header()
 
@@ -75,6 +77,9 @@ class HTTPTransport(BaseTransport):
         return requests.request(method, url, **opts)
 
     def load_document(self, session, response):
+        """
+        Given an HTTP response, return the decoded Core API document.
+        """
         if not response.content:
             return None
         content_type = response.headers.get('content-type')
@@ -82,6 +87,13 @@ class HTTPTransport(BaseTransport):
         return codec.load(response.content, base_url=response.url)
 
     def handle_inline_replacements(self, document, link, link_ancestors):
+        """
+        Given a new document, and the link/ancestors it was created,
+        determine if we should:
+
+        * Make an inline replacement and then return the modified document tree.
+        * Return the new document as-is.
+        """
         transition_type = link.transition
         if not transition_type and link.action.lower() in ('put', 'patch', 'delete'):
             transition_type = 'inline'
