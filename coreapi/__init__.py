@@ -40,7 +40,8 @@ def negotiate_decoder(content_type=None):
 
 def get(url):
     session = _default_session
-    return session.transition(url, 'get')
+    transport = session.determine_transport(url)
+    return transport.transition(url, 'get')
 
 
 def action(document, keys, **params):

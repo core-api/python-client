@@ -85,7 +85,10 @@ class Session(itypes.Object):
         msg = "Unsupported media in Accept header '%s'" % accept
         raise NotAcceptable(msg)
 
-    def transition(self, url, action=None, params=None):
+    def determine_transport(self, url):
+        """
+        Given a URL determine the appropriate transport instance.
+        """
         url_components = urlparse.urlparse(url)
         scheme = url_components.scheme.lower()
         netloc = url_components.netloc
@@ -102,7 +105,7 @@ class Session(itypes.Object):
         else:
             raise TransportError("Unsupported URL scheme '%s'." % scheme)
 
-        return transport.transition(url, action, params)
+        return transport
 
     def action(self, document, keys, **params):
         if isinstance(keys, string_types):
@@ -113,7 +116,8 @@ class Session(itypes.Object):
         validate_parameters(link, params)
 
         # Perform the action, and return a new document.
-        new_document = self.transition(link.url, link.action, params)
+        transport = self.determine_transport(link.url)
+        new_document = transport.transition(link.url, link.action, params)
 
         # If we got an error response back, raise an exception.
         if isinstance(new_document, Error):

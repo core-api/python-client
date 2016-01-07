@@ -22,19 +22,19 @@ class MockResponse(object):
 def test_unknown_scheme():
     session = get_default_session()
     with pytest.raises(TransportError):
-        session.transition('ftp://example.org')
+        session.determine_transport('ftp://example.org')
 
 
 def test_missing_scheme():
     session = get_default_session()
     with pytest.raises(TransportError):
-        session.transition('example.org')
+        session.determine_transport('example.org')
 
 
 def test_missing_hostname():
     session = get_default_session()
     with pytest.raises(TransportError):
-        session.transition('http://')
+        session.determine_transport('http://')
 
 
 # Test basic transition types.
