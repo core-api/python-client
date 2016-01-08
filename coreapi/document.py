@@ -166,13 +166,13 @@ class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, transition=None, fields=None):
+    def __init__(self, url=None, action=None, inplace=None, fields=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (action is not None) and (not isinstance(action, string_types)):
             raise TypeError("Argument 'action' must be a string.")
-        if (transition is not None) and (not isinstance(transition, string_types)):
-            raise TypeError("Argument 'transition' must be a string.")
+        if (inplace is not None) and (not isinstance(inplace, bool)):
+            raise TypeError("Argument 'inplace' must be a boolean.")
         if (fields is not None) and (not isinstance(fields, list)):
             raise TypeError("Argument 'fields' must be a list.")
         if (fields is not None) and any([
@@ -183,7 +183,7 @@ class Link(itypes.Object):
 
         self._url = '' if (url is None) else url
         self._action = '' if (action is None) else action
-        self._transition = '' if (transition is None) else transition
+        self._inplace = inplace
         self._fields = () if (fields is None) else tuple([
             item if isinstance(item, Field) else Field(item, required=False)
             for item in fields
@@ -198,8 +198,8 @@ class Link(itypes.Object):
         return self._action
 
     @property
-    def transition(self):
-        return self._transition
+    def inplace(self):
+        return self._inplace
 
     @property
     def fields(self):
@@ -210,7 +210,7 @@ class Link(itypes.Object):
             isinstance(other, Link) and
             self.url == other.url and
             self.action == other.action and
-            self.transition == other.transition and
+            self.inplace == other.inplace and
             set(self.fields) == set(other.fields)
         )
 

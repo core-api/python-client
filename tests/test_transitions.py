@@ -10,11 +10,11 @@ class MockTransport(HTTPTransport):
         if link.action == 'get':
             document = Document(title='new', content={'new': 123})
         elif link.action in ('put', 'post'):
-            document = Document(title='new', content={'new': 123, 'param': params.get('param')})
+            document = Document(title='new', content={'new': 123, 'foo': params.get('foo')})
         else:
             document = None
 
-        return self.handle_inline_replacements(document, link, link_ancestors)
+        return self.handle_inplace_replacements(document, link, link_ancestors)
 
 
 session = Session(codecs=[], transports=[MockTransport()])
@@ -25,9 +25,9 @@ def doc():
     return Document(title='original', content={
         'nested': Document(content={
             'follow': Link(url='mock://example.com', action='get'),
-            'action': Link(url='mock://example.com', action='post', transition='inline', fields=['param']),
-            'create': Link(url='mock://example.com', action='post', fields=['param']),
-            'update': Link(url='mock://example.com', action='put', fields=['param']),
+            'action': Link(url='mock://example.com', action='post', inplace=True, fields=['foo']),
+            'create': Link(url='mock://example.com', action='post', fields=['foo']),
+            'update': Link(url='mock://example.com', action='put', fields=['foo']),
             'delete': Link(url='mock://example.com', action='delete')
         })
     })
@@ -42,20 +42,20 @@ def test_get(doc):
 
 
 def test_inline_post(doc):
-    new = session.action(doc, ['nested', 'action'], param=123)
-    assert new == {'nested': {'new': 123, 'param': 123}}
+    new = session.action(doc, ['nested', 'action'], params={'foo': 123})
+    assert new == {'nested': {'new': 123, 'foo': 123}}
     assert new.title == 'original'
 
 
 def test_post(doc):
-    new = session.action(doc, ['nested', 'create'], param=456)
-    assert new == {'new': 123, 'param': 456}
+    new = session.action(doc, ['nested', 'create'], params={'foo': 456})
+    assert new == {'new': 123, 'foo': 456}
     assert new.title == 'new'
 
 
 def test_put(doc):
-    new = session.action(doc, ['nested', 'update'], param=789)
-    assert new == {'nested': {'new': 123, 'param': 789}}
+    new = session.action(doc, ['nested', 'update'], params={'foo': 789})
+    assert new == {'nested': {'new': 123, 'foo': 789}}
     assert new.title == 'original'
 
 

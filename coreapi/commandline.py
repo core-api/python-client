@@ -9,29 +9,31 @@ class NoDocument(Exception):
     pass
 
 
-def dotted_path_to_list(doc, path):
+def coerce_key_types(doc, keys):
     """
-    Given a document and a string dotted notation like 'rows.123.edit",
-    return a list of keys,such as ['rows', 123, 'edit'].
+    Given a document and a list of keys such as ['rows', '123', 'edit'],
+    return a list of keys, such as ['rows', 123, 'edit'].
     """
-    keys = path.split('.')
+    ret = []
     active = doc
     for idx, key in enumerate(keys):
         # Coerce array lookups to integers.
         if isinstance(active, coreapi.Array):
             try:
                 key = int(key)
-                keys[idx] = key
             except:
                 pass
 
         # Descend through the document, so we can correctly identify
         # any nested array lookups.
+        ret.append(key)
         try:
             active = active[key]
         except (KeyError, IndexError, ValueError, TypeError):
+            ret += keys[idx + 1:]
             break
-    return keys
+
+    return ret
 
 
 def get_credentials_path():
@@ -130,10 +132,7 @@ def show(path):
         return
 
     if path:
-        if len(path) > 1:
-            click.echo('Too many arguments.')
-            sys.exit(1)
-        keys = dotted_path_to_list(doc, path[0])
+        keys = coerce_key_types(doc, path)
         for key in keys:
             doc = doc[key]
         if isinstance(doc, (bool, type(None))):
@@ -141,17 +140,21 @@ def show(path):
     click.echo(dump_to_console(doc))
 
 
+def validate_params(ctx, param, value):
+    if any(['=' not in item for item in value]):
+        raise click.BadParameter('Parameters need to be in format <field name>=<value>')
+    return value
+
+
 @click.command(help='Interact with the current document, given a PATH to a link.')
-@click.argument('path')
-@click.argument('fields', nargs=-1)
-def action(path, fields):
-    kwargs = {}
-    for field in fields:
-        if '=' not in field:
-            click.echo('All fields should be in format "key=value".')
-            sys.exit(1)
-        key, value = field.split('=', 1)
-        kwargs[key] = value
+@click.argument('path', nargs=-1)
+@click.option('--param', '-p', multiple=True, callback=validate_params, help='Parameter in the form <field name>=<value>.')
+def action(path, param):
+    if not path:
+        click.echo('Missing PATH to a link in the document.')
+        sys.exit(1)
+
+    kwargs = dict([tuple(item.split('=', 1)) for item in param])
 
     try:
         doc = read_from_store()
@@ -160,7 +163,7 @@ def action(path, fields):
         return
 
     session = get_session()
-    keys = dotted_path_to_list(doc, path)
+    keys = coerce_key_types(doc, path)
     doc = session.action(doc, keys, **kwargs)
     click.echo(dump_to_console(doc))
     write_to_store(doc)

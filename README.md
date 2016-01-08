@@ -60,9 +60,9 @@ You can also inspect the document URL and title.
 
 ### Interacting with documents
 
-Documents in the Python Core API library are immutable objects. To perform a transition we use the `.action()` function and assign the resulting new document.
+Documents in the Python Core API library are immutable objects. To perform a transition we use the `coreapi.action()` function and assign the resulting new document.
 
-    >>> doc = coreapi.action(doc, ['add_note'], description='My new note.')
+    >>> doc = coreapi.action(doc, ['add_note'], params={'description': 'My new note.'})
 
 The arguments to `.action()` are:
 
@@ -72,7 +72,7 @@ The arguments to `.action()` are:
 
 Transitions may update part of the document tree.
 
-    >>> doc = coreapi.action(doc, ['notes', 0, 'edit'], complete=True)
+    >>> doc = coreapi.action(doc, ['notes', 0, 'edit'], params={'complete': True})
     >>> doc['notes'][0]['complete']
     True
 

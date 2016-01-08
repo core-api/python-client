@@ -77,8 +77,8 @@ def _document_to_primative(node, base_url=None):
             ret['url'] = url
         if node.action:
             ret['action'] = node.action
-        if node.transition:
-            ret['transition'] = node.transition
+        if node.inplace is not None:
+            ret['inplace'] = node.inplace
         if node.fields:
             # Use short format for optional fields, long format for required.
             ret['fields'] = [
@@ -144,9 +144,9 @@ def _primative_to_document(data, base_url=None):
         if not isinstance(action, string_types):
             action = ''
 
-        transition = data.get('transition')
-        if not isinstance(transition, string_types):
-            transition = ''
+        inplace = data.get('inplace')
+        if not isinstance(inplace, bool):
+            inplace = None
 
         fields = data.get('fields', [])
         if not isinstance(fields, list):
@@ -167,7 +167,7 @@ def _primative_to_document(data, base_url=None):
                 for item in fields
             ]
 
-        return Link(url=url, action=action, transition=transition, fields=fields)
+        return Link(url=url, action=action, inplace=inplace, fields=fields)
 
     elif isinstance(data, dict) and data.get('_type') == 'error':
         # Error
