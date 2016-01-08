@@ -14,7 +14,7 @@ class MockTransport(HTTPTransport):
         else:
             document = None
 
-        return self.handle_inline_replacements(document, link, link_ancestors)
+        return self.handle_inplace_replacements(document, link, link_ancestors)
 
 
 session = Session(codecs=[], transports=[MockTransport()])
@@ -25,7 +25,7 @@ def doc():
     return Document(title='original', content={
         'nested': Document(content={
             'follow': Link(url='mock://example.com', action='get'),
-            'action': Link(url='mock://example.com', action='post', transition='inline', fields=['foo']),
+            'action': Link(url='mock://example.com', action='post', inplace=True, fields=['foo']),
             'create': Link(url='mock://example.com', action='post', fields=['foo']),
             'update': Link(url='mock://example.com', action='put', fields=['foo']),
             'delete': Link(url='mock://example.com', action='delete')
