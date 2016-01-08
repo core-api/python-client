@@ -6,29 +6,13 @@ from coreapi.document import Document, Link, Array, Object
 import json
 
 
-def _graceful_relative_url(base_url, url):
-    """
-    Return a graceful link for a URL relative to a base URL.
-
-    * If the have the same scheme and hostname, return the path & query params.
-    * Otherwise return the full URL.
-    """
-    if not url:
-        return base_url or '/'
-    base_prefix = '%s://%s' % urlparse.urlparse(base_url or '')[0:2]
-    url_prefix = '%s://%s' % urlparse.urlparse(url or '')[0:2]
-    if base_prefix == url_prefix and url_prefix != '://':
-        return url[len(url_prefix):]
-    return url
-
-
 def _is_array_containing_instance(value, datatype):
     return isinstance(value, Array) and value and isinstance(value[0], datatype)
 
 
 def _document_to_primative(node, base_url=None):
     if isinstance(node, Document):
-        url = _graceful_relative_url(base_url, node.url)
+        url = urlparse.urljoin(base_url, node.url)
         links = OrderedDict()
         embedded = OrderedDict()
         data = OrderedDict()
@@ -66,8 +50,9 @@ def _document_to_primative(node, base_url=None):
         return ret
 
     elif isinstance(node, Link):
+        url = urlparse.urljoin(base_url, node.url)
         ret = OrderedDict()
-        ret['href'] = _graceful_relative_url(node.url, base_url)
+        ret['href'] = url
         if node.fields and node.action.lower() in ('get', ''):
             ret['href'] += "{?%s}" % ','.join([field.name for field in node.fields])
             ret['templated'] = True
@@ -85,6 +70,46 @@ def _document_to_primative(node, base_url=None):
         ])
 
     return node
+
+
+def _parse_document(data, base_url=None):
+    self = data.get('_links', {}).get('self')
+    if not self:
+        url = base_url
+        title = None
+    else:
+        url = urlparse.urljoin(base_url, self.get('href'))
+        title = self.get('title')
+
+    content = {}
+
+    for key, value in data.get('_links', {}).items():
+        if key in ('self', 'curies', 'curie'):
+            continue
+
+        if ':' in key:
+            key = key.split(':', 1)[1]
+
+        if isinstance(value, list):
+            content[key] = [
+                Link(url=urlparse.urljoin(base_url, item.get('href')))
+                for item in value
+            ]
+        elif isinstance(value, dict):
+            content[key] = Link(url=urlparse.urljoin(base_url, value.get('href')))
+
+    for key, value in data.get('_embedded', {}):
+        if isinstance(value, list):
+            content[key] = [_parse_document(item, base_url=url) for item in value]
+        elif isinstance(value, dict):
+            content[key] = _parse_document(value, base_url=url)
+
+    for key, value in data.items():
+        if key not in ('_embedded', '_links'):
+            content[key] = value
+
+    return Document(url, title, content)
+
 
 
 class HALCodec(BaseCodec):
@@ -109,3 +134,18 @@ class HALCodec(BaseCodec):
 
         data = _document_to_primative(document)
         return force_bytes(json.dumps(data, **options))
+
+    def load(self, bytes, base_url=None):
+        """
+        Takes a bytestring and returns a document.
+        """
+        try:
+            data = json.loads(bytes.decode('utf-8'))
+        except ValueError as exc:
+            raise ParseError('Malformed JSON. %s' % exc)
+
+        doc = _parse_document(data, base_url)
+        if not isinstance(doc, Document):
+            raise ParseError('Top level node must be a document message.')
+
+        return doc

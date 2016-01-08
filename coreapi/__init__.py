@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi.codecs import BaseCodec, CoreJSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
+from coreapi.codecs import BaseCodec, CoreJSONCodec, HALCodec, HTMLCodec, PlainTextCodec, PythonCodec
 from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.sessions import Session
@@ -8,7 +8,7 @@ from coreapi.transport import BaseTransport, HTTPTransport
 
 __version__ = '1.4.0'
 __all__ = [
-    'BaseCodec', 'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'BaseCodec', 'CoreJSONCodec', 'HALCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
@@ -18,7 +18,7 @@ __all__ = [
 
 
 _default_session = Session(
-    codecs=[CoreJSONCodec(), HTMLCodec(), PlainTextCodec()],
+    codecs=[CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()],
     transports=[HTTPTransport()]
 )
 
@@ -29,7 +29,7 @@ def get_default_session():
 
 def get_session(credentials):
     return Session(
-        codecs=[CoreJSONCodec(), HTMLCodec(), PlainTextCodec()],
+        codecs=_default_session.codecs,
         transports=[HTTPTransport(credentials=credentials)]
     )
 
