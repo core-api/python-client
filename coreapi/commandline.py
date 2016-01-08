@@ -154,7 +154,7 @@ def action(path, param):
         click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
 
-    kwargs = dict([tuple(item.split('=', 1)) for item in param])
+    params = dict([tuple(item.split('=', 1)) for item in param])
 
     try:
         doc = read_from_store()
@@ -164,7 +164,7 @@ def action(path, param):
 
     session = get_session()
     keys = coerce_key_types(doc, path)
-    doc = session.action(doc, keys, **kwargs)
+    doc = session.action(doc, keys, params=params)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 
