@@ -30,7 +30,7 @@ def coerce_key_types(doc, keys):
         try:
             active = active[key]
         except (KeyError, IndexError, ValueError, TypeError):
-            ret += keys[idx+1:]
+            ret += keys[idx + 1:]
             break
 
     return ret

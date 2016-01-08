@@ -49,9 +49,9 @@ def get(url):
     return session.get(url)
 
 
-def action(document, keys, **params):
+def action(document, keys, params=None):
     session = _default_session
-    return session.action(document, keys, **params)
+    return session.action(document, keys, params)
 
 
 def load(bytestring, content_type=None):
