@@ -16,7 +16,7 @@ def doc():
             'link': Link(
                 url='/',
                 action='post',
-                transition='inline',
+                inplace=True,
                 fields=['optional', required('required')]
             ),
             'nested': {'child': Link(url='/123')}
@@ -223,7 +223,7 @@ def test_document_repr(doc):
         "'integer': 123, "
         "'list': [1, 2, 3], "
         "'nested': {'child': Link(url='/123')}, "
-        "'link': Link(url='/', action='post', transition='inline', "
+        "'link': Link(url='/', action='post', inplace=True, "
         "fields=['optional', required('required')])"
         "})"
     )
@@ -333,7 +333,7 @@ def test_document_equality(doc):
         'link': Link(
             url='/',
             action='post',
-            transition='inline',
+            inplace=True,
             fields=['optional', required('required')]
         ),
         'nested': {'child': Link(url='/123')}
@@ -412,9 +412,9 @@ def test_link_action_must_be_string():
         Link(action=123)
 
 
-def test_link_transition_must_be_string():
+def test_link_inplace_must_be_boolean():
     with pytest.raises(TypeError):
-        Link(transition=123)
+        Link(inplace=123)
 
 
 def test_link_fields_must_be_list():

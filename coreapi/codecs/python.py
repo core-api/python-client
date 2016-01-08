@@ -28,8 +28,8 @@ def _to_repr(node):
         args = "url=%s" % repr(node.url)
         if node.action:
             args += ", action=%s" % repr(node.action)
-        if node.transition:
-            args += ", transition=%s" % repr(node.transition)
+        if node.inplace is not None:
+            args += ", inplace=%s" % repr(node.inplace)
         if node.fields:
             fields_repr = ', '.join([
                 'required(%s)' % repr(field.name)

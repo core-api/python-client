@@ -35,7 +35,7 @@ class HTTPTransport(BaseTransport):
             raise ErrorMessage(document.messages)
 
         if link_ancestors:
-            document = self.handle_inline_replacements(document, link, link_ancestors)
+            document = self.handle_inplace_replacements(document, link, link_ancestors)
 
         return document
 
@@ -89,7 +89,7 @@ class HTTPTransport(BaseTransport):
         codec = session.negotiate_decoder(content_type)
         return codec.load(response.content, base_url=response.url)
 
-    def handle_inline_replacements(self, document, link, link_ancestors):
+    def handle_inplace_replacements(self, document, link, link_ancestors):
         """
         Given a new document, and the link/ancestors it was created,
         determine if we should:
@@ -97,14 +97,15 @@ class HTTPTransport(BaseTransport):
         * Make an inline replacement and then return the modified document tree.
         * Return the new document as-is.
         """
-        transition_type = link.transition
-        if not transition_type and link.action.lower() in ('put', 'patch', 'delete'):
-            transition_type = 'inline'
+        inplace = link.inplace
+        if inplace is None and link.action.lower() in ('put', 'patch', 'delete'):
+            inplace = True
 
-        if transition_type == 'inline':
+        if inplace:
             root = link_ancestors[0].document
             keys_to_link_parent = link_ancestors[-1].keys
             if document is None:
                 return root.delete_in(keys_to_link_parent)
             return root.set_in(keys_to_link_parent, document)
+
         return document

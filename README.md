@@ -60,7 +60,7 @@ You can also inspect the document URL and title.
 
 ### Interacting with documents
 
-Documents in the Python Core API library are immutable objects. To perform a transition we use the `.action()` function and assign the resulting new document.
+Documents in the Python Core API library are immutable objects. To perform a transition we use the `coreapi.action()` function and assign the resulting new document.
 
     >>> doc = coreapi.action(doc, ['add_note'], params={'description': 'My new note.'})
 
