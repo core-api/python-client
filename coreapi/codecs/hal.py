@@ -4,6 +4,7 @@ from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object
 import json
+import uritemplate
 
 
 def _is_array_containing_instance(value, datatype):
@@ -72,6 +73,15 @@ def _document_to_primative(node, base_url=None):
     return node
 
 
+def _parse_link(data, base_url=None):
+    url = urlparse.urljoin(base_url, data.get('href'))
+    if data.get('templated'):
+        fields = list(uritemplate.variables(url))
+    else:
+        fields = None
+    return Link(url=url, fields=fields)
+
+
 def _parse_document(data, base_url=None):
     self = data.get('_links', {}).get('self')
     if not self:
@@ -91,12 +101,9 @@ def _parse_document(data, base_url=None):
             key = key.split(':', 1)[1]
 
         if isinstance(value, list):
-            content[key] = [
-                Link(url=urlparse.urljoin(base_url, item.get('href')))
-                for item in value
-            ]
+            content[key] = [_parse_link(item, base_url) for item in value]
         elif isinstance(value, dict):
-            content[key] = Link(url=urlparse.urljoin(base_url, value.get('href')))
+            content[key] = _parse_link(value, base_url)
 
     for key, value in data.get('_embedded', {}):
         if isinstance(value, list):
