@@ -112,9 +112,12 @@ class Session(itypes.Object):
         link = Link(url, action='get')
         return transport.transition(link, session=self)
 
-    def action(self, document, keys, **params):
+    def action(self, document, keys, params=None):
         if isinstance(keys, string_types):
             keys = [keys]
+
+        if params is None:
+            params = {}
 
         # Validate the keys and link parameters.
         link, link_ancestors = validate_keys_to_link(document, keys)

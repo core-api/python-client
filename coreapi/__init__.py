@@ -6,7 +6,7 @@ from coreapi.sessions import Session
 from coreapi.transport import BaseTransport, HTTPTransport
 
 
-__version__ = '1.2.7'
+__version__ = '1.3.0'
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
@@ -49,9 +49,9 @@ def get(url):
     return session.get(url)
 
 
-def action(document, keys, **params):
+def action(document, keys, params=None):
     session = _default_session
-    return session.action(document, keys, **params)
+    return session.action(document, keys, params)
 
 
 def load(bytestring, content_type=None):
