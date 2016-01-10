@@ -17,12 +17,17 @@ class BaseTransport(itypes.Object):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None):
+    def __init__(self, credentials=None, headers=None):
         self._credentials = itypes.Dict(credentials or {})
+        self._headers = itypes.Dict(headers or {})
 
     @property
     def credentials(self):
         return self._credentials
+
+    @property
+    def headers(self):
+        return self._headers
 
     def transition(self, link, params=None, session=None, link_ancestors=None):
         if session is None:
@@ -76,6 +81,9 @@ class HTTPTransport(BaseTransport):
             host = url_components.netloc
             if host in self.credentials:
                 opts['headers']['authorization'] = self.credentials[host]
+
+        if self.headers:
+            opts['headers'].update(self.headers)
 
         return requests.request(method, url, **opts)
 
