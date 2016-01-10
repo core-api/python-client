@@ -68,6 +68,10 @@ def test_error(monkeypatch, document):
 
 
 def test_get_session():
-    session = get_session(credentials={'example.org': 'abc'})
+    session = get_session(
+        credentials={'example.org': 'abc'},
+        headers={'user-agent': 'foo'}
+    )
     assert len(session.transports) == 1
     assert session.transports[0].credentials == {'example.org': 'abc'}
+    assert session.transports[0].headers == {'user-agent': 'foo'}

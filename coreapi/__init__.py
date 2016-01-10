@@ -27,10 +27,10 @@ def get_default_session():
     return _default_session
 
 
-def get_session(credentials):
+def get_session(credentials=None, headers=None):
     return Session(
         codecs=[CoreJSONCodec(), HTMLCodec(), PlainTextCodec()],
-        transports=[HTTPTransport(credentials=credentials)]
+        transports=[HTTPTransport(credentials=credentials, headers=headers)]
     )
 
 

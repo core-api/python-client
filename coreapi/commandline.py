@@ -5,8 +5,11 @@ import os
 import sys
 
 
-class NoDocument(Exception):
-    pass
+config_path = os.path.join(os.path.expanduser('~'), '.coreapi')
+
+store_path = os.path.join(config_path, 'document.json')
+credentials_path = os.path.join(config_path, 'credentials.json')
+headers_path = os.path.join(config_path, 'headers.json')
 
 
 def coerce_key_types(doc, keys):
@@ -36,52 +39,26 @@ def coerce_key_types(doc, keys):
     return ret
 
 
-def get_credentials_path():
-    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
-    if os.path.isfile(directory):
-        os.remove(directory)
-        os.mkdir(directory)
-    elif not os.path.exists(directory):
-        os.mkdir(directory)
-    return os.path.join(directory, 'credentials.json')
-
-
-def get_store_path():
-    directory = os.path.join(os.path.expanduser('~'), '.coreapi')
-    if os.path.isfile(directory):
-        os.remove(directory)
-        os.mkdir(directory)
-    elif not os.path.exists(directory):
-        os.mkdir(directory)
-    return os.path.join(directory, 'document.json')
-
-
 def get_session():
-    path = get_credentials_path()
-    if os.path.exists(path) and os.path.isfile(path):
-        store = open(path, 'rb')
-        credentials = json.loads(store.read())
-        store.close()
-        return coreapi.get_session(credentials)
-    return coreapi.get_default_session()
-
-
-def write_to_store(doc):
-    path = get_store_path()
-    content_type, content = coreapi.dump(doc)
-    store = open(path, 'wb')
-    store.write(content)
-    store.close()
+    credentials = get_credentials()
+    headers = get_headers()
+    return coreapi.get_session(credentials, headers)
 
 
 def read_from_store():
-    path = get_store_path()
-    if not os.path.exists(path):
-        raise NoDocument()
-    store = open(path, 'rb')
+    if not os.path.exists(store_path):
+        return None
+    store = open(store_path, 'rb')
     content = store.read()
     store.close()
     return coreapi.load(content)
+
+
+def write_to_store(doc):
+    content_type, content = coreapi.dump(doc)
+    store = open(store_path, 'wb')
+    store.write(content)
+    store.close()
 
 
 def dump_to_console(doc):
@@ -89,10 +66,17 @@ def dump_to_console(doc):
     return codec.dump(doc, colorize=True)
 
 
+# Core commands
+
 @click.group(invoke_without_command=True, help='Command line client for interacting with CoreAPI services.\n\nVisit http://www.coreapi.org for more information.')
 @click.option('--version', is_flag=True, help='Display the package version number.')
 @click.pass_context
 def client(ctx, version):
+    if os.path.isfile(config_path):
+        os.remove(config_path)
+    if not os.path.isdir(config_path):
+        os.mkdir(config_path)
+
     if ctx.invoked_subcommand is not None:
         return
 
@@ -113,21 +97,18 @@ def get(url):
 
 @click.command(help='Remove the current document, and any stored credentials.')
 def clear():
-    path = get_store_path()
-    if os.path.exists(path):
-        os.remove(path)
-    path = get_credentials_path()
-    if os.path.exists(path):
-        os.remove(path)
+    if os.path.exists(store_path):
+        os.remove(store_path)
+    if os.path.exists(credentials_path):
+        os.remove(credentials_path)
     click.echo('Cleared.')
 
 
 @click.command(help='Display the current document, or element at the given PATH.')
 @click.argument('path', nargs=-1)
 def show(path):
-    try:
-        doc = read_from_store()
-    except NoDocument:
+    doc = read_from_store()
+    if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
@@ -156,9 +137,8 @@ def action(path, param):
 
     params = dict([tuple(item.split('=', 1)) for item in param])
 
-    try:
-        doc = read_from_store()
-    except NoDocument:
+    doc = read_from_store()
+    if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
@@ -169,10 +149,137 @@ def action(path, param):
     write_to_store(doc)
 
 
+# Credentials
+
+def get_credentials():
+    if not os.path.isfile(credentials_path):
+        return {}
+    store = open(credentials_path, 'rb')
+    credentials = json.loads(store.read())
+    store.close()
+    return credentials
+
+
+def set_credentials(credentials):
+    store = open(credentials_path, 'wb')
+    store.write(json.dumps(credentials))
+    store.close
+
+
+@click.group(help='Configure credentials using in request "Authorization:" headers.')
+def credentials():
+    pass
+
+
+@click.command(help="List stored credentials.")
+def credentials_show():
+    credentials = get_credentials()
+    if credentials:
+        width = max([len(key) for key in credentials.keys()])
+        fmt = '{domain:%d} "{header}"' % width
+
+    click.echo(click.style('Credentials', bold=True))
+    for key, value in sorted(credentials.items()):
+        click.echo(fmt.format(domain=key, header=value))
+
+
+@click.command(help="Add CREDENTIALS string for the given DOMAIN.")
+@click.argument('domain', nargs=1)
+@click.argument('header', nargs=1)
+def credentials_add(domain, header):
+    credentials = get_credentials()
+    credentials[domain] = header
+    set_credentials(credentials)
+
+    click.echo(click.style('Added credentials', bold=True))
+    click.echo('%s "%s"' % (domain, header))
+
+
+@click.command(help="Remove credentials for the given DOMAIN.")
+@click.argument('domain', nargs=1)
+def credentials_remove(domain):
+    credentials = get_credentials()
+    credentials.pop(domain, None)
+    set_credentials(credentials)
+
+    click.echo(click.style('Removed credentials', bold=True))
+    click.echo(domain)
+
+
+# Headers
+
+def get_headers():
+    if not os.path.isfile(headers_path):
+        return {}
+    headers_file = open(headers_path, 'rb')
+    headers = json.loads(headers_file.read())
+    headers_file.close()
+    return headers
+
+
+def set_headers(headers):
+    headers_file = open(headers_path, 'wb')
+    headers_file.write(json.dumps(headers))
+    headers_file.close()
+
+
+def titlecase(header):
+    return '-'.join([word.title() for word in header.split('-')])
+
+
+@click.group(help="Configure custom request headers.")
+def headers():
+    pass
+
+
+@click.command(help="List custom request headers.")
+def headers_show():
+    headers = get_headers()
+
+    click.echo(click.style('Headers', bold=True))
+    for key, value in sorted(headers.items()):
+        click.echo(key + ': ' + value)
+
+
+@click.command(help="Add custom request HEADER with given VALUE.")
+@click.argument('header', nargs=1)
+@click.argument('value', nargs=1)
+def headers_add(header, value):
+    header = titlecase(header)
+    headers = get_headers()
+    headers[header] = value
+    set_headers(headers)
+
+    click.echo(click.style('Added header', bold=True))
+    click.echo('%s: %s' % (header, value))
+
+
+@click.command(help="Remove custom request HEADER.")
+@click.argument('header', nargs=1)
+def headers_remove(header):
+    header = titlecase(header)
+    headers = get_headers()
+    headers.pop(header, None)
+    set_headers(headers)
+
+    click.echo(click.style('Removed header', bold=True))
+    click.echo(header)
+
+
 client.add_command(get)
 client.add_command(show)
 client.add_command(action)
 client.add_command(clear)
+
+client.add_command(credentials)
+credentials.add_command(credentials_add, name='add')
+credentials.add_command(credentials_remove, name='remove')
+credentials.add_command(credentials_show, name='show')
+
+client.add_command(headers)
+headers.add_command(headers_add, name='add')
+headers.add_command(headers_remove, name='remove')
+headers.add_command(headers_show, name='show')
 
 
 if __name__ == '__main__':
