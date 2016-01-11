@@ -173,7 +173,7 @@ class Link(itypes.Object):
             raise TypeError("Argument 'action' must be a string.")
         if (inplace is not None) and (not isinstance(inplace, bool)):
             raise TypeError("Argument 'inplace' must be a boolean.")
-        if (fields is not None) and (not isinstance(fields, list)):
+        if (fields is not None) and (not isinstance(fields, (list, tuple))):
             raise TypeError("Argument 'fields' must be a list.")
         if (fields is not None) and any([
             not (isinstance(item, string_types) or isinstance(item, Field))
