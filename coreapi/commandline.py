@@ -128,10 +128,20 @@ def validate_params(ctx, param, value):
     return value
 
 
+def validate_inplace(ctx, param, value):
+    if value is None:
+        return
+    if value.lower() not in ('true', 'false'):
+        raise click.BadParameter('"--inplace" needs to be one of "true" or "false"')
+    return value.lower() == 'true'
+
+
 @click.command(help='Interact with the current document, given a PATH to a link.')
 @click.argument('path', nargs=-1)
 @click.option('--param', '-p', multiple=True, callback=validate_params, help='Parameter in the form <field name>=<value>.')
-def action(path, param):
+@click.option('--action', '-a', help='Set the link action explicitly.', default=None)
+@click.option('--inplace', '-i', callback=validate_inplace, help='Set the inplace boolean explicitly.', default=None)
+def action(path, param, action, inplace):
     if not path:
         click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
@@ -145,7 +155,7 @@ def action(path, param):
 
     session = get_session()
     keys = coerce_key_types(doc, path)
-    doc = session.action(doc, keys, params=params)
+    doc = session.action(doc, keys, params=params, action=action, inplace=inplace)
     click.echo(dump_to_console(doc))
     write_to_store(doc)
 

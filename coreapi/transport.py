@@ -105,9 +105,10 @@ class HTTPTransport(BaseTransport):
         * Make an inline replacement and then return the modified document tree.
         * Return the new document as-is.
         """
-        inplace = link.inplace
-        if inplace is None and link.action.lower() in ('put', 'patch', 'delete'):
-            inplace = True
+        if link.inplace is None:
+            inplace = link.action.lower() in ('put', 'patch', 'delete')
+        else:
+            inplace = link.inplace
 
         if inplace:
             root = link_ancestors[0].document
