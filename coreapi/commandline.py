@@ -10,6 +10,7 @@ config_path = os.path.join(os.path.expanduser('~'), '.coreapi')
 store_path = os.path.join(config_path, 'document.json')
 credentials_path = os.path.join(config_path, 'credentials.json')
 headers_path = os.path.join(config_path, 'headers.json')
+bookmarks_path = os.path.join(config_path, 'bookmarks.json')
 
 
 def coerce_key_types(doc, keys):
@@ -266,6 +267,83 @@ def headers_remove(header):
     click.echo(header)
 
 
+# Headers
+
+def get_bookmarks():
+    if not os.path.isfile(bookmarks_path):
+        return {}
+    bookmarks_file = open(bookmarks_path, 'rb')
+    bookmarks = json.loads(bookmarks_file.read())
+    bookmarks_file.close()
+    return bookmarks
+
+
+def set_bookmarks(bookmarks):
+    bookmarks_file = open(bookmarks_path, 'wb')
+    bookmarks_file.write(json.dumps(bookmarks))
+    bookmarks_file.close()
+
+
+@click.group(help="Add, remove and show bookmarks.")
+def bookmarks():
+    pass
+
+
+@click.command(help="List bookmarks.")
+def bookmarks_show():
+    bookmarks = get_bookmarks()
+
+    if bookmarks:
+        width = max([len(key) for key in bookmarks.keys()])
+        fmt = '{name:%d} <{title} {url}>' % width
+
+    click.echo(click.style('Bookmarks', bold=True))
+    for key, value in sorted(bookmarks.items()):
+        click.echo(fmt.format(name=key, title=value['title'] or 'Document', url=value['url']))
+
+
+@click.command(help="Add the current document to the bookmarks, with the given NAME.")
+@click.argument('name', nargs=1)
+def bookmarks_add(name):
+    doc = read_from_store()
+    if doc is None:
+        click.echo('No current document.')
+        return
+
+    bookmarks = get_bookmarks()
+    bookmarks[name] = {'url': doc.url, 'title': doc.title}
+    set_bookmarks(bookmarks)
+
+    click.echo(click.style('Added bookmark', bold=True))
+    click.echo(name)
+
+
+@click.command(help="Remove a bookmark with the given NAME.")
+@click.argument('name', nargs=1)
+def bookmarks_remove(name):
+    bookmarks = get_bookmarks()
+    bookmarks.pop(name, None)
+    set_bookmarks(bookmarks)
+
+    click.echo(click.style('Removed bookmark', bold=True))
+    click.echo(name)
+
+
+@click.command(help="Fetch the bookmarked document with the given NAME.")
+@click.argument('name', nargs=1)
+def bookmarks_get(name):
+    bookmarks = get_bookmarks()
+    bookmark = bookmarks.get(name)
+    if bookmark is None:
+        click.echo('Bookmark "%s" does not exist.' % name)
+        return
+
+    session = get_session()
+    doc = session.get(bookmark['url'])
+    click.echo(dump_to_console(doc))
+    write_to_store(doc)
+
+
 client.add_command(get)
 client.add_command(show)
 client.add_command(action)
@@ -280,6 +358,12 @@ client.add_command(headers)
 headers.add_command(headers_add, name='add')
 headers.add_command(headers_remove, name='remove')
 headers.add_command(headers_show, name='show')
+
+client.add_command(bookmarks)
+bookmarks.add_command(bookmarks_add, name='add')
+bookmarks.add_command(bookmarks_get, name='get')
+bookmarks.add_command(bookmarks_remove, name='remove')
+bookmarks.add_command(bookmarks_show, name='show')
 
 
 if __name__ == '__main__':
