@@ -38,7 +38,7 @@ class Session(itypes.Object):
         """
         Return an 'Accept' header for the given codecs.
         """
-        return ', '.join([codec.media_type for codec in self.codecs])
+        return ', '.join([codec.media_type for codec in self.decoders])
 
     def negotiate_decoder(self, content_type=None):
         """
