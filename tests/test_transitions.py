@@ -63,3 +63,17 @@ def test_delete(doc):
     new = session.action(doc, ['nested', 'delete'])
     assert new == {}
     assert new.title == 'original'
+
+
+# Test overrides
+
+def test_override_action(doc):
+    new = session.action(doc, ['nested', 'follow'], action='put')
+    assert new == {'nested': {'new': 123, 'foo': None}}
+    assert new.title == 'original'
+
+
+def test_override_inplace(doc):
+    new = session.action(doc, ['nested', 'update'], params={'foo': 456}, inplace=False)
+    assert new == {'new': 123, 'foo': 456}
+    assert new.title == 'new'

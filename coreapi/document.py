@@ -90,6 +90,15 @@ class Document(itypes.Dict):
     def __str__(self):
         return _str(self)
 
+    def __eq__(self, other):
+        if isinstance(other, Document):
+            return (
+                self.url == other.url and
+                self.title == other.title and
+                self._data == other._data
+            )
+        return super(Document, self).__eq__(other)
+
     @property
     def url(self):
         return self._url
@@ -173,7 +182,7 @@ class Link(itypes.Object):
             raise TypeError("Argument 'action' must be a string.")
         if (inplace is not None) and (not isinstance(inplace, bool)):
             raise TypeError("Argument 'inplace' must be a boolean.")
-        if (fields is not None) and (not isinstance(fields, list)):
+        if (fields is not None) and (not isinstance(fields, (list, tuple))):
             raise TypeError("Argument 'fields' must be a list.")
         if (fields is not None) and any([
             not (isinstance(item, string_types) or isinstance(item, Field))

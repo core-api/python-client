@@ -3,12 +3,17 @@ from coreapi.codecs.base import BaseCodec
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object
+from coreapi.exceptions import ParseError
 import json
 import uritemplate
 
 
 def _is_array_containing_instance(value, datatype):
     return isinstance(value, Array) and value and isinstance(value[0], datatype)
+
+
+def _is_map_containing_instance(value, datatype):
+    return isinstance(value, Object) and value and isinstance(value[0], datatype)
 
 
 def _document_to_primative(node, base_url=None):
@@ -31,8 +36,14 @@ def _document_to_primative(node, base_url=None):
                 links[key] = [
                     _document_to_primative(item, base_url=url)
                     for item in value
-                    if isinstance(value, Link)
+                    if isinstance(item, Link)
                 ]
+            elif _is_map_containing_instance(value, Link):
+                links[key] = {
+                    key: _document_to_primative(val, base_url=url)
+                    for key, val in value.items()
+                    if isinstance(val, Link)
+                }
             elif isinstance(value, Document):
                 embedded[key] = _document_to_primative(value, base_url=url)
             elif _is_array_containing_instance(value, Document):
@@ -101,7 +112,10 @@ def _parse_document(data, base_url=None):
             key = key.split(':', 1)[1]
 
         if isinstance(value, list):
-            content[key] = [_parse_link(item, base_url) for item in value]
+            if value and 'name' in value[0]:
+                content[key] = {item['name']: _parse_link(item, base_url) for item in value}
+            else:
+                content[key] = [_parse_link(item, base_url) for item in value]
         elif isinstance(value, dict):
             content[key] = _parse_link(value, base_url)
 
@@ -116,7 +130,6 @@ def _parse_document(data, base_url=None):
             content[key] = value
 
     return Document(url, title, content)
-
 
 
 class HALCodec(BaseCodec):

@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get_default_session, Link
+from coreapi import get_session, get_default_session, Link
 from coreapi.exceptions import TransportError
 from coreapi.transport import HTTPTransport
 import pytest
@@ -97,8 +97,8 @@ def test_credentials(monkeypatch):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
-    transport = HTTPTransport(credentials=credentials)
-    session = get_default_session()
+    session = get_session(credentials=credentials)
+    transport = session.transports[0]
 
     # Requests to example.org include credentials.
     response = transport.make_http_request(session, 'http://example.org/123')
@@ -107,3 +107,20 @@ def test_credentials(monkeypatch):
     # Requests to other.org do not include credentials.
     response = transport.make_http_request(session, 'http://other.org/123')
     assert response.content == ''
+
+
+# Test custom headers
+
+def test_headers(monkeypatch):
+    def mockreturn(method, url, headers):
+        return MockResponse(headers.get('User-Agent', ''))
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    headers = {'User-Agent': 'Example v1.0'}
+    session = get_session(headers=headers)
+    transport = session.transports[0]
+
+    # Requests include custom headers.
+    response = transport.make_http_request(session, 'http://example.org/123')
+    assert response.content == 'Example v1.0'

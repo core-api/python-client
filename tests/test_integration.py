@@ -1,5 +1,6 @@
 # coding: utf-8
 from coreapi import get_session, action, get, load, dump, Link, ErrorMessage
+import coreapi
 import requests
 import pytest
 
@@ -57,6 +58,17 @@ def test_follow(monkeypatch, document):
     assert doc == {'example': 123}
 
 
+def test_reload(monkeypatch):
+    def mockreturn(method, url, headers):
+        return MockResponse(b'{"_type": "document", "example": 123}')
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    doc = coreapi.Document(url='http://example.org')
+    doc = coreapi.reload(doc)
+    assert doc == {'example': 123}
+
+
 def test_error(monkeypatch, document):
     def mockreturn(method, url, headers):
         return MockResponse(b'{"_type": "error", "message": ["failed"]}')
@@ -68,6 +80,13 @@ def test_error(monkeypatch, document):
 
 
 def test_get_session():
-    session = get_session(credentials={'example.org': 'abc'})
+    session = get_session(
+        credentials={'example.org': 'abc'},
+        headers={'user-agent': 'foo'}
+    )
+
+    assert len(session.codecs) == 4
     assert len(session.transports) == 1
+
     assert session.transports[0].credentials == {'example.org': 'abc'}
+    assert session.transports[0].headers == {'user-agent': 'foo'}
