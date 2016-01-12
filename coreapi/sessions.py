@@ -112,6 +112,12 @@ class Session(itypes.Object):
         link = Link(url, action='get')
         return transport.transition(link, session=self)
 
+    def reload(self, document):
+        url = document.url
+        transport = self.determine_transport(url)
+        link = Link(url, action='get')
+        return transport.transition(link, session=self)
+
     def action(self, document, keys, params=None, action=None, inplace=None):
         if isinstance(keys, string_types):
             keys = [keys]

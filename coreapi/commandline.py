@@ -7,7 +7,8 @@ import sys
 
 config_path = os.path.join(os.path.expanduser('~'), '.coreapi')
 
-store_path = os.path.join(config_path, 'document.json')
+document_path = os.path.join(config_path, 'document.json')
+history_path = os.path.join(config_path, 'history.json')
 credentials_path = os.path.join(config_path, 'credentials.json')
 headers_path = os.path.join(config_path, 'headers.json')
 bookmarks_path = os.path.join(config_path, 'bookmarks.json')
@@ -46,23 +47,23 @@ def get_session():
     return coreapi.get_session(credentials, headers)
 
 
-def read_from_store():
-    if not os.path.exists(store_path):
+def get_document():
+    if not os.path.exists(document_path):
         return None
-    store = open(store_path, 'rb')
+    store = open(document_path, 'rb')
     content = store.read()
     store.close()
     return coreapi.load(content)
 
 
-def write_to_store(doc):
+def set_document(doc):
     content_type, content = coreapi.dump(doc)
-    store = open(store_path, 'wb')
+    store = open(document_path, 'wb')
     store.write(content)
     store.close()
 
 
-def dump_to_console(doc):
+def display(doc):
     codec = coreapi.codecs.PlainTextCodec()
     return codec.dump(doc, colorize=True)
 
@@ -91,24 +92,33 @@ def client(ctx, version):
 @click.argument('url')
 def get(url):
     session = get_session()
+    history = get_history()
     doc = session.get(url)
-    click.echo(dump_to_console(doc))
-    write_to_store(doc)
+    history = history.add(doc)
+    click.echo(display(doc))
+    set_document(doc)
+    set_history(history)
 
 
-@click.command(help='Remove the current document, and any stored credentials.')
+@click.command(help='Clear the active document and other state.\n\nThis includes the current document, history, credentials, headers and bookmarks.')
 def clear():
-    if os.path.exists(store_path):
-        os.remove(store_path)
-    if os.path.exists(credentials_path):
-        os.remove(credentials_path)
+    for path in [
+        document_path,
+        history_path,
+        credentials_path,
+        headers_path,
+        bookmarks_path
+    ]:
+        if os.path.exists(path):
+            os.remove(path)
+
     click.echo('Cleared.')
 
 
-@click.command(help='Display the current document, or element at the given PATH.')
+@click.command(help='Display the current document.\n\nOptionally display just the element at the given PATH.')
 @click.argument('path', nargs=-1)
 def show(path):
-    doc = read_from_store()
+    doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
@@ -119,13 +129,13 @@ def show(path):
             doc = doc[key]
         if isinstance(doc, (bool, type(None))):
             doc = {True: 'true', False: 'false', None: 'null'}[doc]
-    click.echo(dump_to_console(doc))
+    click.echo(display(doc))
 
 
 def validate_params(ctx, param, value):
     if any(['=' not in item for item in value]):
         raise click.BadParameter('Parameters need to be in format <field name>=<value>')
-    return value
+    return dict([tuple(item.split('=', 1)) for item in param])
 
 
 def validate_inplace(ctx, param, value):
@@ -136,7 +146,7 @@ def validate_inplace(ctx, param, value):
     return value.lower() == 'true'
 
 
-@click.command(help='Interact with the current document, given a PATH to a link.')
+@click.command(help='Interact with the active document.\n\nRequires a PATH to a link in the document.')
 @click.argument('path', nargs=-1)
 @click.option('--param', '-p', multiple=True, callback=validate_params, help='Parameter in the form <field name>=<value>.')
 @click.option('--action', '-a', help='Set the link action explicitly.', default=None)
@@ -146,18 +156,35 @@ def action(path, param, action, inplace):
         click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
 
-    params = dict([tuple(item.split('=', 1)) for item in param])
-
-    doc = read_from_store()
+    doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         return
 
     session = get_session()
+    history = get_history()
     keys = coerce_key_types(doc, path)
-    doc = session.action(doc, keys, params=params, action=action, inplace=inplace)
-    click.echo(dump_to_console(doc))
-    write_to_store(doc)
+    doc = session.action(doc, keys, params=param, action=action, inplace=inplace)
+    history = history.add(doc)
+    click.echo(display(doc))
+    set_document(doc)
+    set_history(history)
+
+
+@click.command(help='Reload the current document.')
+def reload_document():
+    doc = get_document()
+    if doc is None:
+        click.echo('No current document. Use `coreapi get` to fetch a document first.')
+        return
+
+    session = get_session()
+    history = get_history()
+    doc = session.reload(doc)
+    history = history.add(doc)
+    click.echo(display(doc))
+    set_document(doc)
+    set_history(history)
 
 
 # Credentials
@@ -177,7 +204,7 @@ def set_credentials(credentials):
     store.close
 
 
-@click.group(help='Configure credentials using in request "Authorization:" headers.')
+@click.group(help='Configure request credentials. Request credentials are associated with a given domain, and used in request "Authorization:" headers.')
 def credentials():
     pass
 
@@ -309,13 +336,13 @@ def bookmarks_show():
 
     click.echo(click.style('Bookmarks', bold=True))
     for key, value in sorted(bookmarks.items()):
-        click.echo(fmt.format(name=key, title=value['title'] or 'Document', url=value['url']))
+        click.echo(fmt.format(name=key, title=value['title'] or 'Document', url=json.dumps(value['url'])))
 
 
 @click.command(help="Add the current document to the bookmarks, with the given NAME.")
 @click.argument('name', nargs=1)
 def bookmarks_add(name):
-    doc = read_from_store()
+    doc = get_document()
     if doc is None:
         click.echo('No current document.')
         return
@@ -349,14 +376,80 @@ def bookmarks_get(name):
         return
 
     session = get_session()
+    history = get_history()
     doc = session.get(bookmark['url'])
-    click.echo(dump_to_console(doc))
-    write_to_store(doc)
+    history = history.add(doc)
+    click.echo(display(doc))
+    set_document(doc)
+    set_history(history)
+
+
+# History
+
+def get_history():
+    if not os.path.isfile(history_path):
+        return coreapi.History(max_items=20)
+    history_file = open(history_path, 'rb')
+    bytestring = history_file.read()
+    history_file.close()
+    return coreapi.history.load_history(bytestring)
+
+
+def set_history(history):
+    bytestring = coreapi.history.dump_history(history)
+    history_file = open(history_path, 'wb')
+    history_file.write(bytestring)
+    history_file.close()
+
+
+@click.group(help="Navigate the browser history.")
+def history():
+    pass
+
+
+@click.command(help="List the browser history.")
+def history_show():
+    history = get_history()
+
+    click.echo(click.style('History', bold=True))
+    for is_active, doc in history.get_items():
+        prefix = '[*] ' if is_active else '[ ] '
+        document = 'blank' if (doc is None) else '<%s %s>' % (doc.title, json.dumps(doc.url))
+        click.echo(prefix + document)
+
+
+@click.command(help="Navigate back through the browser history.")
+def history_back():
+    session = get_session()
+    history = get_history()
+    if history.is_at_oldest:
+        click.echo("Currently at oldest point in history. Cannot navigate back.")
+        return
+    doc, history = history.back()
+    doc = session.reload(doc)
+    click.echo(display(doc))
+    set_history(history)
+    set_document(doc)
+
+
+@click.command(help="Navigate forward through the browser history.")
+def history_forward():
+    session = get_session()
+    history = get_history()
+    if history.is_at_most_recent:
+        click.echo("Currently at most recent point in history. Cannot navigate forward.")
+        return
+    doc, history = history.forward()
+    doc = session.reload(doc)
+    click.echo(display(doc))
+    set_history(history)
+    set_document(doc)
 
 
 client.add_command(get)
 client.add_command(show)
 client.add_command(action)
+client.add_command(reload_document, name='reload')
 client.add_command(clear)
 
 client.add_command(credentials)
@@ -374,6 +467,11 @@ bookmarks.add_command(bookmarks_add, name='add')
 bookmarks.add_command(bookmarks_get, name='get')
 bookmarks.add_command(bookmarks_remove, name='remove')
 bookmarks.add_command(bookmarks_show, name='show')
+
+client.add_command(history)
+history.add_command(history_back, name='back')
+history.add_command(history_forward, name='forward')
+history.add_command(history_show, name='show')
 
 
 if __name__ == '__main__':

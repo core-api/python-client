@@ -1,5 +1,6 @@
 # coding: utf-8
 from coreapi import get_session, action, get, load, dump, Link, ErrorMessage
+import coreapi
 import requests
 import pytest
 
@@ -54,6 +55,17 @@ def test_follow(monkeypatch, document):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     doc = action(document, ['next'])
+    assert doc == {'example': 123}
+
+
+def test_reload(monkeypatch):
+    def mockreturn(method, url, headers):
+        return MockResponse(b'{"_type": "document", "example": 123}')
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    doc = coreapi.Document(url='http://example.org')
+    doc = coreapi.reload(doc)
     assert doc == {'example': 123}
 
 
