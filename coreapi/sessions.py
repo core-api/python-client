@@ -38,7 +38,7 @@ class Session(itypes.Object):
         """
         Return an 'Accept' header for the given codecs.
         """
-        return ', '.join([codec.media_type for codec in self.codecs])
+        return ', '.join([codec.media_type for codec in self.decoders])
 
     def negotiate_decoder(self, content_type=None):
         """
@@ -112,7 +112,7 @@ class Session(itypes.Object):
         link = Link(url, action='get')
         return transport.transition(link, session=self)
 
-    def action(self, document, keys, params=None):
+    def action(self, document, keys, params=None, action=None, inplace=None):
         if isinstance(keys, string_types):
             keys = [keys]
 
@@ -122,6 +122,12 @@ class Session(itypes.Object):
         # Validate the keys and link parameters.
         link, link_ancestors = validate_keys_to_link(document, keys)
         validate_parameters(link, params)
+
+        if action is not None or inplace is not None:
+            # Handle any explicit overrides.
+            action = link.action if (action is None) else action
+            inplace = link.inplace if (inplace is None) else inplace
+            link = Link(link.url, action, inplace, link.fields)
 
         # Perform the action, and return a new document.
         transport = self.determine_transport(link.url)
