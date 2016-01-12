@@ -135,7 +135,7 @@ def show(path):
 def validate_params(ctx, param, value):
     if any(['=' not in item for item in value]):
         raise click.BadParameter('Parameters need to be in format <field name>=<value>')
-    return dict([tuple(item.split('=', 1)) for item in param])
+    return dict([tuple(item.split('=', 1)) for item in value])
 
 
 def validate_inplace(ctx, param, value):
