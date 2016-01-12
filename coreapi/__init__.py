@@ -2,17 +2,18 @@
 from coreapi.codecs import BaseCodec, CoreJSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
 from coreapi.document import Array, Document, Link, Object, Error, required
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
+from coreapi.history import History
 from coreapi.sessions import Session
 from coreapi.transport import BaseTransport, HTTPTransport
 
 
-__version__ = '1.4.3'
+__version__ = '1.5.0'
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
     'Array', 'Document', 'Link', 'Object', 'Error', 'required',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
-    'BaseTransport', 'HTTPTransport',
+    'BaseTransport', 'HTTPTransport', 'Session', 'History',
     'load', 'dump', 'get', 'get_default_session'
 ]
 
@@ -52,6 +53,11 @@ def get(url):
 def action(document, keys, params=None, action=None, inplace=None):
     session = _default_session
     return session.action(document, keys, params, action=action, inplace=inplace)
+
+
+def reload(document):
+    session = _default_session
+    return session.reload(document)
 
 
 def load(bytestring, content_type=None):

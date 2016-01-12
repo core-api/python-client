@@ -90,6 +90,15 @@ class Document(itypes.Dict):
     def __str__(self):
         return _str(self)
 
+    def __eq__(self, other):
+        if isinstance(other, Document):
+            return (
+                self.url == other.url and
+                self.title == other.title and
+                self._data == other._data
+            )
+        return super(Document, self).__eq__(other)
+
     @property
     def url(self):
         return self._url
