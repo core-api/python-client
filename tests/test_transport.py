@@ -77,7 +77,7 @@ def test_get_with_path_parameter(monkeypatch, http):
     link = Link(
         url='http://example.org/{user_id}/',
         action='get',
-        fields=[Field(name='user_id', type='path')]
+        fields=[Field(name='user_id', location='path')]
     )
     doc = http.transition(link, params={'user_id': 123})
     assert doc == {'example': 'http://example.org/123/'}

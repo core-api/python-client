@@ -36,12 +36,12 @@ def _key_sorting(item):
 
 # The field class, as used by Link objects:
 
-Field = namedtuple('Field', ['name', 'required', 'type'])
+Field = namedtuple('Field', ['name', 'required', 'location'])
 Field.__new__.__defaults__ = (False, '')
 
 
 def required(name):
-    return Field(name, required=True, type='')
+    return Field(name, required=True, location='')
 
 
 # The Core API primatives:
@@ -195,7 +195,7 @@ class Link(itypes.Object):
         self._action = '' if (action is None) else action
         self._inplace = inplace
         self._fields = () if (fields is None) else tuple([
-            item if isinstance(item, Field) else Field(item, required=False, type='')
+            item if isinstance(item, Field) else Field(item, required=False, location='')
             for item in fields
         ])
 

@@ -152,7 +152,7 @@ def test_link_encodings(json_codec):
         'link': Link(
             action='post',
             inplace=True,
-            fields=['optional', Field('required', required=True, type='path')]
+            fields=['optional', Field('required', required=True, location='path')]
         )
     })
     bytes = json_codec.dump(doc, indent=True)
@@ -169,7 +169,7 @@ def test_link_encodings(json_codec):
             {
                 "name": "required",
                 "required": true,
-                "type": "path"
+                "location": "path"
             }
         ]
     }
