@@ -82,11 +82,16 @@ def _document_to_primative(node, base_url=None):
         if node.fields:
             # Use short format for optional fields, long format for required.
             ret['fields'] = [
-                item.name
-                if not item.required else
-                OrderedDict([('name', item.name), ('required', item.required)])
-                for item in node.fields
+                _document_to_primative(field) for field in node.fields
             ]
+        return ret
+
+    elif isinstance(node, Field):
+        ret = OrderedDict({'name': node.name})
+        if node.required:
+            ret['required'] = True
+        if node.type:
+            ret['type'] = node.type
         return ret
 
     elif isinstance(node, Object):
@@ -163,7 +168,7 @@ def _primative_to_document(data, base_url=None):
             # Transform the strings or dicts into strings or Field instances.
             fields = [
                 item if isinstance(item, string_types) else
-                Field(item['name'], required=bool(item.get('required', False)))
+                Field(item['name'], required=bool(item.get('required', False)), type=str(item.get('type', '')))
                 for item in fields
             ]
 

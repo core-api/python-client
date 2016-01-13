@@ -40,21 +40,6 @@ def validate_parameters(link, parameters):
     required = set([
         field.name for field in link.fields if field.required
     ])
-    optional = set([
-        field.name for field in link.fields if not field.required
-    ])
-
-    # Determine any parameter names supplied that are not valid.
-    unexpected = provided - (optional | required)
-    unexpected = ['"' + item + '"' for item in sorted(unexpected)]
-    if unexpected:
-        fmt = 'Unknown parameter{plural}: {listing}'
-        plural = 's' if len(unexpected) > 1 else ''
-        listing = ', '.join(unexpected)
-        raise ValueError(fmt.format(
-            plural=plural,
-            listing=listing
-        ))
 
     # Determine if any required field names not supplied.
     missing = required - provided

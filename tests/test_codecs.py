@@ -2,7 +2,7 @@
 from coreapi import negotiate_decoder, negotiate_encoder
 from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
-from coreapi.document import Document, Link, Error, required
+from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, NotAcceptable
 import pytest
 
@@ -152,7 +152,7 @@ def test_link_encodings(json_codec):
         'link': Link(
             action='post',
             inplace=True,
-            fields=['optional', required('required')]
+            fields=['optional', Field('required', required=True, type='path')]
         )
     })
     bytes = json_codec.dump(doc, indent=True)
@@ -163,10 +163,13 @@ def test_link_encodings(json_codec):
         "action": "post",
         "inplace": true,
         "fields": [
-            "optional",
+            {
+                "name": "optional"
+            },
             {
                 "name": "required",
-                "required": true
+                "required": true,
+                "type": "path"
             }
         ]
     }
