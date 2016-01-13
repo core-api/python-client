@@ -61,15 +61,15 @@ class HTTPTransport(BaseTransport):
         query_params = {}
         form_params = {}
         for key, value in params.items():
-            if key not in fields or not fields[key].type:
+            if key not in fields or not fields[key].location:
                 # Default is 'query' for 'GET'/'DELETE', and 'form' others.
-                param_type = 'query' if method in ('GET', 'DELETE') else 'form'
+                location = 'query' if method in ('GET', 'DELETE') else 'form'
             else:
-                param_type = fields[key].type
+                location = fields[key].location
 
-            if param_type == 'path':
+            if location == 'path':
                 path_params[key] = value
-            elif param_type == 'query':
+            elif location == 'query':
                 query_params[key] = value
             else:
                 form_params[key] = value

@@ -90,8 +90,8 @@ def _document_to_primative(node, base_url=None):
         ret = OrderedDict({'name': node.name})
         if node.required:
             ret['required'] = True
-        if node.type:
-            ret['type'] = node.type
+        if node.location:
+            ret['location'] = node.location
         return ret
 
     elif isinstance(node, Object):
@@ -168,7 +168,7 @@ def _primative_to_document(data, base_url=None):
             # Transform the strings or dicts into strings or Field instances.
             fields = [
                 item if isinstance(item, string_types) else
-                Field(item['name'], required=bool(item.get('required', False)), type=str(item.get('type', '')))
+                Field(item['name'], required=bool(item.get('required', False)), location=str(item.get('type', '')))
                 for item in fields
             ]
 
