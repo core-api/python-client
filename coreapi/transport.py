@@ -5,6 +5,7 @@ from coreapi.compat import urlparse
 import requests
 import itypes
 import json
+import uritemplate
 
 
 class BaseTransport(itypes.Object):
@@ -34,7 +35,9 @@ class HTTPTransport(BaseTransport):
             from coreapi import get_default_session
             session = get_default_session()
 
-        response = self.make_http_request(session, link.url, link.action, params)
+        method = self.get_http_method(link.action)
+        url, query_params, form_params = self.get_params(method, link, params)
+        response = self.make_http_request(session, url, method, query_params, form_params)
         document = self.load_document(session, response)
         if isinstance(document, Error):
             raise ErrorMessage(document.messages)
@@ -44,45 +47,60 @@ class HTTPTransport(BaseTransport):
 
         return document
 
-    def make_http_request(self, session, url, action=None, params=None):
+    def get_http_method(self, action=None):
+        if not action:
+            return 'GET'
+        return action.upper()
+
+    def get_params(self, method, link, params=None):
+        if params is None:
+            return (link.url, {}, {})
+
+        fields = {field.name: field for field in link.fields}
+        path_params = {}
+        query_params = {}
+        form_params = {}
+        for key, value in params.items():
+            if key not in fields or not fields[key].type:
+                # Default is 'query' for 'GET'/'DELETE', and 'form' others.
+                param_type = 'query' if method in ('GET', 'DELETE') else 'form'
+            else:
+                param_type = fields[key].type
+
+            if param_type == 'path':
+                path_params[key] = value
+            elif param_type == 'query':
+                query_params[key] = value
+            else:
+                form_params[key] = value
+
+        url = uritemplate.expand(link.url, path_params)
+        return (url, query_params, form_params)
+
+    def make_http_request(self, session, url, method, query_params=None, form_params=None):
         """
         Make an HTTP request and return an HTTP response.
         """
-        if not action:
-            method = 'GET'
-        else:
-            method = action.upper()
-        accept = session.get_accept_header()
-
-        if params and method == 'GET':
-            opts = {
-                'params': params,
-                'headers': {
-                    'accept': accept
-                }
+        opts = {
+            "headers": {
+                "accept": session.get_accept_header()
             }
-        elif params:
-            opts = {
-                'data': json.dumps(params),
-                'headers': {
-                    'content-type': 'application/json',
-                    'accept': accept
-                }
-            }
-        else:
-            opts = {
-                'headers': {
-                    'accept': accept
-                }
-            }
+        }
+        if query_params:
+            opts['params'] = query_params
+        elif form_params:
+            opts['data'] = json.dumps(form_params)
+            opts['headers']['content-type'] = 'application/json'
 
         if self.credentials:
+            # Include any authorization credentials relevant to this domain.
             url_components = urlparse.urlparse(url)
             host = url_components.netloc
             if host in self.credentials:
                 opts['headers']['authorization'] = self.credentials[host]
 
         if self.headers:
+            # Include any custom headers associated with this transport.
             opts['headers'].update(self.headers)
 
         return requests.request(method, url, **opts)
