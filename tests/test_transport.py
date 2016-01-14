@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get_session, get_default_session, Link
+from coreapi import get_session, get_default_session, Link, Field
 from coreapi.exceptions import TransportError
 from coreapi.transport import HTTPTransport
 import pytest
@@ -41,7 +41,7 @@ def test_missing_hostname():
 # Test basic transition types.
 
 def test_get(monkeypatch, http):
-    def mockreturn(method, url, headers):
+    def mockreturn(method, url, **opts):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -52,8 +52,8 @@ def test_get(monkeypatch, http):
 
 
 def test_get_with_parameters(monkeypatch, http):
-    def mockreturn(method, url, params, headers):
-        insert = params['example'].encode('utf-8')
+    def mockreturn(method, url, **opts):
+        insert = opts['params']['example'].encode('utf-8')
         return MockResponse(
             b'{"_type": "document", "example": "' + insert + b'"}'
         )
@@ -65,9 +65,27 @@ def test_get_with_parameters(monkeypatch, http):
     assert doc == {'example': 'abc'}
 
 
+def test_get_with_path_parameter(monkeypatch, http):
+    def mockreturn(method, url, **opts):
+        insert = url.encode('utf-8')
+        return MockResponse(
+            b'{"_type": "document", "example": "' + insert + b'"}'
+        )
+
+    monkeypatch.setattr(requests, 'request', mockreturn)
+
+    link = Link(
+        url='http://example.org/{user_id}/',
+        action='get',
+        fields=[Field(name='user_id', location='path')]
+    )
+    doc = http.transition(link, params={'user_id': 123})
+    assert doc == {'example': 'http://example.org/123/'}
+
+
 def test_post(monkeypatch, http):
-    def mockreturn(method, url, data, headers):
-        insert = data.encode('utf-8')
+    def mockreturn(method, url, **opts):
+        insert = opts['data'].encode('utf-8')
         return MockResponse(b'{"_type": "document", "data": ' + insert + b'}')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -78,7 +96,7 @@ def test_post(monkeypatch, http):
 
 
 def test_delete(monkeypatch, http):
-    def mockreturn(method, url, headers):
+    def mockreturn(method, url, **opts):
         return MockResponse(b'')
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -91,8 +109,8 @@ def test_delete(monkeypatch, http):
 # Test credentials
 
 def test_credentials(monkeypatch):
-    def mockreturn(method, url, headers):
-        return MockResponse(headers.get('authorization', ''))
+    def mockreturn(method, url, **opts):
+        return MockResponse(opts['headers'].get('authorization', ''))
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 
@@ -101,18 +119,18 @@ def test_credentials(monkeypatch):
     transport = session.transports[0]
 
     # Requests to example.org include credentials.
-    response = transport.make_http_request(session, 'http://example.org/123')
+    response = transport.make_http_request(session, 'http://example.org/123', 'GET')
     assert response.content == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
 
     # Requests to other.org do not include credentials.
-    response = transport.make_http_request(session, 'http://other.org/123')
+    response = transport.make_http_request(session, 'http://other.org/123', 'GET')
     assert response.content == ''
 
 
 # Test custom headers
 
 def test_headers(monkeypatch):
-    def mockreturn(method, url, headers):
+    def mockreturn(method, url, **opts):
         return MockResponse(headers.get('User-Agent', ''))
 
     monkeypatch.setattr(requests, 'request', mockreturn)
@@ -122,5 +140,5 @@ def test_headers(monkeypatch):
     transport = session.transports[0]
 
     # Requests include custom headers.
-    response = transport.make_http_request(session, 'http://example.org/123')
+    response = transport.make_http_request(session, 'http://example.org/123', 'GET')
     assert response.content == 'Example v1.0'

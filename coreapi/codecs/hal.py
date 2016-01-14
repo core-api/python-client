@@ -2,7 +2,7 @@ from collections import OrderedDict
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
-from coreapi.document import Document, Link, Array, Object
+from coreapi.document import Document, Link, Array, Object, Field
 from coreapi.exceptions import ParseError
 import json
 import uritemplate
@@ -87,7 +87,9 @@ def _document_to_primative(node, base_url=None):
 def _parse_link(data, base_url=None):
     url = urlparse.urljoin(base_url, data.get('href'))
     if data.get('templated'):
-        fields = list(uritemplate.variables(url))
+        fields = [
+            Field(name, location='path')for name in uritemplate.variables(url)
+        ]
     else:
         fields = None
     return Link(url=url, fields=fields)
@@ -105,7 +107,7 @@ def _parse_document(data, base_url=None):
     content = {}
 
     for key, value in data.get('_links', {}).items():
-        if key in ('self', 'curies', 'curie'):
+        if key in ('self', 'curies'):
             continue
 
         if ':' in key:
@@ -113,9 +115,16 @@ def _parse_document(data, base_url=None):
 
         if isinstance(value, list):
             if value and 'name' in value[0]:
-                content[key] = {item['name']: _parse_link(item, base_url) for item in value}
+                content[key] = {
+                    item['name']: _parse_link(item, base_url)
+                    for item in value
+                    if 'name' in item
+                }
             else:
-                content[key] = [_parse_link(item, base_url) for item in value]
+                content[key] = [
+                    _parse_link(item, base_url)
+                    for item in value
+                ]
         elif isinstance(value, dict):
             content[key] = _parse_link(value, base_url)
 

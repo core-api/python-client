@@ -1,6 +1,6 @@
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
-from coreapi.document import Document, Link, Array, Object, Error
+from coreapi.document import Document, Link, Array, Object, Error, Field
 
 
 def _to_repr(node):
@@ -31,14 +31,19 @@ def _to_repr(node):
         if node.inplace is not None:
             args += ", inplace=%s" % repr(node.inplace)
         if node.fields:
-            fields_repr = ', '.join([
-                'required(%s)' % repr(field.name)
-                if field.required else
-                repr(field.name)
-                for field in node.fields
-            ])
+            fields_repr = ', '.join(_to_repr(item) for item in node.fields)
             args += ", fields=[%s]" % fields_repr
         return "Link(%s)" % args
+
+    elif isinstance(node, Field):
+        args = repr(node.name)
+        if not node.required and not node.location:
+            return args
+        if node.required:
+            args += ', required=True'
+        if node.location:
+            args += ', location=%s' % repr(node.location)
+        return 'Field(%s)' % args
 
     elif isinstance(node, Error):
         return 'Error(%s)' % repr(list(node.messages))

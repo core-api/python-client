@@ -1,6 +1,6 @@
 # coding: utf-8
-from coreapi import action, required
-from coreapi import Array, Document, Object, Link, Error
+from coreapi import action
+from coreapi import Array, Document, Object, Link, Error, Field
 import pytest
 
 
@@ -17,7 +17,7 @@ def doc():
                 url='/',
                 action='post',
                 inplace=True,
-                fields=['optional', required('required')]
+                fields=['optional', Field('required', required=True, location='path')]
             ),
             'nested': {'child': Link(url='/123')}
         })
@@ -38,7 +38,7 @@ def link():
     return Link(
         url='/',
         action='post',
-        fields=[required('required'), 'optional']
+        fields=[Field('required', required=True), 'optional']
     )
 
 
@@ -224,7 +224,7 @@ def test_document_repr(doc):
         "'list': [1, 2, 3], "
         "'nested': {'child': Link(url='/123')}, "
         "'link': Link(url='/', action='post', inplace=True, "
-        "fields=['optional', required('required')])"
+        "fields=['optional', Field('required', required=True, location='path')])"
         "})"
     )
     assert eval(repr(doc)) == doc
@@ -241,7 +241,7 @@ def test_array_repr(array):
 
 
 def test_link_repr(link):
-    assert repr(link) == "Link(url='/', action='post', fields=[required('required'), 'optional'])"
+    assert repr(link) == "Link(url='/', action='post', fields=[Field('required', required=True), 'optional'])"
     assert eval(repr(link)) == link
 
 
@@ -334,7 +334,7 @@ def test_document_equality(doc):
             url='/',
             action='post',
             inplace=True,
-            fields=['optional', required('required')]
+            fields=['optional', Field('required', required=True, location='path')]
         ),
         'nested': {'child': Link(url='/123')}
     }
