@@ -165,11 +165,14 @@ def _primative_to_document(data, base_url=None):
                     isinstance(item.get('name'), string_types)
                 )
             ]
-            # Transform the strings or dicts into strings or Field instances.
+            # Transform the dicts into Field instances.
             fields = [
-                item if isinstance(item, string_types) else
-                Field(item['name'], required=bool(item.get('required', False)), location=str(item.get('type', '')))
-                for item in fields
+                Field(
+                    item['name'],
+                    required=bool(item.get('required', False)),
+                    location=str(item.get('type', ''))
+                )
+                for item in fields if isinstance(item, dict)
             ]
 
         return Link(url=url, action=action, inplace=inplace, fields=fields)

@@ -40,10 +40,6 @@ Field = namedtuple('Field', ['name', 'required', 'location'])
 Field.__new__.__defaults__ = (False, '')
 
 
-def required(name):
-    return Field(name, required=True, location='')
-
-
 # The Core API primatives:
 
 class Document(itypes.Dict):
