@@ -1,17 +1,17 @@
 # coding: utf-8
 from coreapi.codecs import BaseCodec, CoreJSONCodec, HTMLCodec, PlainTextCodec, PythonCodec
-from coreapi.document import Array, Document, Link, Object, Error, Field, required
+from coreapi.document import Array, Document, Link, Object, Error, Field
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.history import History
 from coreapi.sessions import Session
 from coreapi.transport import BaseTransport, HTTPTransport
 
 
-__version__ = '1.5.1'
+__version__ = '1.6.0'
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',
-    'Array', 'Document', 'Link', 'Object', 'Error', 'Field', 'required',
+    'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
     'BaseTransport', 'HTTPTransport', 'Session', 'History',
     'load', 'dump', 'get', 'get_default_session'

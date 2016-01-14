@@ -1,4 +1,4 @@
-from coreapi import Link, required
+from coreapi import Link, Field
 from coreapi.validation import validate_parameters
 import datetime
 import pytest
@@ -12,7 +12,7 @@ def link():
     return Link(
         url='/',
         action='post',
-        fields=[required('required'), 'optional']
+        fields=[Field('required', required=True), 'optional']
     )
 
 
