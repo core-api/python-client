@@ -56,9 +56,7 @@ def coerce_key_types(doc, keys):
 
 
 def get_document_string(doc):
-    if not doc.title and not doc.content:
-        return '<Empty %s>' % json.dumps(doc.url)
-    elif not doc.title:
+    if not doc.title:
         return '<Document %s>' % json.dumps(doc.url)
     return '<%s %s>' % (doc.title, json.dumps(doc.url))
 
@@ -99,7 +97,7 @@ def client(ctx, version):
     setup_paths()
 
     if os.path.isfile(config_path):
-        os.remove(config_path)
+        os.remove(config_path)  # pragma: nocover
     if not os.path.isdir(config_path):
         os.mkdir(config_path)
 
@@ -145,7 +143,7 @@ def show(path):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     if path:
         keys = coerce_key_types(doc, path)
@@ -183,7 +181,7 @@ def action(path, param, action, inplace):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     session = get_session()
     history = get_history()
@@ -200,7 +198,7 @@ def reload_document():
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     session = get_session()
     history = get_history()
@@ -369,7 +367,7 @@ def bookmarks_add(name):
     doc = get_document()
     if doc is None:
         click.echo('No current document.')
-        return
+        sys.exit(1)
 
     bookmarks = get_bookmarks()
     bookmarks[name] = {'url': doc.url, 'title': doc.title}
