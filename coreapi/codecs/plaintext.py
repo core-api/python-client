@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
+from coreapi.compat import string_types
 from coreapi.document import Document, Link, Array, Object, Error
 import click
 import json
@@ -13,7 +14,7 @@ def _colorize_keys(text):
     return click.style(text, fg='cyan')  # pragma: nocover
 
 
-def _to_plaintext(node, indent=0, base_url=None, colorize=False):
+def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=None):
     colorize_document = _colorize_document if colorize else lambda x: x
     colorize_keys = _colorize_keys if colorize else lambda x: x
 
@@ -23,7 +24,7 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False):
 
         body = '\n'.join([
             body_indent + colorize_keys(str(key) + ': ') +
-            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
+            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize, extra_offset=len(str(key)))
             for key, value in node.data.items()
         ] + [
             body_indent + colorize_keys(str(key) + '(') +
@@ -43,7 +44,7 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False):
 
         body = '\n'.join([
             body_indent + colorize_keys(str(key)) + ': ' +
-            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
+            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize, extra_offset=len(str(key)))
             for key, value in node.data.items()
         ] + [
             body_indent + colorize_keys(str(key) + '(') +
@@ -75,6 +76,12 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False):
         return '<Error>' + ''.join([
             '\n    * %s' % repr(message) for message in node.messages
         ])
+
+    if isinstance(node, string_types) and (extra_offset is not None) and ('\n' in node):
+        # Display newlines in strings gracefully.
+        text = json.dumps(node)
+        spacing = ('    ' * indent) + (' ' * extra_offset) + '   '
+        return text.replace('\\n', '\n' + spacing)
 
     return json.dumps(node)
 
