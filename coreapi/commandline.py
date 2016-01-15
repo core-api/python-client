@@ -41,6 +41,14 @@ def coerce_key_types(doc, keys):
     return ret
 
 
+def get_document_string(doc):
+    if not doc.title and not doc.content:
+        return '<Empty %s>' % json.dumps(doc.url)
+    elif not doc.title:
+        return '<Document %s>' % json.dumps(doc.url)
+    return '<%s %s>' % (doc.title, json.dumps(doc.url))
+
+
 def get_session():
     credentials = get_credentials()
     headers = get_headers()
@@ -414,8 +422,7 @@ def history_show():
     click.echo(click.style('History', bold=True))
     for is_active, doc in history.get_items():
         prefix = '[*] ' if is_active else '[ ] '
-        document = 'blank' if (doc is None) else '<%s %s>' % (doc.title, json.dumps(doc.url))
-        click.echo(prefix + document)
+        click.echo(prefix + get_document_string(doc))
 
 
 @click.command(help="Navigate back through the browser history.")

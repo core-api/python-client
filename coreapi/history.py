@@ -14,6 +14,8 @@ class History(itypes.Object):
         self._items = itypes.List(items or [])
         self._idx = idx
         self._max_items = max_items
+        if any([not isinstance(doc, Document) for doc in self._items]):
+            raise ValueError('items must be a list of Document instances.')
 
     @property
     def max_items(self):
@@ -46,10 +48,10 @@ class History(itypes.Object):
         )
 
     def add(self, doc):
-        if doc is None:
-            new = None
-        else:
-            new = Document(doc.url, doc.title)
+        if not isinstance(doc, Document):
+            raise ValueError('Argument must be a Document instance.')
+
+        new = Document(doc.url, doc.title)
         current = self.current
 
         # Remove any forward history past the current item.
@@ -58,15 +60,12 @@ class History(itypes.Object):
         # Add the new reference if required.
         if current == new:
             pass
-        elif current is None:
-            items = [new] + items[1:]
-        elif new is None:
-            items = [new] + items
-        elif current.url == new.url:
+        elif (current is not None) and (current.url == new.url):
             items = [new] + items[1:]
         else:
             items = [new] + items
 
+        # Truncate the history if we've reached the maximum number of items.
         items = items[:self.max_items]
         return History(items, max_items=self.max_items)
 
@@ -90,7 +89,7 @@ class History(itypes.Object):
 def dump_history(history):
     history_data = {
         'items': [
-            None if (doc is None) else {'url': doc.url, 'title': doc.title}
+            {'url': doc.url, 'title': doc.title}
             for active, doc in history.get_items()
         ],
         'idx': history._idx,
@@ -102,7 +101,7 @@ def dump_history(history):
 def load_history(bytestring):
     history_data = json.loads(bytestring.decode('utf-8'))
     items = [
-        None if (item is None) else Document(item['url'], item['title'])
+        Document(item['url'], item['title'])
         for item in history_data['items']
     ]
     idx = history_data['idx']
