@@ -5,13 +5,27 @@ import os
 import sys
 
 
-config_path = os.path.join(os.path.expanduser('~'), '.coreapi')
+config_path = None
 
-document_path = os.path.join(config_path, 'document.json')
-history_path = os.path.join(config_path, 'history.json')
-credentials_path = os.path.join(config_path, 'credentials.json')
-headers_path = os.path.join(config_path, 'headers.json')
-bookmarks_path = os.path.join(config_path, 'bookmarks.json')
+document_path = None
+history_path = None
+credentials_path = None
+headers_path = None
+bookmarks_path = None
+
+
+def setup_paths():
+    global config_path, document_path, history_path
+    global credentials_path, headers_path, bookmarks_path
+
+    default_dir = os.path.join(os.path.expanduser('~'), '.coreapi')
+    config_path = os.environ.get('COREAPI_CONFIG_DIR', default_dir)
+
+    document_path = os.path.join(config_path, 'document.json')
+    history_path = os.path.join(config_path, 'history.json')
+    credentials_path = os.path.join(config_path, 'credentials.json')
+    headers_path = os.path.join(config_path, 'headers.json')
+    bookmarks_path = os.path.join(config_path, 'bookmarks.json')
 
 
 def coerce_key_types(doc, keys):
@@ -42,9 +56,7 @@ def coerce_key_types(doc, keys):
 
 
 def get_document_string(doc):
-    if not doc.title and not doc.content:
-        return '<Empty %s>' % json.dumps(doc.url)
-    elif not doc.title:
+    if not doc.title:
         return '<Document %s>' % json.dumps(doc.url)
     return '<%s %s>' % (doc.title, json.dumps(doc.url))
 
@@ -82,8 +94,10 @@ def display(doc):
 @click.option('--version', is_flag=True, help='Display the package version number.')
 @click.pass_context
 def client(ctx, version):
+    setup_paths()
+
     if os.path.isfile(config_path):
-        os.remove(config_path)
+        os.remove(config_path)  # pragma: nocover
     if not os.path.isdir(config_path):
         os.mkdir(config_path)
 
@@ -129,7 +143,7 @@ def show(path):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     if path:
         keys = coerce_key_types(doc, path)
@@ -167,7 +181,7 @@ def action(path, param, action, inplace):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     session = get_session()
     history = get_history()
@@ -184,7 +198,7 @@ def reload_document():
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
-        return
+        sys.exit(1)
 
     session = get_session()
     history = get_history()
@@ -352,8 +366,8 @@ def bookmarks_show():
 def bookmarks_add(name):
     doc = get_document()
     if doc is None:
-        click.echo('No current document.')
-        return
+        click.echo('No current document. Use `coreapi get` to fetch a document first.')
+        sys.exit(1)
 
     bookmarks = get_bookmarks()
     bookmarks[name] = {'url': doc.url, 'title': doc.title}
