@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi import Error, ErrorMessage
+from coreapi import Document, Error, ErrorMessage
 from coreapi.compat import urlparse
 import requests
 import itypes
@@ -45,6 +45,8 @@ class HTTPTransport(BaseTransport):
         if link_ancestors:
             document = self.handle_inplace_replacements(document, link, link_ancestors)
 
+        if document is None:
+            document = Document(url=response.url)
         return document
 
     def get_http_method(self, action=None):

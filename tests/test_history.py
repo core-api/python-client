@@ -16,10 +16,6 @@ def test_empty_history():
     with pytest.raises(ValueError):
         history.forward()
 
-    # Adding blank does not change history.
-    new_history = history.add(None)
-    assert list(new_history.get_items()) == []
-
     # Adding new document changes history.
     new_doc = Document('http://example.com', 'Example')
     new_history = history.add(new_doc)
@@ -39,10 +35,6 @@ def test_single_history():
         history.back()
     with pytest.raises(ValueError):
         history.forward()
-
-    # Adding blank changes history.
-    new_history = history.add(None)
-    assert list(new_history.get_items()) == [(True, None), (False, doc)]
 
     # Adding same document does not change history.
     new_doc = Document('http://example.com', 'Example')
@@ -101,18 +93,9 @@ def test_adding_from_midpoint():
     assert list(new.get_items()) == [(True, third), (False, first)]
 
 
-def test_adding_none_from_midpoint():
-    """
-    Adding a blank item from midpoint in history removes any forwards items.
-    """
-    first = Document('http://first.com', 'First')
-    second = Document('http://second.com', 'Second')
-    history = History([second, first], idx=1)
+def test_invalid_arguments():
+    with pytest.raises(ValueError):
+        History([None, Document('http://example.com')])
 
-    new = history.add(None)
-    assert list(new.get_items()) == [(True, None), (False, first)]
-
-
-def test_dump_and_load_with_blank_item():
-    history = History([None, Document('http://example.com')])
-    assert load_history(dump_history(history)) == history
+    with pytest.raises(ValueError):
+        History().add(None)
