@@ -110,7 +110,9 @@ def _parse_document(data, base_url=None):
         if key in ('self', 'curies'):
             continue
 
-        if ':' in key:
+        if key.startswith('http://') or key.startswith('https://'):
+            key = urlparse.urlsplit(key).path.split('/')[-1]
+        elif ':' in key:
             key = key.split(':', 1)[1]
 
         if isinstance(value, list):
@@ -128,7 +130,12 @@ def _parse_document(data, base_url=None):
         elif isinstance(value, dict):
             content[key] = _parse_link(value, base_url)
 
-    for key, value in data.get('_embedded', {}):
+    for key, value in data.get('_embedded', {}).items():
+        if key.startswith('http://') or key.startswith('https://'):
+            key = urlparse.urlsplit(key).path.split('/')[-1]
+        elif ':' in key:
+            key = key.split(':', 1)[1]
+
         if isinstance(value, list):
             content[key] = [_parse_document(item, base_url=url) for item in value]
         elif isinstance(value, dict):
