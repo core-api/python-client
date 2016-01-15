@@ -75,6 +75,10 @@ def test_cli_clear(cli):
 
 
 def test_cli_reload(cli):
+    result = cli('reload')
+    assert result.output == 'No current document. Use `coreapi get` to fetch a document first.\n'
+    assert result.exit_code == 1
+
     set_response(Document('http://example.com', 'Example'))
     result = cli('get', 'http://mock')
 

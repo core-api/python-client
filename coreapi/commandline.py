@@ -366,7 +366,7 @@ def bookmarks_show():
 def bookmarks_add(name):
     doc = get_document()
     if doc is None:
-        click.echo('No current document.')
+        click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
     bookmarks = get_bookmarks()
