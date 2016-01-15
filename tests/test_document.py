@@ -271,6 +271,15 @@ def test_document_str(doc):
     """)
 
 
+def test_newline_strr():
+    doc = Document(content={'foo': '1\n2'})
+    assert str(doc) == _dedent("""
+        <Document "">
+            foo: "1
+                  2"
+    """)
+
+
 def test_object_str(obj):
     assert str(obj) == _dedent("""
         {
