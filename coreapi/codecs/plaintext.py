@@ -18,7 +18,7 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
     colorize_document = _colorize_document if colorize else lambda x: x
     colorize_keys = _colorize_keys if colorize else lambda x: x
 
-    if isinstance(node, Document):
+    if isinstance(node, Document) or isinstance(node, Error):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
 
@@ -32,10 +32,14 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
             for key, value in node.links.items()
         ])
 
-        head = colorize_document('<%s %s>' % (
-            node.title.strip() or 'Document',
-            json.dumps(node.url)
-        ))
+        if isinstance(node, Document):
+            head = colorize_document('<%s %s>' % (
+                node.title.strip() or 'Document',
+                json.dumps(node.url)
+            ))
+        else:
+            head = '{%s}' % (node.title.strip() or 'Error')
+
         return head if (not body) else head + '\n' + body
 
     elif isinstance(node, Object):
@@ -71,11 +75,6 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
             _fields_to_plaintext(node, colorize=colorize) +
             colorize_keys(')')
         )
-
-    elif isinstance(node, Error):
-        return '<Error>' + ''.join([
-            '\n    * %s' % repr(message) for message in node.messages
-        ])
 
     if isinstance(node, string_types) and (extra_offset is not None) and ('\n' in node):
         # Display newlines in strings gracefully.

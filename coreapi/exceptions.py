@@ -1,6 +1,5 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi.compat import string_types
 
 
 class ParseError(Exception):
@@ -28,16 +27,11 @@ class ErrorMessage(Exception):
     """
     Raised when the transition returns an error message.
     """
-    def __init__(self, messages):
-        if not isinstance(messages, (list, tuple)):
-            raise TypeError("'messages' should be a list of strings.")
-        if any([not isinstance(message, string_types) for message in messages]):
-            raise TypeError("'messages' should be a list of strings.")
-
-        self.messages = tuple(messages)
+    def __init__(self, error):
+        self.error = error
 
     def __repr__(self):
-        return 'ErrorMessage(%s)' % repr(list(self.messages))
+        return 'ErrorMessage(%s)' % repr(self.error)
 
     def __str__(self):
-        return repr(list(self.messages))
+        return str(self.error)

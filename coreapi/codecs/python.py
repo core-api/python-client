@@ -4,11 +4,15 @@ from coreapi.document import Document, Link, Array, Object, Error, Field
 
 
 def _to_repr(node):
-    if isinstance(node, Document):
+    if isinstance(node, Document) or isinstance(node, Error):
         content = ', '.join([
             '%s: %s' % (repr(key), _to_repr(value))
             for key, value in node.items()
         ])
+        if isinstance(node, Error):
+            return 'Error(url=%s, title=%s, content={%s})' % (
+                repr(node.url), repr(node.title), content
+            )
         return 'Document(url=%s, title=%s, content={%s})' % (
             repr(node.url), repr(node.title), content
         )
@@ -44,9 +48,6 @@ def _to_repr(node):
         if node.location:
             args += ', location=%s' % repr(node.location)
         return 'Field(%s)' % args
-
-    elif isinstance(node, Error):
-        return 'Error(%s)' % repr(list(node.messages))
 
     return repr(node)
 

@@ -69,7 +69,7 @@ def test_primative_to_document(doc):
 
 
 def test_error_to_primative():
-    error = Error(['failed'])
+    error = Error(content={'messages': ['failed']})
     data = {
         '_type': 'error',
         'messages': ['failed']
@@ -78,7 +78,7 @@ def test_error_to_primative():
 
 
 def test_primative_to_error():
-    error = Error(['failed'])
+    error = Error(content={'messages': ['failed']})
     data = {
         '_type': 'error',
         'messages': ['failed']
@@ -105,7 +105,7 @@ def test_minimal_error(json_codec):
     """
     error = json_codec.load(b'{"_type":"error","messages":["failed"]}')
     assert isinstance(error, Error)
-    assert error == ['failed']
+    assert error == {'messages': ['failed']}
 
 
 # Parse errors should be raised for invalid encodings.
@@ -203,11 +203,6 @@ def test_invalid_link_fields_ignored(json_codec):
     assert doc == Document(content={"link": Link()})
 
 
-def test_invalid_message_field_ignored(json_codec):
-    error = json_codec.load(b'{"_type": "error", "messages": 1}')
-    assert error == Error(messages=[])
-
-
 # Tests for 'Content-Type' header lookup.
 
 def test_get_default_decoder():
@@ -269,7 +264,7 @@ def test_get_unsupported_encoder_with_fallback():
 # Tests for HTML rendering
 
 def test_html_document_rendering(html_codec):
-    doc = Document({'string': 'abc', 'int': 123, 'bool': True})
+    doc = Document(content={'string': 'abc', 'int': 123, 'bool': True})
     content = html_codec.dump(doc)
     assert 'coreapi-document' in content
     assert '<span>abc</span>' in content
@@ -278,7 +273,7 @@ def test_html_document_rendering(html_codec):
 
 
 def test_html_object_rendering(html_codec):
-    doc = Document({'object': {'a': 1, 'b': 2}})
+    doc = Document(content={'object': {'a': 1, 'b': 2}})
     content = html_codec.dump(doc)
     assert 'coreapi-object' in content
     assert '<th>a</th>' in content
@@ -286,7 +281,7 @@ def test_html_object_rendering(html_codec):
 
 
 def test_html_array_rendering(html_codec):
-    doc = Document({'array': [1, 2]})
+    doc = Document(content={'array': [1, 2]})
     content = html_codec.dump(doc)
     assert 'coreapi-array' in content
     assert '<th>0</th>' in content
@@ -294,14 +289,14 @@ def test_html_array_rendering(html_codec):
 
 
 def test_html_link_rendering(html_codec):
-    doc = Document({'link': Link(url='/test/')})
+    doc = Document(content={'link': Link(url='/test/')})
     content = html_codec.dump(doc)
     assert 'coreapi-link' in content
     assert 'href="/test/"' in content
 
 
 def test_html_error_rendering(html_codec):
-    doc = Error(['something failed'])
+    doc = Error(content={'message': ['something failed']})
     content = html_codec.dump(doc)
     assert 'coreapi-error' in content
     assert 'something failed' in content

@@ -49,9 +49,12 @@ def _document_to_primative(node, base_url=None):
     Take a Core API document and return Python primatives
     ready to be rendered into the JSON style encoding.
     """
-    if isinstance(node, Document):
+    if isinstance(node, Document) or isinstance(node, Error):
         ret = OrderedDict()
-        ret['_type'] = 'document'
+        if isinstance(node, Error):
+            ret['_type'] = 'error'
+        else:
+            ret['_type'] = 'document'
 
         # Only fill in items in '_meta' if required.
         meta = OrderedDict()
@@ -63,6 +66,7 @@ def _document_to_primative(node, base_url=None):
         if meta:
             ret['_meta'] = meta
 
+        # Fill in key-value content.
         ret.update([
             (_escape_key(key), _document_to_primative(value, base_url=node.url))
             for key, value in node.items()
@@ -103,12 +107,6 @@ def _document_to_primative(node, base_url=None):
     elif isinstance(node, Array):
         return [_document_to_primative(value) for value in node]
 
-    elif isinstance(node, Error):
-        ret = OrderedDict()
-        ret['_type'] = 'error'
-        ret['messages'] = node.messages
-        return ret
-
     return node
 
 
@@ -117,7 +115,7 @@ def _primative_to_document(data, base_url=None):
     Take Python primatives as returned from parsing JSON content,
     and return a Core API document.
     """
-    if isinstance(data, dict) and data.get('_type') == 'document':
+    if isinstance(data, dict) and data.get('_type') in ('document', 'error'):
         # Document
         meta = data.get('_meta', {})
         if not isinstance(meta, dict):
@@ -132,11 +130,15 @@ def _primative_to_document(data, base_url=None):
         if not isinstance(title, string_types):
             title = ''
 
-        return Document(url=url, title=title, content={
+        content = {
             _unescape_key(key): _primative_to_document(value, url)
             for key, value in data.items()
             if key not in ('_type', '_meta')
-        })
+        }
+
+        if data.get('_type') == 'error':
+            return Error(url=url, title=title, content=content)
+        return Document(url=url, title=title, content=content)
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
         # Link
@@ -177,20 +179,6 @@ def _primative_to_document(data, base_url=None):
 
         return Link(url=url, action=action, inplace=inplace, fields=fields)
 
-    elif isinstance(data, dict) and data.get('_type') == 'error':
-        # Error
-        messages = data.get('messages', [])
-        if not isinstance(messages, list):
-            messages = []
-
-        # Ignore any messages which are have incorrect type.
-        messages = [
-            message for message in messages
-            if isinstance(message, string_types)
-        ]
-
-        return Error(messages)
-
     elif isinstance(data, dict):
         # Map
         return Object({
@@ -222,8 +210,8 @@ class CoreJSONCodec(BaseCodec):
             raise ParseError('Malformed JSON. %s' % exc)
 
         doc = _primative_to_document(data, base_url)
-        if not isinstance(doc, (Document, Error)):
-            raise ParseError('Top level node must be a document or error message.')
+        if not (isinstance(doc, Document) or isinstance(doc, Error)):
+            raise ParseError('Top level node must be a document or error.')
 
         return doc
 
