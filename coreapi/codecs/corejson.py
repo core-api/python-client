@@ -8,6 +8,34 @@ from coreapi.exceptions import ParseError
 import json
 
 
+def _get_string(item, key):
+    value = item.get(key)
+    return value if isinstance(value, string_types) else ''
+
+
+def _get_dict(item, key):
+    value = item.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _get_list(item, key):
+    value = item.get(key)
+    return value if isinstance(value, list) else []
+
+
+def _get_bool(item, key):
+    value = item.get(key)
+    return value if isinstance(value, bool) else None
+
+
+def _get_content(item, base_url=None):
+    return {
+        _unescape_key(key): _primative_to_document(value, base_url)
+        for key, value in item.items()
+        if key not in ('_type', '_meta')
+    }
+
+
 def _graceful_relative_url(base_url, url):
     """
     Return a graceful link for a URL relative to a base URL.
@@ -49,12 +77,9 @@ def _document_to_primative(node, base_url=None):
     Take a Core API document and return Python primatives
     ready to be rendered into the JSON style encoding.
     """
-    if isinstance(node, Document) or isinstance(node, Error):
+    if isinstance(node, Document):
         ret = OrderedDict()
-        if isinstance(node, Error):
-            ret['_type'] = 'error'
-        else:
-            ret['_type'] = 'document'
+        ret['_type'] = 'document'
 
         # Only fill in items in '_meta' if required.
         meta = OrderedDict()
@@ -69,6 +94,21 @@ def _document_to_primative(node, base_url=None):
         # Fill in key-value content.
         ret.update([
             (_escape_key(key), _document_to_primative(value, base_url=node.url))
+            for key, value in node.items()
+        ])
+        return ret
+
+    elif isinstance(node, Error):
+        ret = OrderedDict()
+        ret['_type'] = 'error'
+
+        # Only fill in items in '_meta' if required.
+        if node.title:
+            ret['_meta'] = {'title': node.title}
+
+        # Fill in key-value content.
+        ret.update([
+            (_escape_key(key), _document_to_primative(value))
             for key, value in node.items()
         ])
         return ret
@@ -115,50 +155,31 @@ def _primative_to_document(data, base_url=None):
     Take Python primatives as returned from parsing JSON content,
     and return a Core API document.
     """
-    if isinstance(data, dict) and data.get('_type') in ('document', 'error'):
+    if isinstance(data, dict) and data.get('_type') == 'document':
         # Document
-        meta = data.get('_meta', {})
-        if not isinstance(meta, dict):
-            meta = {}
-
-        url = meta.get('url', '')
-        if not isinstance(url, string_types):
-            url = ''
+        meta = _get_dict(data, '_meta')
+        url = _get_string(meta, 'url')
         url = urlparse.urljoin(base_url, url)
-
-        title = meta.get('title', '')
-        if not isinstance(title, string_types):
-            title = ''
-
-        content = {
-            _unescape_key(key): _primative_to_document(value, url)
-            for key, value in data.items()
-            if key not in ('_type', '_meta')
-        }
-
-        if data.get('_type') == 'error':
-            return Error(url=url, title=title, content=content)
+        title = _get_string(meta, 'title')
+        content = _get_content(data, base_url=url)
         return Document(url=url, title=title, content=content)
+
+    if isinstance(data, dict) and data.get('_type') == 'error':
+        # Error
+        meta = _get_dict(data, '_meta')
+        title = _get_string(meta, 'title')
+        content = _get_content(data)
+        return Error(title=title, content=content)
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
         # Link
-        url = data.get('url', '')
-        if not isinstance(url, string_types):
-            url = ''
+        url = _get_string(data, 'url')
         url = urlparse.urljoin(base_url, url)
+        action = _get_string(data, 'action')
+        inplace = _get_bool(data, 'inplace')
+        fields = _get_list(data, 'fields')
 
-        action = data.get('action')
-        if not isinstance(action, string_types):
-            action = ''
-
-        inplace = data.get('inplace')
-        if not isinstance(inplace, bool):
-            inplace = None
-
-        fields = data.get('fields', [])
-        if not isinstance(fields, list):
-            fields = []
-        else:
+        if fields:
             # Ignore any field items that don't match the required structure.
             fields = [
                 item for item in fields
@@ -181,11 +202,8 @@ def _primative_to_document(data, base_url=None):
 
     elif isinstance(data, dict):
         # Map
-        return Object({
-            _unescape_key(key): _primative_to_document(value, base_url)
-            for key, value in data.items()
-            if key not in ('_type', '_meta')
-        })
+        content = _get_content(data, base_url=base_url)
+        return Object(content)
 
     elif isinstance(data, list):
         # Array

@@ -42,7 +42,7 @@ Field.__new__.__defaults__ = (False, '')
 
 # The Core API primatives:
 
-class _DocumentOrError(itypes.Dict):
+class Document(itypes.Dict):
     """
     The Core API document type.
 
@@ -59,9 +59,7 @@ class _DocumentOrError(itypes.Dict):
         if content is not None and not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
         if any([not isinstance(key, string_types) for key in data.keys()]):
-            raise TypeError('%s keys must be strings.' % self.__class__.__name__)
-        if any([not isinstance(value, primative_types) for value in data.values()]):
-            raise TypeError('%s values must be primatives.' % self.__class__.__name__)
+            raise TypeError('content keys must be strings.')
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
@@ -87,7 +85,7 @@ class _DocumentOrError(itypes.Dict):
                 self.title == other.title and
                 self._data == other._data
             )
-        return super(_DocumentOrError, self).__eq__(other)
+        return super(Document, self).__eq__(other)
 
     @property
     def url(self):
@@ -110,21 +108,6 @@ class _DocumentOrError(itypes.Dict):
             (key, value) for key, value in self.items()
             if isinstance(value, Link)
         ])
-
-
-class Document(_DocumentOrError):
-    pass
-
-
-class Error(_DocumentOrError):
-    def get_messages(self):
-        messages = []
-        for value in self.values():
-            if isinstance(value, Array):
-                messages += [
-                    item for item in value if isinstance(item, string_types)
-                ]
-        return messages
 
 
 class Object(itypes.Dict):
@@ -235,7 +218,46 @@ class Link(itypes.Object):
         return _str(self)
 
 
-primative_types = string_types + (
-    type(None), int, float, bool, list, dict,
-    Document, Object, Array, Link
-)
+class Error(itypes.Dict):
+    def __init__(self, title=None, content=None):
+        data = {} if (content is None) else content
+
+        if title is not None and not isinstance(title, string_types):
+            raise TypeError("'title' must be a string.")
+        if content is not None and not isinstance(content, dict):
+            raise TypeError("'content' must be a dict.")
+        if any([not isinstance(key, string_types) for key in data.keys()]):
+            raise TypeError('content keys must be strings.')
+
+        self._title = '' if (title is None) else title
+        self._data = {key: _to_immutable(value) for key, value in data.items()}
+
+    def __iter__(self):
+        items = sorted(self._data.items(), key=_key_sorting)
+        return iter([key for key, value in items])
+
+    def __repr__(self):
+        return _repr(self)
+
+    def __str__(self):
+        return _str(self)
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Error) and
+            self.title == other.title and
+            self._data == other._data
+        )
+
+    @property
+    def title(self):
+        return self._title
+
+    def get_messages(self):
+        messages = []
+        for value in self.values():
+            if isinstance(value, Array):
+                messages += [
+                    item for item in value if isinstance(item, string_types)
+                ]
+        return messages

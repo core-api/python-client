@@ -26,7 +26,7 @@ def doc():
             'integer': 123,
             'dict': {'key': 'value'},
             'list': [1, 2, 3],
-            'link': Link(url='http://example.org/'),
+            'link': Link(url='http://example.org/', fields=[Field(name='example')]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
         })
@@ -45,7 +45,7 @@ def test_document_to_primative(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link'},
+        'link': {'_type': 'link', 'fields': [{'name': 'example'}]},
         'nested': {'child': {'_type': 'link', 'url': '/123'}},
         '__type': 'needs escaping'
     }
@@ -61,7 +61,7 @@ def test_primative_to_document(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'url': 'http://example.org/'},
+        'link': {'_type': 'link', 'url': 'http://example.org/', 'fields': [{'name': 'example'}]},
         'nested': {'child': {'_type': 'link', 'url': 'http://example.org/123'}},
         '__type': 'needs escaping'
     }
@@ -69,18 +69,20 @@ def test_primative_to_document(doc):
 
 
 def test_error_to_primative():
-    error = Error(content={'messages': ['failed']})
+    error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
+        '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
     assert _document_to_primative(error) == data
 
 
 def test_primative_to_error():
-    error = Error(content={'messages': ['failed']})
+    error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
+        '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
     assert _primative_to_document(data) == error
@@ -103,9 +105,8 @@ def test_minimal_error(json_codec):
     """
     Ensure we can load a minimal error message encoding.
     """
-    error = json_codec.load(b'{"_type":"error","messages":["failed"]}')
-    assert isinstance(error, Error)
-    assert error == {'messages': ['failed']}
+    error = json_codec.load(b'{"_type":"error","_meta":{"title":"Failure"},"messages":["failed"]}')
+    assert error == Error(title="Failure", content={'messages': ['failed']})
 
 
 # Parse errors should be raised for invalid encodings.

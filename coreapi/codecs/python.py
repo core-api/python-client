@@ -4,17 +4,22 @@ from coreapi.document import Document, Link, Array, Object, Error, Field
 
 
 def _to_repr(node):
-    if isinstance(node, Document) or isinstance(node, Error):
+    if isinstance(node, Document):
         content = ', '.join([
             '%s: %s' % (repr(key), _to_repr(value))
             for key, value in node.items()
         ])
-        if isinstance(node, Error):
-            return 'Error(url=%s, title=%s, content={%s})' % (
-                repr(node.url), repr(node.title), content
-            )
         return 'Document(url=%s, title=%s, content={%s})' % (
             repr(node.url), repr(node.title), content
+        )
+
+    elif isinstance(node, Error):
+        content = ', '.join([
+            '%s: %s' % (repr(key), _to_repr(value))
+            for key, value in node.items()
+        ])
+        return 'Error(title=%s, content={%s})' % (
+            repr(node.title), content
         )
 
     elif isinstance(node, Object):

@@ -44,7 +44,7 @@ def link():
 
 @pytest.fixture
 def error():
-    return Error(url='', title='', content={'messages': ['failed']})
+    return Error(title='', content={'messages': ['failed']})
 
 
 def _dedent(string):
@@ -246,7 +246,7 @@ def test_link_repr(link):
 
 
 def test_error_repr(error):
-    assert repr(error) == "Error(url='', title='', content={'messages': ['failed']})"
+    assert repr(error) == "Error(title='', content={'messages': ['failed']})"
     assert eval(repr(error)) == error
 
 
@@ -391,24 +391,24 @@ def test_document_keys_must_be_strings():
         Document(content={0: 123})
 
 
-def test_document_values_must_be_valid_primatives():
-    with pytest.raises(TypeError):
-        Document(content={'a': set()})
-
-
 def test_object_keys_must_be_strings():
     with pytest.raises(TypeError):
         Object(content={0: 123})
 
 
-def test_error_messages_must_be_list():
+def test_error_title_must_be_string():
     with pytest.raises(TypeError):
-        Error(123)
+        Error(title=123)
 
 
-def test_error_messages_must_be_list_of_strings():
+def test_error_content_must_be_dict():
     with pytest.raises(TypeError):
-        Error([123])
+        Error(content=123)
+
+
+def test_error_keys_must_be_strings():
+    with pytest.raises(TypeError):
+        Error(content={0: 123})
 
 
 # Link arguments must be valid.
