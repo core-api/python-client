@@ -1,11 +1,30 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from coreapi import Document, Error, ErrorMessage
+from collections import OrderedDict
+from coreapi import Document, Object, Link, Array, Error, ErrorMessage
 from coreapi.compat import urlparse
 import requests
 import itypes
 import json
 import uritemplate
+
+
+def _coerce_to_error_content(node):
+    # Errors should not contain nested documents or links.
+    # If we get a 4xx or 5xx response with a Document, then coerce it
+    # into plain data.
+    if isinstance(node, (Document, Object)):
+        return OrderedDict([
+            (key, _coerce_to_error_content(value))
+            for key, value in node.data.items()
+        ])
+    elif isinstance(node, Array):
+        return [
+            _coerce_to_error_content(item)
+            for item in node
+            if not isinstance(item, Link)
+        ]
+    return node
 
 
 class BaseTransport(itypes.Object):
@@ -39,6 +58,18 @@ class HTTPTransport(BaseTransport):
         url, query_params, form_params = self.get_params(method, link, params)
         response = self.make_http_request(session, url, method, query_params, form_params)
         document = self.load_document(session, response)
+
+        if (
+            isinstance(document, Document) and
+            response.status_code >= 400 and
+            response.status_code <= 599
+        ):
+            # Coerce 4xx and 5xx codes into errors.
+            document = Error(
+                title=document.title,
+                content=_coerce_to_error_content(document)
+            )
+
         if isinstance(document, Error):
             raise ErrorMessage(document)
 
