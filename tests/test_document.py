@@ -313,7 +313,7 @@ def test_link_str(link):
 
 def test_error_str(error):
     assert str(error) == _dedent("""
-        {Error}
+        <Error>
             messages: [
                 "failed"
             ]

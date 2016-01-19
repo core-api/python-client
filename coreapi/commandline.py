@@ -115,7 +115,11 @@ def client(ctx, version):
 def get(url):
     session = get_session()
     history = get_history()
-    doc = session.get(url)
+    try:
+        doc = session.get(url)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     history = history.add(doc)
     click.echo(display(doc))
     set_document(doc)
@@ -186,7 +190,11 @@ def action(path, param, action, inplace):
     session = get_session()
     history = get_history()
     keys = coerce_key_types(doc, path)
-    doc = session.action(doc, keys, params=param, action=action, inplace=inplace)
+    try:
+        doc = session.action(doc, keys, params=param, action=action, inplace=inplace)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     history = history.add(doc)
     click.echo(display(doc))
     set_document(doc)
@@ -202,7 +210,11 @@ def reload_document():
 
     session = get_session()
     history = get_history()
-    doc = session.reload(doc)
+    try:
+        doc = session.reload(doc)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     history = history.add(doc)
     click.echo(display(doc))
     set_document(doc)

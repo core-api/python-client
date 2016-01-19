@@ -70,7 +70,7 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
             for key, value in node.items()
         ])
 
-        head = colorize_error('{%s}' % (node.title.strip() or 'Error'))
+        head = colorize_error('<Error: %s>' % node.title.strip() if node.title else '<Error>')
 
         return head if (not body) else head + '\n' + body
 
