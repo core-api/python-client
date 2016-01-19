@@ -8,6 +8,8 @@ from coreapi.exceptions import ParseError
 import json
 
 
+# Helper functions to get an expected type from a dictionary,
+
 def _get_string(item, key):
     value = item.get(key)
     return value if isinstance(value, string_types) else ''
@@ -23,17 +25,9 @@ def _get_list(item, key):
     return value if isinstance(value, list) else []
 
 
-def _get_bool(item, key):
+def _get_bool(item, key, default=False):
     value = item.get(key)
-    return value if isinstance(value, bool) else None
-
-
-def _get_content(item, base_url=None):
-    return {
-        _unescape_key(key): _primative_to_document(value, base_url)
-        for key, value in item.items()
-        if key not in ('_type', '_meta')
-    }
+    return value if isinstance(value, bool) else default
 
 
 def _graceful_relative_url(base_url, url):
@@ -72,6 +66,17 @@ def _unescape_key(string):
     return string
 
 
+def _get_content(item, base_url=None):
+    """
+    Return a dictionary of content, for documents, objects and errors.
+    """
+    return {
+        _unescape_key(key): _primative_to_document(value, base_url)
+        for key, value in item.items()
+        if key not in ('_type', '_meta')
+    }
+
+
 def _document_to_primative(node, base_url=None):
     """
     Take a Core API document and return Python primatives
@@ -81,7 +86,6 @@ def _document_to_primative(node, base_url=None):
         ret = OrderedDict()
         ret['_type'] = 'document'
 
-        # Only fill in items in '_meta' if required.
         meta = OrderedDict()
         url = _graceful_relative_url(base_url, node.url)
         if url:
@@ -93,7 +97,7 @@ def _document_to_primative(node, base_url=None):
 
         # Fill in key-value content.
         ret.update([
-            (_escape_key(key), _document_to_primative(value, base_url=node.url))
+            (_escape_key(key), _document_to_primative(value, base_url=url))
             for key, value in node.items()
         ])
         return ret
@@ -102,13 +106,12 @@ def _document_to_primative(node, base_url=None):
         ret = OrderedDict()
         ret['_type'] = 'error'
 
-        # Only fill in items in '_meta' if required.
         if node.title:
             ret['_meta'] = {'title': node.title}
 
         # Fill in key-value content.
         ret.update([
-            (_escape_key(key), _document_to_primative(value))
+            (_escape_key(key), _document_to_primative(value, base_url=base_url))
             for key, value in node.items()
         ])
         return ret
@@ -124,7 +127,6 @@ def _document_to_primative(node, base_url=None):
         if node.inplace is not None:
             ret['inplace'] = node.inplace
         if node.fields:
-            # Use short format for optional fields, long format for required.
             ret['fields'] = [
                 _document_to_primative(field) for field in node.fields
             ]
@@ -133,7 +135,7 @@ def _document_to_primative(node, base_url=None):
     elif isinstance(node, Field):
         ret = OrderedDict({'name': node.name})
         if node.required:
-            ret['required'] = True
+            ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
         return ret
@@ -168,7 +170,7 @@ def _primative_to_document(data, base_url=None):
         # Error
         meta = _get_dict(data, '_meta')
         title = _get_string(meta, 'title')
-        content = _get_content(data)
+        content = _get_content(data, base_url=base_url)
         return Error(title=title, content=content)
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
@@ -176,28 +178,16 @@ def _primative_to_document(data, base_url=None):
         url = _get_string(data, 'url')
         url = urlparse.urljoin(base_url, url)
         action = _get_string(data, 'action')
-        inplace = _get_bool(data, 'inplace')
+        inplace = _get_bool(data, 'inplace', default=None)
         fields = _get_list(data, 'fields')
-
-        if fields:
-            # Ignore any field items that don't match the required structure.
-            fields = [
-                item for item in fields
-                if isinstance(item, string_types) or (
-                    isinstance(item, dict) and
-                    isinstance(item.get('name'), string_types)
-                )
-            ]
-            # Transform the dicts into Field instances.
-            fields = [
-                Field(
-                    item['name'],
-                    required=bool(item.get('required', False)),
-                    location=str(item.get('type', ''))
-                )
-                for item in fields if isinstance(item, dict)
-            ]
-
+        fields = [
+            Field(
+                name=_get_string(item, 'name'),
+                required=_get_bool(item, 'required'),
+                location=_get_string(item, 'location')
+            )
+            for item in fields if isinstance(item, dict)
+        ]
         return Link(url=url, action=action, inplace=inplace, fields=fields)
 
     elif isinstance(data, dict):
@@ -207,9 +197,8 @@ def _primative_to_document(data, base_url=None):
 
     elif isinstance(data, list):
         # Array
-        return Array([
-            _primative_to_document(item, base_url) for item in data
-        ])
+        content = [_primative_to_document(item, base_url) for item in data]
+        return Array(content)
 
     # String, Integer, Number, Boolean, null.
     return data
