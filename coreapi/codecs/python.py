@@ -13,6 +13,15 @@ def _to_repr(node):
             repr(node.url), repr(node.title), content
         )
 
+    elif isinstance(node, Error):
+        content = ', '.join([
+            '%s: %s' % (repr(key), _to_repr(value))
+            for key, value in node.items()
+        ])
+        return 'Error(title=%s, content={%s})' % (
+            repr(node.title), content
+        )
+
     elif isinstance(node, Object):
         return '{%s}' % ', '.join([
             '%s: %s' % (repr(key), _to_repr(value))
@@ -44,9 +53,6 @@ def _to_repr(node):
         if node.location:
             args += ', location=%s' % repr(node.location)
         return 'Field(%s)' % args
-
-    elif isinstance(node, Error):
-        return 'Error(%s)' % repr(list(node.messages))
 
     return repr(node)
 

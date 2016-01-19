@@ -10,12 +10,17 @@ def _colorize_document(text):
     return click.style(text, fg='green')  # pragma: nocover
 
 
+def _colorize_error(text):
+    return click.style(text, fg='red')  # pragma: nocover
+
+
 def _colorize_keys(text):
     return click.style(text, fg='cyan')  # pragma: nocover
 
 
 def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=None):
     colorize_document = _colorize_document if colorize else lambda x: x
+    colorize_error = _colorize_error if colorize else lambda x: x
     colorize_keys = _colorize_keys if colorize else lambda x: x
 
     if isinstance(node, Document):
@@ -36,6 +41,7 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
             node.title.strip() or 'Document',
             json.dumps(node.url)
         ))
+
         return head if (not body) else head + '\n' + body
 
     elif isinstance(node, Object):
@@ -54,6 +60,20 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
 
         return '{}' if (not body) else '{\n' + body + '\n' + head_indent + '}'
 
+    if isinstance(node, Error):
+        head_indent = '    ' * indent
+        body_indent = '    ' * (indent + 1)
+
+        body = '\n'.join([
+            body_indent + colorize_keys(str(key) + ': ') +
+            _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize, extra_offset=len(str(key)))
+            for key, value in node.items()
+        ])
+
+        head = colorize_error('<Error: %s>' % node.title.strip() if node.title else '<Error>')
+
+        return head if (not body) else head + '\n' + body
+
     elif isinstance(node, Array):
         head_indent = '    ' * indent
         body_indent = '    ' * (indent + 1)
@@ -71,11 +91,6 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
             _fields_to_plaintext(node, colorize=colorize) +
             colorize_keys(')')
         )
-
-    elif isinstance(node, Error):
-        return '<Error>' + ''.join([
-            '\n    * %s' % repr(message) for message in node.messages
-        ])
 
     if isinstance(node, string_types) and (extra_offset is not None) and ('\n' in node):
         # Display newlines in strings gracefully.

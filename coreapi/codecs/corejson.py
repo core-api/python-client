@@ -8,6 +8,28 @@ from coreapi.exceptions import ParseError
 import json
 
 
+# Helper functions to get an expected type from a dictionary,
+
+def _get_string(item, key):
+    value = item.get(key)
+    return value if isinstance(value, string_types) else ''
+
+
+def _get_dict(item, key):
+    value = item.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _get_list(item, key):
+    value = item.get(key)
+    return value if isinstance(value, list) else []
+
+
+def _get_bool(item, key, default=False):
+    value = item.get(key)
+    return value if isinstance(value, bool) else default
+
+
 def _graceful_relative_url(base_url, url):
     """
     Return a graceful link for a URL relative to a base URL.
@@ -44,6 +66,17 @@ def _unescape_key(string):
     return string
 
 
+def _get_content(item, base_url=None):
+    """
+    Return a dictionary of content, for documents, objects and errors.
+    """
+    return {
+        _unescape_key(key): _primative_to_document(value, base_url)
+        for key, value in item.items()
+        if key not in ('_type', '_meta')
+    }
+
+
 def _document_to_primative(node, base_url=None):
     """
     Take a Core API document and return Python primatives
@@ -53,7 +86,6 @@ def _document_to_primative(node, base_url=None):
         ret = OrderedDict()
         ret['_type'] = 'document'
 
-        # Only fill in items in '_meta' if required.
         meta = OrderedDict()
         url = _graceful_relative_url(base_url, node.url)
         if url:
@@ -63,8 +95,23 @@ def _document_to_primative(node, base_url=None):
         if meta:
             ret['_meta'] = meta
 
+        # Fill in key-value content.
         ret.update([
-            (_escape_key(key), _document_to_primative(value, base_url=node.url))
+            (_escape_key(key), _document_to_primative(value, base_url=url))
+            for key, value in node.items()
+        ])
+        return ret
+
+    elif isinstance(node, Error):
+        ret = OrderedDict()
+        ret['_type'] = 'error'
+
+        if node.title:
+            ret['_meta'] = {'title': node.title}
+
+        # Fill in key-value content.
+        ret.update([
+            (_escape_key(key), _document_to_primative(value, base_url=base_url))
             for key, value in node.items()
         ])
         return ret
@@ -80,7 +127,6 @@ def _document_to_primative(node, base_url=None):
         if node.inplace is not None:
             ret['inplace'] = node.inplace
         if node.fields:
-            # Use short format for optional fields, long format for required.
             ret['fields'] = [
                 _document_to_primative(field) for field in node.fields
             ]
@@ -89,7 +135,7 @@ def _document_to_primative(node, base_url=None):
     elif isinstance(node, Field):
         ret = OrderedDict({'name': node.name})
         if node.required:
-            ret['required'] = True
+            ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
         return ret
@@ -103,12 +149,6 @@ def _document_to_primative(node, base_url=None):
     elif isinstance(node, Array):
         return [_document_to_primative(value) for value in node]
 
-    elif isinstance(node, Error):
-        ret = OrderedDict()
-        ret['_type'] = 'error'
-        ret['messages'] = node.messages
-        return ret
-
     return node
 
 
@@ -119,91 +159,46 @@ def _primative_to_document(data, base_url=None):
     """
     if isinstance(data, dict) and data.get('_type') == 'document':
         # Document
-        meta = data.get('_meta', {})
-        if not isinstance(meta, dict):
-            meta = {}
-
-        url = meta.get('url', '')
-        if not isinstance(url, string_types):
-            url = ''
+        meta = _get_dict(data, '_meta')
+        url = _get_string(meta, 'url')
         url = urlparse.urljoin(base_url, url)
+        title = _get_string(meta, 'title')
+        content = _get_content(data, base_url=url)
+        return Document(url=url, title=title, content=content)
 
-        title = meta.get('title', '')
-        if not isinstance(title, string_types):
-            title = ''
-
-        return Document(url=url, title=title, content={
-            _unescape_key(key): _primative_to_document(value, url)
-            for key, value in data.items()
-            if key not in ('_type', '_meta')
-        })
+    if isinstance(data, dict) and data.get('_type') == 'error':
+        # Error
+        meta = _get_dict(data, '_meta')
+        title = _get_string(meta, 'title')
+        content = _get_content(data, base_url=base_url)
+        return Error(title=title, content=content)
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
         # Link
-        url = data.get('url', '')
-        if not isinstance(url, string_types):
-            url = ''
+        url = _get_string(data, 'url')
         url = urlparse.urljoin(base_url, url)
-
-        action = data.get('action')
-        if not isinstance(action, string_types):
-            action = ''
-
-        inplace = data.get('inplace')
-        if not isinstance(inplace, bool):
-            inplace = None
-
-        fields = data.get('fields', [])
-        if not isinstance(fields, list):
-            fields = []
-        else:
-            # Ignore any field items that don't match the required structure.
-            fields = [
-                item for item in fields
-                if isinstance(item, string_types) or (
-                    isinstance(item, dict) and
-                    isinstance(item.get('name'), string_types)
-                )
-            ]
-            # Transform the dicts into Field instances.
-            fields = [
-                Field(
-                    item['name'],
-                    required=bool(item.get('required', False)),
-                    location=str(item.get('type', ''))
-                )
-                for item in fields if isinstance(item, dict)
-            ]
-
-        return Link(url=url, action=action, inplace=inplace, fields=fields)
-
-    elif isinstance(data, dict) and data.get('_type') == 'error':
-        # Error
-        messages = data.get('messages', [])
-        if not isinstance(messages, list):
-            messages = []
-
-        # Ignore any messages which are have incorrect type.
-        messages = [
-            message for message in messages
-            if isinstance(message, string_types)
+        action = _get_string(data, 'action')
+        inplace = _get_bool(data, 'inplace', default=None)
+        fields = _get_list(data, 'fields')
+        fields = [
+            Field(
+                name=_get_string(item, 'name'),
+                required=_get_bool(item, 'required'),
+                location=_get_string(item, 'location')
+            )
+            for item in fields if isinstance(item, dict)
         ]
-
-        return Error(messages)
+        return Link(url=url, action=action, inplace=inplace, fields=fields)
 
     elif isinstance(data, dict):
         # Map
-        return Object({
-            _unescape_key(key): _primative_to_document(value, base_url)
-            for key, value in data.items()
-            if key not in ('_type', '_meta')
-        })
+        content = _get_content(data, base_url=base_url)
+        return Object(content)
 
     elif isinstance(data, list):
         # Array
-        return Array([
-            _primative_to_document(item, base_url) for item in data
-        ])
+        content = [_primative_to_document(item, base_url) for item in data]
+        return Array(content)
 
     # String, Integer, Number, Boolean, null.
     return data
@@ -222,8 +217,8 @@ class CoreJSONCodec(BaseCodec):
             raise ParseError('Malformed JSON. %s' % exc)
 
         doc = _primative_to_document(data, base_url)
-        if not isinstance(doc, (Document, Error)):
-            raise ParseError('Top level node must be a document or error message.')
+        if not (isinstance(doc, Document) or isinstance(doc, Error)):
+            raise ParseError('Top level node must be a document or error.')
 
         return doc
 

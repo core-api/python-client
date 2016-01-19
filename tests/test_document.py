@@ -44,7 +44,7 @@ def link():
 
 @pytest.fixture
 def error():
-    return Error(['failed'])
+    return Error(title='', content={'messages': ['failed']})
 
 
 def _dedent(string):
@@ -123,7 +123,7 @@ def test_link_does_not_support_property_assignment():
 # Errors are immutable.
 
 def test_error_does_not_support_property_assignment():
-    error = Error(['failed'])
+    error = Error(content={'messages': ['failed']})
     with pytest.raises(TypeError):
         error.integer = 456
 
@@ -246,7 +246,7 @@ def test_link_repr(link):
 
 
 def test_error_repr(error):
-    assert repr(error) == "Error(['failed'])"
+    assert repr(error) == "Error(title='', content={'messages': ['failed']})"
     assert eval(repr(error)) == error
 
 
@@ -271,7 +271,7 @@ def test_document_str(doc):
     """)
 
 
-def test_newline_strr():
+def test_newline_str():
     doc = Document(content={'foo': '1\n2'})
     assert str(doc) == _dedent("""
         <Document "">
@@ -314,7 +314,9 @@ def test_link_str(link):
 def test_error_str(error):
     assert str(error) == _dedent("""
         <Error>
-            * 'failed'
+            messages: [
+                "failed"
+            ]
     """)
 
 
@@ -389,24 +391,24 @@ def test_document_keys_must_be_strings():
         Document(content={0: 123})
 
 
-def test_document_values_must_be_valid_primatives():
-    with pytest.raises(TypeError):
-        Document(content={'a': set()})
-
-
 def test_object_keys_must_be_strings():
     with pytest.raises(TypeError):
         Object(content={0: 123})
 
 
-def test_error_messages_must_be_list():
+def test_error_title_must_be_string():
     with pytest.raises(TypeError):
-        Error(123)
+        Error(title=123)
 
 
-def test_error_messages_must_be_list_of_strings():
+def test_error_content_must_be_dict():
     with pytest.raises(TypeError):
-        Error([123])
+        Error(content=123)
+
+
+def test_error_keys_must_be_strings():
+    with pytest.raises(TypeError):
+        Error(content={0: 123})
 
 
 # Link arguments must be valid.
@@ -461,7 +463,7 @@ def test_keys_should_access_a_link(doc):
 # Documents and Objects have `.data` and `.links` attributes
 
 def test_document_data_and_links_properties():
-    doc = Document({'a': 1, 'b': 2, 'c': Link(), 'd': Link()})
+    doc = Document(content={'a': 1, 'b': 2, 'c': Link(), 'd': Link()})
     assert sorted(list(doc.data.keys())) == ['a', 'b']
     assert sorted(list(doc.links.keys())) == ['c', 'd']
 
