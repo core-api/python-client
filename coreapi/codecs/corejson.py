@@ -1,33 +1,11 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi.codecs.base import BaseCodec
-from coreapi.compat import string_types, force_bytes, urlparse
+from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_list, _get_bool
+from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.exceptions import ParseError
 import json
-
-
-# Helper functions to get an expected type from a dictionary,
-
-def _get_string(item, key):
-    value = item.get(key)
-    return value if isinstance(value, string_types) else ''
-
-
-def _get_dict(item, key):
-    value = item.get(key)
-    return value if isinstance(value, dict) else {}
-
-
-def _get_list(item, key):
-    value = item.get(key)
-    return value if isinstance(value, list) else []
-
-
-def _get_bool(item, key, default=False):
-    value = item.get(key)
-    return value if isinstance(value, bool) else default
 
 
 def _graceful_relative_url(base_url, url):

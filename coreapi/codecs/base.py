@@ -1,4 +1,27 @@
+from coreapi.compat import string_types
 import itypes
+
+
+# Helper functions to get an expected type from a dictionary,
+
+def _get_string(item, key):
+    value = item.get(key)
+    return value if isinstance(value, string_types) else ''
+
+
+def _get_dict(item, key):
+    value = item.get(key)
+    return value if isinstance(value, dict) else {}
+
+
+def _get_list(item, key):
+    value = item.get(key)
+    return value if isinstance(value, list) else []
+
+
+def _get_bool(item, key, default=False):
+    value = item.get(key)
+    return value if isinstance(value, bool) else default
 
 
 def _mark_as_not_implemented(method):

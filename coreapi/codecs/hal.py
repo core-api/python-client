@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from coreapi.codecs.base import BaseCodec
+from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_bool
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Field
@@ -65,8 +65,9 @@ def _document_to_primative(node, base_url=None):
         url = urlparse.urljoin(base_url, node.url)
         ret = OrderedDict()
         ret['href'] = url
-        if node.fields and node.action.lower() in ('get', ''):
-            ret['href'] += "{?%s}" % ','.join([field.name for field in node.fields])
+        templated = [field.name for field in node.fields if field.location == 'path']
+        if templated:
+            ret['href'] += "{?%s}" % ','.join([name for name in templated])
             ret['templated'] = True
         return ret
 
@@ -85,62 +86,73 @@ def _document_to_primative(node, base_url=None):
 
 
 def _parse_link(data, base_url=None):
-    url = urlparse.urljoin(base_url, data.get('href'))
-    if data.get('templated'):
+    url = _get_string(data, 'href')
+    url = urlparse.urljoin(base_url, url)
+    if _get_bool(data, 'templated'):
         fields = [
-            Field(name, location='path')for name in uritemplate.variables(url)
+            Field(name, location='path') for name in uritemplate.variables(url)
         ]
     else:
         fields = None
     return Link(url=url, fields=fields)
 
 
+def _map_to_coreapi_key(key):
+    # HAL uses 'rel' values to index links and nested resources.
+    if key.startswith('http://') or key.startswith('https://'):
+        # Fully qualified URL - just use last portion of the path.
+        return urlparse.urlsplit(key).path.split('/')[-1]
+    elif ':' in key:
+        # A curried 'rel' value. Use the named portion.
+        return key.split(':', 1)[1]
+    # A reserved 'rel' value, such as "next".
+    return key
+
+
 def _parse_document(data, base_url=None):
-    self = data.get('_links', {}).get('self')
-    if not self:
-        url = base_url
-        title = None
-    else:
-        url = urlparse.urljoin(base_url, self.get('href'))
-        title = self.get('title')
+    links = _get_dict(data, '_links')
+    embedded = _get_dict(data, '_embedded')
+
+    self = _get_dict(links, 'self')
+    url = _get_string(self, 'href')
+    url = urlparse.urljoin(base_url, url)
+    title = _get_string(self, 'title')
 
     content = {}
 
-    for key, value in data.get('_links', {}).items():
+    for key, value in links.items():
         if key in ('self', 'curies'):
             continue
 
-        if key.startswith('http://') or key.startswith('https://'):
-            key = urlparse.urlsplit(key).path.split('/')[-1]
-        elif ':' in key:
-            key = key.split(':', 1)[1]
+        key = _map_to_coreapi_key(key)
 
         if isinstance(value, list):
             if value and 'name' in value[0]:
+                # Lists of named links should be represented inside a map.
                 content[key] = {
                     item['name']: _parse_link(item, base_url)
                     for item in value
                     if 'name' in item
                 }
             else:
+                # Lists of named links should be represented inside a list.
                 content[key] = [
                     _parse_link(item, base_url)
                     for item in value
                 ]
         elif isinstance(value, dict):
+            # Single link instance.
             content[key] = _parse_link(value, base_url)
 
-    for key, value in data.get('_embedded', {}).items():
-        if key.startswith('http://') or key.startswith('https://'):
-            key = urlparse.urlsplit(key).path.split('/')[-1]
-        elif ':' in key:
-            key = key.split(':', 1)[1]
-
+    # Embedded resources.
+    for key, value in embedded.items():
+        key = _map_to_coreapi_key(key)
         if isinstance(value, list):
             content[key] = [_parse_document(item, base_url=url) for item in value]
         elif isinstance(value, dict):
             content[key] = _parse_document(value, base_url=url)
 
+    # Data.
     for key, value in data.items():
         if key not in ('_embedded', '_links'):
             content[key] = value
