@@ -10,7 +10,7 @@ PYTEST_ARGS = ['tests', '--tb=short']
 FLAKE8_ARGS = ['coreapi', 'tests', '--ignore=E501']
 COVERAGE_OPTIONS = {
     'include': ['coreapi/*', 'tests/*'],
-    'omit': ['coreapi/compat.py', 'coreapi/commandline.py']
+    'omit': ['coreapi/compat.py']
 }
 
 
@@ -34,17 +34,19 @@ def flake8_main(args):
     return ret
 
 
-def fail_if_lacking_coverage(cov):
+def report_coverage(cov, fail_if_not_100=False):
     precent_covered = cov.report(
         file=NullFile(), **COVERAGE_OPTIONS
     )
     if precent_covered == 100:
         print('100% coverage')
         return
-    print('Tests passed, but not 100% coverage.')
+    if fail_if_not_100:
+        print('Tests passed, but not 100% coverage.')
     cov.report(**COVERAGE_OPTIONS)
     cov.html_report(**COVERAGE_OPTIONS)
-    sys.exit(1)
+    if fail_if_not_100:
+        sys.exit(1)
 
 
 def split_class_and_function(string):
@@ -85,4 +87,4 @@ if __name__ == "__main__":
     exit_on_failure(pytest.main(pytest_args))
     cov.stop()
     exit_on_failure(flake8_main(FLAKE8_ARGS))
-    fail_if_lacking_coverage(cov)
+    report_coverage(cov)

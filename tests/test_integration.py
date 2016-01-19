@@ -21,6 +21,7 @@ class MockResponse(object):
         self.content = content
         self.headers = {}
         self.url = 'http://example.org'
+        self.status_code = 200
 
 
 # Basic integration tests.
@@ -85,7 +86,7 @@ def test_get_session():
         headers={'user-agent': 'foo'}
     )
 
-    assert len(session.codecs) == 3
+    assert len(session.codecs) == 4
     assert len(session.transports) == 1
 
     assert session.transports[0].credentials == {'example.org': 'abc'}
