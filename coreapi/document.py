@@ -49,14 +49,7 @@ class Document(itypes.Dict):
     Expresses the data that the client may access,
     and the actions that the client may perform.
     """
-
     def __init__(self, url=None, title=None, content=None):
-        if title is None and content is None and isinstance(url, dict):
-            # If a single positional argument is set and is a dictionary,
-            # treat it as the document content.
-            content = url
-            url = None
-
         data = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
@@ -66,16 +59,14 @@ class Document(itypes.Dict):
         if content is not None and not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
         if any([not isinstance(key, string_types) for key in data.keys()]):
-            raise TypeError('Document keys must be strings.')
-        if any([not isinstance(value, primative_types) for value in data.values()]):
-            raise TypeError('Document values must be primatives.')
+            raise TypeError('content keys must be strings.')
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
         self._data = {key: _to_immutable(value) for key, value in data.items()}
 
     def clone(self, data):
-        return Document(self.url, self.title, data)
+        return self.__class__(self.url, self.title, data)
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
@@ -88,7 +79,7 @@ class Document(itypes.Dict):
         return _str(self)
 
     def __eq__(self, other):
-        if isinstance(other, Document):
+        if self.__class__ == other.__class__:
             return (
                 self.url == other.url and
                 self.title == other.title and
@@ -227,26 +218,23 @@ class Link(itypes.Object):
         return _str(self)
 
 
-class Error(itypes.Object):
-    """
-    Represents an error message or messages from a Core API interface.
-    """
-    def __init__(self, messages):
-        if not isinstance(messages, (list, tuple)):
-            raise TypeError("'messages' should be a list of strings.")
-        if any([not isinstance(message, string_types) for message in messages]):
-            raise TypeError("'messages' should be a list of strings.")
+class Error(itypes.Dict):
+    def __init__(self, title=None, content=None):
+        data = {} if (content is None) else content
 
-        self._messages = tuple(messages)
+        if title is not None and not isinstance(title, string_types):
+            raise TypeError("'title' must be a string.")
+        if content is not None and not isinstance(content, dict):
+            raise TypeError("'content' must be a dict.")
+        if any([not isinstance(key, string_types) for key in data.keys()]):
+            raise TypeError('content keys must be strings.')
 
-    @property
-    def messages(self):
-        return list(self._messages)
+        self._title = '' if (title is None) else title
+        self._data = {key: _to_immutable(value) for key, value in data.items()}
 
-    def __eq__(self, other):
-        if isinstance(other, Error):
-            return self.messages == other.messages
-        return self.messages == other
+    def __iter__(self):
+        items = sorted(self._data.items(), key=_key_sorting)
+        return iter([key for key, value in items])
 
     def __repr__(self):
         return _repr(self)
@@ -254,8 +242,22 @@ class Error(itypes.Object):
     def __str__(self):
         return _str(self)
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, Error) and
+            self.title == other.title and
+            self._data == other._data
+        )
 
-primative_types = string_types + (
-    type(None), int, float, bool, list, dict,
-    Document, Object, Array, Link
-)
+    @property
+    def title(self):
+        return self._title
+
+    def get_messages(self):
+        messages = []
+        for value in self.values():
+            if isinstance(value, Array):
+                messages += [
+                    item for item in value if isinstance(item, string_types)
+                ]
+        return messages

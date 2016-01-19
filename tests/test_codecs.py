@@ -26,7 +26,7 @@ def doc():
             'integer': 123,
             'dict': {'key': 'value'},
             'list': [1, 2, 3],
-            'link': Link(url='http://example.org/'),
+            'link': Link(url='http://example.org/', fields=[Field(name='example')]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
         })
@@ -45,7 +45,7 @@ def test_document_to_primative(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link'},
+        'link': {'_type': 'link', 'fields': [{'name': 'example'}]},
         'nested': {'child': {'_type': 'link', 'url': '/123'}},
         '__type': 'needs escaping'
     }
@@ -61,7 +61,7 @@ def test_primative_to_document(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'url': 'http://example.org/'},
+        'link': {'_type': 'link', 'url': 'http://example.org/', 'fields': [{'name': 'example'}]},
         'nested': {'child': {'_type': 'link', 'url': 'http://example.org/123'}},
         '__type': 'needs escaping'
     }
@@ -69,18 +69,20 @@ def test_primative_to_document(doc):
 
 
 def test_error_to_primative():
-    error = Error(['failed'])
+    error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
+        '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
     assert _document_to_primative(error) == data
 
 
 def test_primative_to_error():
-    error = Error(['failed'])
+    error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
+        '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
     assert _primative_to_document(data) == error
@@ -103,9 +105,8 @@ def test_minimal_error(json_codec):
     """
     Ensure we can load a minimal error message encoding.
     """
-    error = json_codec.load(b'{"_type":"error","messages":["failed"]}')
-    assert isinstance(error, Error)
-    assert error == ['failed']
+    error = json_codec.load(b'{"_type":"error","_meta":{"title":"Failure"},"messages":["failed"]}')
+    assert error == Error(title="Failure", content={'messages': ['failed']})
 
 
 # Parse errors should be raised for invalid encodings.
@@ -203,11 +204,6 @@ def test_invalid_link_fields_ignored(json_codec):
     assert doc == Document(content={"link": Link()})
 
 
-def test_invalid_message_field_ignored(json_codec):
-    error = json_codec.load(b'{"_type": "error", "messages": 1}')
-    assert error == Error(messages=[])
-
-
 # Tests for 'Content-Type' header lookup.
 
 def test_get_default_decoder():
@@ -269,7 +265,7 @@ def test_get_unsupported_encoder_with_fallback():
 # Tests for HTML rendering
 
 def test_html_document_rendering(html_codec):
-    doc = Document({'string': 'abc', 'int': 123, 'bool': True})
+    doc = Document(content={'string': 'abc', 'int': 123, 'bool': True})
     content = html_codec.dump(doc)
     assert 'coreapi-document' in content
     assert '<span>abc</span>' in content
@@ -278,7 +274,7 @@ def test_html_document_rendering(html_codec):
 
 
 def test_html_object_rendering(html_codec):
-    doc = Document({'object': {'a': 1, 'b': 2}})
+    doc = Document(content={'object': {'a': 1, 'b': 2}})
     content = html_codec.dump(doc)
     assert 'coreapi-object' in content
     assert '<th>a</th>' in content
@@ -286,7 +282,7 @@ def test_html_object_rendering(html_codec):
 
 
 def test_html_array_rendering(html_codec):
-    doc = Document({'array': [1, 2]})
+    doc = Document(content={'array': [1, 2]})
     content = html_codec.dump(doc)
     assert 'coreapi-array' in content
     assert '<th>0</th>' in content
@@ -294,14 +290,14 @@ def test_html_array_rendering(html_codec):
 
 
 def test_html_link_rendering(html_codec):
-    doc = Document({'link': Link(url='/test/')})
+    doc = Document(content={'link': Link(url='/test/')})
     content = html_codec.dump(doc)
     assert 'coreapi-link' in content
     assert 'href="/test/"' in content
 
 
 def test_html_error_rendering(html_codec):
-    doc = Error(['something failed'])
+    doc = Error(content={'message': ['something failed']})
     content = html_codec.dump(doc)
     assert 'coreapi-error' in content
     assert 'something failed' in content

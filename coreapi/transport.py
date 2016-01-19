@@ -40,7 +40,7 @@ class HTTPTransport(BaseTransport):
         response = self.make_http_request(session, url, method, query_params, form_params)
         document = self.load_document(session, response)
         if isinstance(document, Error):
-            raise ErrorMessage(document.messages)
+            raise ErrorMessage(document)
 
         if link_ancestors:
             document = self.handle_inplace_replacements(document, link, link_ancestors)
