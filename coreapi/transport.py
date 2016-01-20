@@ -39,6 +39,8 @@ class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
     def __init__(self, credentials=None, headers=None):
+        if headers:
+            headers = {key.lower(): value for key, value in headers.items()}
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
 
