@@ -153,15 +153,21 @@ def show(path):
         keys = coerce_key_types(doc, path)
         for key in keys:
             doc = doc[key]
-        if isinstance(doc, (bool, type(None))):
-            doc = {True: 'true', False: 'false', None: 'null'}[doc]
     click.echo(display(doc))
 
 
 def validate_params(ctx, param, value):
     if any(['=' not in item for item in value]):
         raise click.BadParameter('Parameters need to be in format <field name>=<value>')
-    return dict([tuple(item.split('=', 1)) for item in value])
+    params = dict([tuple(item.split('=', 1)) for item in value])
+    for key, value in params.items():
+        try:
+            value = json.loads(value)
+        except:
+            pass
+        else:
+            params[key] = value
+    return params
 
 
 def validate_inplace(ctx, param, value):
