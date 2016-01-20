@@ -1,5 +1,6 @@
 from coreapi.compat import string_types
 from coreapi.document import Document, Link
+from coreapi.exceptions import NodeLookupError
 import collections
 
 
@@ -36,23 +37,6 @@ def validate_parameters(link, parameters):
 
     Raises a `ValueError` if any parameters do not validate.
     """
-    provided = set(parameters.keys())
-    required = set([
-        field.name for field in link.fields if field.required
-    ])
-
-    # Determine if any required field names not supplied.
-    missing = required - provided
-    missing = ['"' + item + '"' for item in sorted(missing)]
-    if missing:
-        fmt = 'Missing required parameter{plural}: {listing}'
-        plural = 's' if len(missing) > 1 else ''
-        listing = ', '.join(missing)
-        raise ValueError(fmt.format(
-            plural=plural,
-            listing=listing
-        ))
-
     # Ensure all parameter values are valid types.
     for value in parameters.values():
         validate_is_primative(value)
@@ -65,7 +49,7 @@ def validate_keys_to_link(document, keys):
     Returns a two-tuple of (link, link_ancestors).
     """
     if not isinstance(keys, (list, tuple)):
-        msg = "'keys' must be a dot seperated string or a list of strings."
+        msg = "'keys' must be a list of strings or intes."
         raise TypeError(msg)
     if any([
         not isinstance(key, string_types) and not isinstance(key, int)
@@ -79,15 +63,22 @@ def validate_keys_to_link(document, keys):
     node = document
     link_ancestors = [Ancestor(document=document, keys=[])]
     for idx, key in enumerate(keys, start=1):
-        node = node[key]
+        try:
+            node = node[key]
+        except (KeyError, IndexError):
+            index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+            msg = 'Index %s did not reference a link. Key %s was not found.'
+            raise NodeLookupError(msg % (index_string, repr(key).strip('u')))
         if isinstance(node, Document):
             ancestor = Ancestor(document=node, keys=keys[:idx])
             link_ancestors.append(ancestor)
 
     # Ensure that we've correctly indexed into a link.
     if not isinstance(node, Link):
-        raise ValueError(
-            "Can only call 'action' on a Link. Got type '%s'." % type(node)
+        index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+        msg = "Can only call 'action' on a Link. Index %s returned type '%s'."
+        raise NodeLookupError(
+            msg % (index_string, type(node).__name__)
         )
 
     return (node, link_ancestors)

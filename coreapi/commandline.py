@@ -152,14 +152,23 @@ def show(path):
     if path:
         keys = coerce_key_types(doc, path)
         for key in keys:
-            doc = doc[key]
+            try:
+                doc = doc[key]
+            except (KeyError, IndexError):
+                click.echo('Key %s not found.' % repr(key).strip('u'))
+                sys.exit(1)
     click.echo(display(doc))
 
 
 def validate_params(ctx, param, value):
     if any(['=' not in item for item in value]):
         raise click.BadParameter('Parameters need to be in format <field name>=<value>')
+
+    # Convert to dict.
     params = dict([tuple(item.split('=', 1)) for item in value])
+
+    # Gracefully handle non-string values.
+    # Eg treat "-p complete=true" as {"complete": True}
     for key, value in params.items():
         try:
             value = json.loads(value)
@@ -167,6 +176,7 @@ def validate_params(ctx, param, value):
             pass
         else:
             params[key] = value
+
     return params
 
 
@@ -200,6 +210,9 @@ def action(path, param, action, inplace):
         doc = session.action(doc, keys, params=param, action=action, inplace=inplace)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
+        sys.exit(1)
+    except coreapi.exceptions.NodeLookupError as exc:
+        click.echo(exc)
         sys.exit(1)
     history = history.add(doc)
     click.echo(display(doc))

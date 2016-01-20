@@ -31,6 +31,13 @@ class TransportError(Exception):
     pass
 
 
+class NodeLookupError(Exception):
+    """
+    Raised when `.action` fails to index a link in the document.
+    """
+    pass
+
+
 class ErrorMessage(Exception):
     """
     Raised when the transition returns an error message.
