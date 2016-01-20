@@ -58,7 +58,8 @@ def _document_to_primative(node, base_url=None):
         ret = OrderedDict()
         ret['_links'] = links
         ret.update(data)
-        ret['_embedded'] = embedded
+        if embedded:
+            ret['_embedded'] = embedded
         return ret
 
     elif isinstance(node, Link):
