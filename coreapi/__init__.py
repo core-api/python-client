@@ -7,7 +7,7 @@ from coreapi.sessions import Session
 from coreapi.transport import BaseTransport, HTTPTransport
 
 
-__version__ = '1.10.0'
+__version__ = '1.11.0'
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HALCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
     'negotiate_encoder', 'negotiate_decoder',

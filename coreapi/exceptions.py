@@ -9,6 +9,14 @@ class ParseError(Exception):
     pass
 
 
+class UnsupportedContentType(Exception):
+    """
+    Raised when the media specified in the reponse 'Content-Type' header
+    is not supported.
+    """
+    pass
+
+
 class NotAcceptable(Exception):
     """
     Raised when the client 'Accept' header could not be satisfied.

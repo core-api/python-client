@@ -1,6 +1,6 @@
 from coreapi.compat import string_types, urlparse
 from coreapi.document import Link
-from coreapi.exceptions import NotAcceptable, ParseError, TransportError
+from coreapi.exceptions import NotAcceptable, UnsupportedContentType, TransportError
 from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
@@ -54,7 +54,7 @@ class Session(itypes.Object):
                 break
         else:
             msg = "Unsupported media in Content-Type header '%s'" % content_type
-            raise ParseError(msg)
+            raise UnsupportedContentType(msg)
 
         return codec
 

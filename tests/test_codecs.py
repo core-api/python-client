@@ -3,7 +3,7 @@ from coreapi import negotiate_decoder, negotiate_encoder
 from coreapi.codecs import CoreJSONCodec, HTMLCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, Field
-from coreapi.exceptions import ParseError, NotAcceptable
+from coreapi.exceptions import ParseError, UnsupportedContentType, NotAcceptable
 import pytest
 
 
@@ -219,12 +219,12 @@ def test_get_supported_decoder_with_parameters():
 
 
 def test_get_unsupported_decoder():
-    with pytest.raises(ParseError):
+    with pytest.raises(UnsupportedContentType):
         negotiate_decoder('application/csv')
 
 
 def test_get_render_only_decoder():
-    with pytest.raises(ParseError):
+    with pytest.raises(UnsupportedContentType):
         negotiate_decoder('text/html')
 
 

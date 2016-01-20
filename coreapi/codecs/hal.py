@@ -2,7 +2,7 @@ from collections import OrderedDict
 from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_bool
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
-from coreapi.document import Document, Link, Array, Object, Field
+from coreapi.document import Document, Link, Array, Object, Field, Error
 from coreapi.exceptions import ParseError
 import json
 import uritemplate
@@ -80,6 +80,11 @@ def _document_to_primative(node, base_url=None):
         return OrderedDict([
             (key, _document_to_primative(value)) for key, value in node.items()
             if not isinstance(value, (Document, Link))
+        ])
+
+    elif isinstance(node, Error):
+        return OrderedDict([
+            (key, _document_to_primative(value)) for key, value in node.items()
         ])
 
     return node

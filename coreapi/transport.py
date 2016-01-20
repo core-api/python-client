@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi import Document, Object, Link, Array, Error, ErrorMessage
 from coreapi.compat import urlparse
+from coreapi.exceptions import UnsupportedContentType
 import requests
 import itypes
 import json
@@ -57,7 +58,16 @@ class HTTPTransport(BaseTransport):
         method = self.get_http_method(link.action)
         url, query_params, form_params = self.get_params(method, link, params)
         response = self.make_http_request(session, url, method, query_params, form_params)
-        document = self.load_document(session, response)
+        is_error = response.status_code >= 400 and response.status_code <= 599
+        try:
+            document = self.load_document(session, response)
+        except UnsupportedContentType:
+            content_type = response.headers.get('content-type').split(';')[0]
+            if is_error and content_type == 'application/json':
+                content = json.loads(response.content)
+                document = Error(title=response.reason, content=content)
+            else:
+                raise
 
         if (
             isinstance(document, Document) and
