@@ -17,7 +17,7 @@ def lookup_link(document, keys):
     Returns a two-tuple of (link, link_ancestors).
     """
     if not isinstance(keys, (list, tuple)):
-        msg = "'keys' must be a list of strings or intes."
+        msg = "'keys' must be a list of strings or ints."
         raise TypeError(msg)
     if any([
         not isinstance(key, string_types) and not isinstance(key, int)
