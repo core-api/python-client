@@ -189,3 +189,20 @@ class Client(itypes.Object):
         # Perform the action, and return a new document.
         transport = self.determine_transport(link.url)
         return transport.transition(link, params, client=self, link_ancestors=link_ancestors)
+
+    def load(self, bytestring, content_type=None):
+        """
+        Given a bytestring and an optional content_type, return the
+        parsed Document.
+        """
+        codec = self.negotiate_decoder(content_type)
+        return codec.load(bytestring)
+
+    def dump(self, document, accept=None, **kwargs):
+        """
+        Given a document, and an optional accept header, return a two-tuple of
+        the selected media type and encoded bytestring.
+        """
+        codec = self.negotiate_encoder(accept)
+        content = codec.dump(document, **kwargs)
+        return (codec.media_type, content)

@@ -1,5 +1,6 @@
 # coding: utf-8
-from coreapi import Document, Link, HTTPTransport, Client
+from coreapi import Document, Link, Client
+from coreapi.transports import HTTPTransport
 import pytest
 
 

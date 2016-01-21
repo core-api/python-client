@@ -442,7 +442,7 @@ def bookmarks_get(name):
 
 def get_history():
     if not os.path.isfile(history_path):
-        return coreapi.History(max_items=20)
+        return coreapi.history.History(max_items=20)
     history_file = open(history_path, 'rb')
     bytestring = history_file.read()
     history_file.close()
