@@ -1,7 +1,7 @@
 # coding: utf-8
 from coreapi import action
 from coreapi import Array, Document, Object, Link, Error, Field
-from coreapi.exceptions import NodeLookupError
+from coreapi.exceptions import LinkLookupError
 import pytest
 
 
@@ -452,12 +452,12 @@ def test_keys_should_be_a_list_of_strings_or_ints(doc):
 
 
 def test_keys_should_be_valid_indexes(doc):
-    with pytest.raises(NodeLookupError):
+    with pytest.raises(LinkLookupError):
         action(doc, 'dummy')
 
 
 def test_keys_should_access_a_link(doc):
-    with pytest.raises(NodeLookupError):
+    with pytest.raises(LinkLookupError):
         action(doc, 'dict')
 
 

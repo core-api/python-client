@@ -1,7 +1,7 @@
 # coding: utf-8
-from coreapi import get_session, get_default_session, Link, Field
+from coreapi import Client, Link, Field
 from coreapi.exceptions import TransportError
-from coreapi.transport import HTTPTransport
+from coreapi.transports import HTTPTransport
 import pytest
 import requests
 
@@ -22,21 +22,21 @@ class MockResponse(object):
 # Test transport errors.
 
 def test_unknown_scheme():
-    session = get_default_session()
+    client = Client()
     with pytest.raises(TransportError):
-        session.determine_transport('ftp://example.org')
+        client.determine_transport('ftp://example.org')
 
 
 def test_missing_scheme():
-    session = get_default_session()
+    client = Client()
     with pytest.raises(TransportError):
-        session.determine_transport('example.org')
+        client.determine_transport('example.org')
 
 
 def test_missing_hostname():
-    session = get_default_session()
+    client = Client()
     with pytest.raises(TransportError):
-        session.determine_transport('http://')
+        client.determine_transport('http://')
 
 
 # Test basic transition types.
@@ -118,15 +118,15 @@ def test_credentials(monkeypatch):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
-    session = get_session(credentials=credentials)
-    transport = session.transports[0]
+    transport = HTTPTransport(credentials=credentials)
+    client = Client(transports=[transport])
 
     # Requests to example.org include credentials.
-    response = transport.make_http_request(session, 'http://example.org/123', 'GET')
+    response = transport.make_http_request(client, 'http://example.org/123', 'GET')
     assert response.content == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
 
     # Requests to other.org do not include credentials.
-    response = transport.make_http_request(session, 'http://other.org/123', 'GET')
+    response = transport.make_http_request(client, 'http://other.org/123', 'GET')
     assert response.content == ''
 
 
@@ -139,9 +139,9 @@ def test_headers(monkeypatch):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     headers = {'User-Agent': 'Example v1.0'}
-    session = get_session(headers=headers)
-    transport = session.transports[0]
+    transport = HTTPTransport(headers=headers)
+    client = Client(transports=[transport])
 
     # Requests include custom headers.
-    response = transport.make_http_request(session, 'http://example.org/123', 'GET')
+    response = transport.make_http_request(client, 'http://example.org/123', 'GET')
     assert response.content == 'Example v1.0'

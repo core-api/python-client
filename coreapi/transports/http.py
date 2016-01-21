@@ -1,9 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi import Document, Object, Link, Array, Error, ErrorMessage
 from coreapi.compat import urlparse
-from coreapi.exceptions import UnsupportedContentType
+from coreapi.document import Document, Object, Link, Array, Error
+from coreapi.exceptions import ErrorMessage, UnsupportedContentType
+from coreapi.transports.base import BaseTransport
 import requests
 import itypes
 import json
@@ -28,13 +29,6 @@ def _coerce_to_error_content(node):
     return node
 
 
-class BaseTransport(itypes.Object):
-    schemes = None
-
-    def transition(self, link, params=None, session=None, link_ancestors=None):
-        raise NotImplementedError()  # pragma: nocover
-
-
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
@@ -52,17 +46,17 @@ class HTTPTransport(BaseTransport):
     def headers(self):
         return self._headers
 
-    def transition(self, link, params=None, session=None, link_ancestors=None):
-        if session is None:
-            from coreapi import get_default_session
-            session = get_default_session()
+    def transition(self, link, params=None, client=None, link_ancestors=None):
+        if client is None:
+            from coreapi import Client
+            client = Client()
 
         method = self.get_http_method(link.action)
         url, query_params, form_params = self.get_params(method, link, params)
-        response = self.make_http_request(session, url, method, query_params, form_params)
+        response = self.make_http_request(client, url, method, query_params, form_params)
         is_error = response.status_code >= 400 and response.status_code <= 599
         try:
-            document = self.load_document(session, response)
+            document = self.load_document(client, response)
         except UnsupportedContentType:
             content_type = response.headers.get('content-type').split(';')[0]
             if is_error and content_type == 'application/json':
@@ -122,13 +116,13 @@ class HTTPTransport(BaseTransport):
         url = uritemplate.expand(link.url, path_params)
         return (url, query_params, form_params)
 
-    def make_http_request(self, session, url, method, query_params=None, form_params=None):
+    def make_http_request(self, client, url, method, query_params=None, form_params=None):
         """
         Make an HTTP request and return an HTTP response.
         """
         opts = {
             "headers": {
-                "accept": session.get_accept_header()
+                "accept": client.get_accept_header()
             }
         }
         if query_params:
@@ -150,14 +144,14 @@ class HTTPTransport(BaseTransport):
 
         return requests.request(method, url, **opts)
 
-    def load_document(self, session, response):
+    def load_document(self, client, response):
         """
         Given an HTTP response, return the decoded Core API document.
         """
         if not response.content:
             return None
         content_type = response.headers.get('content-type')
-        codec = session.negotiate_decoder(content_type)
+        codec = client.negotiate_decoder(content_type)
         return codec.load(response.content, base_url=response.url)
 
     def handle_inplace_replacements(self, document, link, link_ancestors):

@@ -1,12 +1,64 @@
+from coreapi.codecs import CoreJSONCodec, HALCodec, HTMLCodec, PlainTextCodec
 from coreapi.compat import string_types, urlparse
-from coreapi.document import Link
-from coreapi.exceptions import NotAcceptable, UnsupportedContentType, TransportError
-from coreapi.validation import validate_keys_to_link, validate_parameters
+from coreapi.document import Document, Link
+from coreapi.exceptions import LinkLookupError, NotAcceptable, UnsupportedContentType, TransportError
+from coreapi.transports import HTTPTransport
+import collections
 import itypes
 
 
-class Session(itypes.Object):
-    def __init__(self, codecs, transports):
+LinkAncestor = collections.namedtuple('LinkAncestor', ['document', 'keys'])
+
+
+def lookup_link(document, keys):
+    """
+    Validates that keys looking up a link are correct.
+
+    Returns a two-tuple of (link, link_ancestors).
+    """
+    if not isinstance(keys, (list, tuple)):
+        msg = "'keys' must be a list of strings or ints."
+        raise TypeError(msg)
+    if any([
+        not isinstance(key, string_types) and not isinstance(key, int)
+        for key in keys
+    ]):
+        raise TypeError("'keys' must be a list of strings or ints.")
+
+    # Determine the link node being acted on, and its parent document.
+    # 'node' is the link we're calling the action for.
+    # 'document_keys' is the list of keys to the link's parent document.
+    node = document
+    link_ancestors = [LinkAncestor(document=document, keys=[])]
+    for idx, key in enumerate(keys):
+        try:
+            node = node[key]
+        except (KeyError, IndexError):
+            index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+            msg = 'Index %s did not reference a link. Key %s was not found.'
+            raise LinkLookupError(msg % (index_string, repr(key).strip('u')))
+        if isinstance(node, Document):
+            ancestor = LinkAncestor(document=node, keys=keys[:idx + 1])
+            link_ancestors.append(ancestor)
+
+    # Ensure that we've correctly indexed into a link.
+    if not isinstance(node, Link):
+        index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+        msg = "Can only call 'action' on a Link. Index %s returned type '%s'."
+        raise LinkLookupError(
+            msg % (index_string, type(node).__name__)
+        )
+
+    return (node, link_ancestors)
+
+
+class Client(itypes.Object):
+    def __init__(self, codecs=None, transports=None):
+        if codecs is None:
+            codecs = [CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()]
+        if transports is None:
+            transports = [HTTPTransport()]
+
         self._codecs = itypes.List(codecs)
         self._transports = itypes.List(transports)
         self._decoders = [
@@ -110,13 +162,13 @@ class Session(itypes.Object):
     def get(self, url):
         transport = self.determine_transport(url)
         link = Link(url, action='get')
-        return transport.transition(link, session=self)
+        return transport.transition(link, client=self)
 
     def reload(self, document):
         url = document.url
         transport = self.determine_transport(url)
         link = Link(url, action='get')
-        return transport.transition(link, session=self)
+        return transport.transition(link, client=self)
 
     def action(self, document, keys, params=None, action=None, inplace=None):
         if isinstance(keys, string_types):
@@ -126,8 +178,7 @@ class Session(itypes.Object):
             params = {}
 
         # Validate the keys and link parameters.
-        link, link_ancestors = validate_keys_to_link(document, keys)
-        validate_parameters(link, params)
+        link, link_ancestors = lookup_link(document, keys)
 
         if action is not None or inplace is not None:
             # Handle any explicit overrides.
@@ -137,4 +188,21 @@ class Session(itypes.Object):
 
         # Perform the action, and return a new document.
         transport = self.determine_transport(link.url)
-        return transport.transition(link, params, session=self, link_ancestors=link_ancestors)
+        return transport.transition(link, params, client=self, link_ancestors=link_ancestors)
+
+    def load(self, bytestring, content_type=None):
+        """
+        Given a bytestring and an optional content_type, return the
+        parsed Document.
+        """
+        codec = self.negotiate_decoder(content_type)
+        return codec.load(bytestring)
+
+    def dump(self, document, accept=None, **kwargs):
+        """
+        Given a document, and an optional accept header, return a two-tuple of
+        the selected media type and encoded bytestring.
+        """
+        codec = self.negotiate_encoder(accept)
+        content = codec.dump(document, **kwargs)
+        return (codec.media_type, content)

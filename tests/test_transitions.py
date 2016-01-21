@@ -1,12 +1,13 @@
 # coding: utf-8
-from coreapi import Document, Link, HTTPTransport, Session
+from coreapi import Document, Link, Client
+from coreapi.transports import HTTPTransport
 import pytest
 
 
 class MockTransport(HTTPTransport):
     schemes = ['mock']
 
-    def transition(self, link, params=None, session=None, link_ancestors=None):
+    def transition(self, link, params=None, client=None, link_ancestors=None):
         if link.action == 'get':
             document = Document(title='new', content={'new': 123})
         elif link.action in ('put', 'post'):
@@ -17,7 +18,7 @@ class MockTransport(HTTPTransport):
         return self.handle_inplace_replacements(document, link, link_ancestors)
 
 
-session = Session(codecs=[], transports=[MockTransport()])
+client = Client(codecs=[], transports=[MockTransport()])
 
 
 @pytest.fixture
@@ -36,31 +37,31 @@ def doc():
 # Test valid transitions.
 
 def test_get(doc):
-    new = session.action(doc, ['nested', 'follow'])
+    new = client.action(doc, ['nested', 'follow'])
     assert new == {'new': 123}
     assert new.title == 'new'
 
 
 def test_inline_post(doc):
-    new = session.action(doc, ['nested', 'action'], params={'foo': 123})
+    new = client.action(doc, ['nested', 'action'], params={'foo': 123})
     assert new == {'nested': {'new': 123, 'foo': 123}}
     assert new.title == 'original'
 
 
 def test_post(doc):
-    new = session.action(doc, ['nested', 'create'], params={'foo': 456})
+    new = client.action(doc, ['nested', 'create'], params={'foo': 456})
     assert new == {'new': 123, 'foo': 456}
     assert new.title == 'new'
 
 
 def test_put(doc):
-    new = session.action(doc, ['nested', 'update'], params={'foo': 789})
+    new = client.action(doc, ['nested', 'update'], params={'foo': 789})
     assert new == {'nested': {'new': 123, 'foo': 789}}
     assert new.title == 'original'
 
 
 def test_delete(doc):
-    new = session.action(doc, ['nested', 'delete'])
+    new = client.action(doc, ['nested', 'delete'])
     assert new == {}
     assert new.title == 'original'
 
@@ -68,12 +69,12 @@ def test_delete(doc):
 # Test overrides
 
 def test_override_action(doc):
-    new = session.action(doc, ['nested', 'follow'], action='put')
+    new = client.action(doc, ['nested', 'follow'], action='put')
     assert new == {'nested': {'new': 123, 'foo': None}}
     assert new.title == 'original'
 
 
 def test_override_inplace(doc):
-    new = session.action(doc, ['nested', 'update'], params={'foo': 456}, inplace=False)
+    new = client.action(doc, ['nested', 'update'], params={'foo': 456}, inplace=False)
     assert new == {'new': 123, 'foo': 456}
     assert new.title == 'new'

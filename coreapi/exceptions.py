@@ -31,7 +31,7 @@ class TransportError(Exception):
     pass
 
 
-class NodeLookupError(Exception):
+class LinkLookupError(Exception):
     """
     Raised when `.action` fails to index a link in the document.
     """

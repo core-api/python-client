@@ -2,7 +2,7 @@ from click.testing import CliRunner
 from coreapi import __version__ as version
 from coreapi import Document, Link
 from coreapi.commandline import client, coerce_key_types
-from coreapi.transport import HTTPTransport
+from coreapi.transports import HTTPTransport
 import pytest
 import os
 import shutil

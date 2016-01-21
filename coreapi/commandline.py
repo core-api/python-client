@@ -61,10 +61,11 @@ def get_document_string(doc):
     return '<%s %s>' % (doc.title, json.dumps(doc.url))
 
 
-def get_session():
+def get_client():
     credentials = get_credentials()
     headers = get_headers()
-    return coreapi.get_session(credentials, headers)
+    http_transport = coreapi.transports.HTTPTransport(credentials, headers)
+    return coreapi.Client(transports=[http_transport])
 
 
 def get_document():
@@ -113,10 +114,10 @@ def client(ctx, version):
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
 def get(url):
-    session = get_session()
+    client = get_client()
     history = get_history()
     try:
-        doc = session.get(url)
+        doc = client.get(url)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
@@ -203,15 +204,15 @@ def action(path, param, action, inplace):
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
-    session = get_session()
+    client = get_client()
     history = get_history()
     keys = coerce_key_types(doc, path)
     try:
-        doc = session.action(doc, keys, params=param, action=action, inplace=inplace)
+        doc = client.action(doc, keys, params=param, action=action, inplace=inplace)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
-    except coreapi.exceptions.NodeLookupError as exc:
+    except coreapi.exceptions.LinkLookupError as exc:
         click.echo(exc)
         sys.exit(1)
     history = history.add(doc)
@@ -227,10 +228,10 @@ def reload_document():
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
-    session = get_session()
+    client = get_client()
     history = get_history()
     try:
-        doc = session.reload(doc)
+        doc = client.reload(doc)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
@@ -428,9 +429,9 @@ def bookmarks_get(name):
         click.echo('Bookmark "%s" does not exist.' % name)
         return
 
-    session = get_session()
+    client = get_client()
     history = get_history()
-    doc = session.get(bookmark['url'])
+    doc = client.get(bookmark['url'])
     history = history.add(doc)
     click.echo(display(doc))
     set_document(doc)
@@ -441,7 +442,7 @@ def bookmarks_get(name):
 
 def get_history():
     if not os.path.isfile(history_path):
-        return coreapi.History(max_items=20)
+        return coreapi.history.History(max_items=20)
     history_file = open(history_path, 'rb')
     bytestring = history_file.read()
     history_file.close()
@@ -472,13 +473,13 @@ def history_show():
 
 @click.command(help="Navigate back through the browser history.")
 def history_back():
-    session = get_session()
+    client = get_client()
     history = get_history()
     if history.is_at_oldest:
         click.echo("Currently at oldest point in history. Cannot navigate back.")
         return
     doc, history = history.back()
-    doc = session.reload(doc)
+    doc = client.reload(doc)
     click.echo(display(doc))
     set_history(history)
     set_document(doc)
@@ -486,13 +487,13 @@ def history_back():
 
 @click.command(help="Navigate forward through the browser history.")
 def history_forward():
-    session = get_session()
+    client = get_client()
     history = get_history()
     if history.is_at_most_recent:
         click.echo("Currently at most recent point in history. Cannot navigate forward.")
         return
     doc, history = history.forward()
-    doc = session.reload(doc)
+    doc = client.reload(doc)
     click.echo(display(doc))
     set_history(history)
     set_document(doc)
