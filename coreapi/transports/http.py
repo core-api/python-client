@@ -1,9 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi import Document, Object, Link, Array, Error, ErrorMessage
 from coreapi.compat import urlparse
-from coreapi.exceptions import UnsupportedContentType
+from coreapi.document import Document, Object, Link, Array, Error
+from coreapi.exceptions import ErrorMessage, UnsupportedContentType
+from coreapi.transports.base import BaseTransport
 import requests
 import itypes
 import json
@@ -26,13 +27,6 @@ def _coerce_to_error_content(node):
             if not isinstance(item, Link)
         ]
     return node
-
-
-class BaseTransport(itypes.Object):
-    schemes = None
-
-    def transition(self, link, params=None, client=None, link_ancestors=None):
-        raise NotImplementedError()  # pragma: nocover
 
 
 class HTTPTransport(BaseTransport):

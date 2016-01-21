@@ -1,7 +1,7 @@
 # coding: utf-8
 from coreapi import get_client, get_default_client, Link, Field
 from coreapi.exceptions import TransportError
-from coreapi.transport import HTTPTransport
+from coreapi.transports import HTTPTransport
 import pytest
 import requests
 

@@ -4,7 +4,7 @@ from coreapi.document import Array, Document, Link, Object, Error, Field
 from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi.history import History
 from coreapi.client import Client
-from coreapi.transport import BaseTransport, HTTPTransport
+from coreapi.transports import BaseTransport, HTTPTransport
 
 
 __version__ = '1.11.4'
