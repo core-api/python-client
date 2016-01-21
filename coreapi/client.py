@@ -5,7 +5,7 @@ from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
 
-class Session(itypes.Object):
+class Client(itypes.Object):
     def __init__(self, codecs, transports):
         self._codecs = itypes.List(codecs)
         self._transports = itypes.List(transports)
@@ -110,13 +110,13 @@ class Session(itypes.Object):
     def get(self, url):
         transport = self.determine_transport(url)
         link = Link(url, action='get')
-        return transport.transition(link, session=self)
+        return transport.transition(link, client=self)
 
     def reload(self, document):
         url = document.url
         transport = self.determine_transport(url)
         link = Link(url, action='get')
-        return transport.transition(link, session=self)
+        return transport.transition(link, client=self)
 
     def action(self, document, keys, params=None, action=None, inplace=None):
         if isinstance(keys, string_types):
@@ -137,4 +137,4 @@ class Session(itypes.Object):
 
         # Perform the action, and return a new document.
         transport = self.determine_transport(link.url)
-        return transport.transition(link, params, session=self, link_ancestors=link_ancestors)
+        return transport.transition(link, params, client=self, link_ancestors=link_ancestors)

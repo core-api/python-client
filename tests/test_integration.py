@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get_session, action, get, load, dump, Link, ErrorMessage
+from coreapi import get_client, action, get, load, dump, Link, ErrorMessage
 import coreapi
 import requests
 import pytest
@@ -80,14 +80,14 @@ def test_error(monkeypatch, document):
         action(document, ['next'])
 
 
-def test_get_session():
-    session = get_session(
+def test_get_client():
+    client = get_client(
         credentials={'example.org': 'abc'},
         headers={'user-agent': 'foo'}
     )
 
-    assert len(session.codecs) == 4
-    assert len(session.transports) == 1
+    assert len(client.codecs) == 4
+    assert len(client.transports) == 1
 
-    assert session.transports[0].credentials == {'example.org': 'abc'}
-    assert session.transports[0].headers == {'user-agent': 'foo'}
+    assert client.transports[0].credentials == {'example.org': 'abc'}
+    assert client.transports[0].headers == {'user-agent': 'foo'}
