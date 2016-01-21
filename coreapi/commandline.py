@@ -212,7 +212,7 @@ def action(path, param, action, inplace):
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
-    except coreapi.exceptions.NodeLookupError as exc:
+    except coreapi.exceptions.LinkLookupError as exc:
         click.echo(exc)
         sys.exit(1)
     history = history.add(doc)

@@ -1,10 +1,55 @@
 from coreapi.codecs import CoreJSONCodec, HALCodec, HTMLCodec, PlainTextCodec
 from coreapi.compat import string_types, urlparse
-from coreapi.document import Link
-from coreapi.exceptions import NotAcceptable, UnsupportedContentType, TransportError
+from coreapi.document import Document, Link
+from coreapi.exceptions import LinkLookupError, NotAcceptable, UnsupportedContentType, TransportError
 from coreapi.transports import HTTPTransport
-from coreapi.validation import validate_keys_to_link, validate_parameters
+import collections
 import itypes
+
+
+LinkAncestor = collections.namedtuple('LinkAncestor', ['document', 'keys'])
+
+
+def lookup_link(document, keys):
+    """
+    Validates that keys looking up a link are correct.
+
+    Returns a two-tuple of (link, link_ancestors).
+    """
+    if not isinstance(keys, (list, tuple)):
+        msg = "'keys' must be a list of strings or intes."
+        raise TypeError(msg)
+    if any([
+        not isinstance(key, string_types) and not isinstance(key, int)
+        for key in keys
+    ]):
+        raise TypeError("'keys' must be a list of strings or ints.")
+
+    # Determine the link node being acted on, and its parent document.
+    # 'node' is the link we're calling the action for.
+    # 'document_keys' is the list of keys to the link's parent document.
+    node = document
+    link_ancestors = [LinkAncestor(document=document, keys=[])]
+    for idx, key in enumerate(keys):
+        try:
+            node = node[key]
+        except (KeyError, IndexError):
+            index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+            msg = 'Index %s did not reference a link. Key %s was not found.'
+            raise LinkLookupError(msg % (index_string, repr(key).strip('u')))
+        if isinstance(node, Document):
+            ancestor = LinkAncestor(document=node, keys=keys[:idx + 1])
+            link_ancestors.append(ancestor)
+
+    # Ensure that we've correctly indexed into a link.
+    if not isinstance(node, Link):
+        index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
+        msg = "Can only call 'action' on a Link. Index %s returned type '%s'."
+        raise LinkLookupError(
+            msg % (index_string, type(node).__name__)
+        )
+
+    return (node, link_ancestors)
 
 
 class Client(itypes.Object):
@@ -133,8 +178,7 @@ class Client(itypes.Object):
             params = {}
 
         # Validate the keys and link parameters.
-        link, link_ancestors = validate_keys_to_link(document, keys)
-        validate_parameters(link, params)
+        link, link_ancestors = lookup_link(document, keys)
 
         if action is not None or inplace is not None:
             # Handle any explicit overrides.
