@@ -48,8 +48,8 @@ class HTTPTransport(BaseTransport):
 
     def transition(self, link, params=None, client=None, link_ancestors=None):
         if client is None:
-            from coreapi import get_default_client
-            client = get_default_client()
+            from coreapi import Client
+            client = Client()
 
         method = self.get_http_method(link.action)
         url, query_params, form_params = self.get_params(method, link, params)

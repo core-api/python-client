@@ -64,7 +64,8 @@ def get_document_string(doc):
 def get_client():
     credentials = get_credentials()
     headers = get_headers()
-    return coreapi.get_client(credentials, headers)
+    http_transport = coreapi.transports.HTTPTransport(credentials, headers)
+    return coreapi.Client(transports=[http_transport])
 
 
 def get_document():

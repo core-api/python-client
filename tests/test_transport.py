@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import get_client, get_default_client, Link, Field
+from coreapi import Client, Link, Field
 from coreapi.exceptions import TransportError
 from coreapi.transports import HTTPTransport
 import pytest
@@ -22,19 +22,19 @@ class MockResponse(object):
 # Test transport errors.
 
 def test_unknown_scheme():
-    client = get_default_client()
+    client = Client()
     with pytest.raises(TransportError):
         client.determine_transport('ftp://example.org')
 
 
 def test_missing_scheme():
-    client = get_default_client()
+    client = Client()
     with pytest.raises(TransportError):
         client.determine_transport('example.org')
 
 
 def test_missing_hostname():
-    client = get_default_client()
+    client = Client()
     with pytest.raises(TransportError):
         client.determine_transport('http://')
 
@@ -118,8 +118,8 @@ def test_credentials(monkeypatch):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
-    client = get_client(credentials=credentials)
-    transport = client.transports[0]
+    transport = HTTPTransport(credentials=credentials)
+    client = Client(transports=[transport])
 
     # Requests to example.org include credentials.
     response = transport.make_http_request(client, 'http://example.org/123', 'GET')
@@ -139,8 +139,8 @@ def test_headers(monkeypatch):
     monkeypatch.setattr(requests, 'request', mockreturn)
 
     headers = {'User-Agent': 'Example v1.0'}
-    client = get_client(headers=headers)
-    transport = client.transports[0]
+    transport = HTTPTransport(headers=headers)
+    client = Client(transports=[transport])
 
     # Requests include custom headers.
     response = transport.make_http_request(client, 'http://example.org/123', 'GET')
