@@ -1,12 +1,19 @@
+from coreapi.codecs import CoreJSONCodec, HALCodec, HTMLCodec, PlainTextCodec
 from coreapi.compat import string_types, urlparse
 from coreapi.document import Link
 from coreapi.exceptions import NotAcceptable, UnsupportedContentType, TransportError
+from coreapi.transports import HTTPTransport
 from coreapi.validation import validate_keys_to_link, validate_parameters
 import itypes
 
 
 class Client(itypes.Object):
-    def __init__(self, codecs, transports):
+    def __init__(self, codecs=None, transports=None):
+        if codecs is None:
+            codecs = [CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()]
+        if transports is None:
+            transports = [HTTPTransport()]
+
         self._codecs = itypes.List(codecs)
         self._transports = itypes.List(transports)
         self._decoders = [

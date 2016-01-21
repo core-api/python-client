@@ -18,10 +18,7 @@ __all__ = [
 ]
 
 
-_default_client = Client(
-    codecs=[CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()],
-    transports=[HTTPTransport()]
-)
+_default_client = Client()
 
 
 def get_default_client():
