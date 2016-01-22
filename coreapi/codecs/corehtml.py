@@ -40,7 +40,7 @@ def _render_html(node, url=None, key=None, path=''):
     return template.render(node=node, render=_render_html, url=url, key=key, path=path)
 
 
-class HTMLCodec(BaseCodec):
+class CoreHTMLCodec(BaseCodec):
     media_type = 'text/html'
 
     def dump(self, document, extra_css=None, **kwargs):

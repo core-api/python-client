@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi import negotiate_decoder, negotiate_encoder
-from coreapi.codecs import CoreJSONCodec, HTMLCodec
+from coreapi.codecs import CoreJSONCodec, CoreHTMLCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, UnsupportedContentType, NotAcceptable
@@ -14,7 +14,7 @@ def json_codec():
 
 @pytest.fixture
 def html_codec():
-    return HTMLCodec()
+    return CoreHTMLCodec()
 
 
 @pytest.fixture
@@ -249,7 +249,7 @@ def test_get_accepted_encoder():
 
 def test_get_underspecified_encoder():
     codec = negotiate_encoder(accept='text/*')
-    assert isinstance(codec, HTMLCodec)
+    assert isinstance(codec, CoreHTMLCodec)
 
 
 def test_get_unsupported_encoder():

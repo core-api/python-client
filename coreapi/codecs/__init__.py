@@ -1,9 +1,9 @@
 # coding: utf-8
 from coreapi.codecs.base import BaseCodec
+from coreapi.codecs.corehtml import CoreHTMLCodec
 from coreapi.codecs.corejson import CoreJSONCodec
 from coreapi.codecs.coretext import CoreTextCodec
 from coreapi.codecs.hal import HALCodec
-from coreapi.codecs.html import HTMLCodec
 from coreapi.codecs.hyperschema import HyperschemaCodec
 from coreapi.codecs.jsondata import JSONCodec
 from coreapi.codecs.plaintext import PlainTextCodec
@@ -13,7 +13,7 @@ import itypes
 
 
 __all__ = [
-    'BaseCodec', 'CoreJSONCodec', 'CoreTextCodec', 'HALCodec', 'HTMLCodec',
+    'BaseCodec', 'CoreHTMLCodec', 'CoreJSONCodec', 'CoreTextCodec', 'HALCodec',
     'HyperschemaCodec', 'JSONCodec', 'PlainTextCodec', 'PythonCodec',
 ]
 
@@ -24,7 +24,9 @@ default_decoders = itypes.List([
 ])
 
 # Default set of encoders for servers to respond with.
-default_encoders = itypes.List([CoreJSONCodec(), HALCodec(), HTMLCodec()])
+default_encoders = itypes.List([
+    CoreJSONCodec(), HALCodec(), CoreHTMLCodec()
+])
 
 
 def negotiate_decoder(content_type=None, decoders=None):
