@@ -134,6 +134,27 @@ def get(url):
         set_history(history)
 
 
+@click.command(help='Load a document from disk.')
+@click.argument('input_file', type=click.File('rb'))
+@click.option('--format', default='corejson', type=click.Choice(['corejson', 'hal', 'hyperschema']))
+def load(input_file, format):
+    input_bytes = input_file.read()
+    input_file.close()
+    codec = {
+        'corejson': coreapi.codecs.CoreJSONCodec(),
+        'hal': coreapi.codecs.HALCodec(),
+        'hyperschema': coreapi.codecs.HyperschemaCodec(),
+    }[format]
+
+    history = get_history()
+    doc = codec.load(input_bytes)
+    click.echo(display(doc))
+    if isinstance(doc, coreapi.Document):
+        history = history.add(doc)
+        set_document(doc)
+        set_history(history)
+
+
 @click.command(help='Clear the active document and other state.\n\nThis includes the current document, history, credentials, headers and bookmarks.')
 def clear():
     for path in [
@@ -529,6 +550,7 @@ client.add_command(show)
 client.add_command(action)
 client.add_command(reload_document, name='reload')
 client.add_command(clear)
+client.add_command(load)
 
 client.add_command(credentials)
 credentials.add_command(credentials_add, name='add')

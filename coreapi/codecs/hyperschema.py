@@ -70,9 +70,20 @@ def _get_content(data, base_url, ref):
 
 
 def _primative_to_document(data, base_url):
+    url = base_url
+
+    # Determine if the document contains a self URL.
+    links = _get_list(data, 'links')
+    for link in get_dicts(links):
+        href = _get_string(link, 'href')
+        rel = _get_string(link, 'rel')
+        if rel == 'self' and href:
+            url = urlparse.urljoin(url, href)
+
+    # Load the document content.
     title = _get_string(data, 'title')
-    content = _get_content(data, base_url, ref=data)
-    return Document(title=title, url=base_url, content=content)
+    content = _get_content(data, url, ref=data)
+    return Document(title=title, url=url, content=content)
 
 
 class HyperschemaCodec(BaseCodec):
