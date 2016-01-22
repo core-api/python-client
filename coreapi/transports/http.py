@@ -55,8 +55,9 @@ class HTTPTransport(BaseTransport):
         return self._headers
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
-        method = self.get_http_method(link)
-        url, query_params, form_params = self.get_url_and_params(method, link, params)
+        method = self.get_http_method(link.action)
+        path_params, query_params, form_params = self.seperate_params(method, link.fields, params)
+        url = self.expand_path_params(link.url, path_params)
         headers = self.get_headers(url, decoders)
         response = self.make_http_request(url, method, headers, query_params, form_params)
         is_error = response.status_code >= 400 and response.status_code <= 599
@@ -70,11 +71,7 @@ class HTTPTransport(BaseTransport):
             else:
                 raise
 
-        if (
-            isinstance(document, Document) and
-            response.status_code >= 400 and
-            response.status_code <= 599
-        ):
+        if isinstance(document, Document) and is_error:
             # Coerce 4xx and 5xx codes into errors.
             document = Error(
                 title=document.title,
@@ -91,28 +88,28 @@ class HTTPTransport(BaseTransport):
             document = Document(url=response.url)
         return document
 
-    def get_http_method(self, link):
-        if not link.action:
+    def get_http_method(self, action):
+        if not action:
             return 'GET'
-        return link.action.upper()
+        return action.upper()
 
-    def get_url_and_params(self, method, link, params=None):
+    def seperate_params(self, method, fields, params=None):
         """
-        Return the url, query parameters and form parameters for the request.
+        Seperate the params into their location types: path, query, or form.
         """
         if params is None:
-            return (link.url, {}, {})
+            return ({}, {}, {})
 
-        fields = {field.name: field for field in link.fields}
+        field_map = {field.name: field for field in fields}
         path_params = {}
         query_params = {}
         form_params = {}
         for key, value in params.items():
-            if key not in fields or not fields[key].location:
+            if key not in field_map or not field_map[key].location:
                 # Default is 'query' for 'GET'/'DELETE', and 'form' others.
                 location = 'query' if method in ('GET', 'DELETE') else 'form'
             else:
-                location = fields[key].location
+                location = field_map[key].location
 
             if location == 'path':
                 path_params[key] = value
@@ -121,8 +118,12 @@ class HTTPTransport(BaseTransport):
             else:
                 form_params[key] = value
 
-        url = uritemplate.expand(link.url, path_params)
-        return (url, query_params, form_params)
+        return path_params, query_params, form_params
+
+    def expand_path_params(self, url, path_params):
+        if path_params:
+            return uritemplate.expand(url, path_params)
+        return url
 
     def get_headers(self, url, decoders=None):
         """
