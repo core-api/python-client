@@ -1,7 +1,7 @@
 # coding: utf-8
-from coreapi import Client, Link, Field
+from coreapi import Link, Field
 from coreapi.exceptions import TransportError
-from coreapi.transports import HTTPTransport
+from coreapi.transports import determine_transport, HTTPTransport
 import pytest
 import requests
 
@@ -22,21 +22,18 @@ class MockResponse(object):
 # Test transport errors.
 
 def test_unknown_scheme():
-    client = Client()
     with pytest.raises(TransportError):
-        client.determine_transport('ftp://example.org')
+        determine_transport('ftp://example.org')
 
 
 def test_missing_scheme():
-    client = Client()
     with pytest.raises(TransportError):
-        client.determine_transport('example.org')
+        determine_transport('example.org')
 
 
 def test_missing_hostname():
-    client = Client()
     with pytest.raises(TransportError):
-        client.determine_transport('http://')
+        determine_transport('http://')
 
 
 # Test basic transition types.
@@ -112,36 +109,26 @@ def test_delete(monkeypatch, http):
 # Test credentials
 
 def test_credentials(monkeypatch):
-    def mockreturn(method, url, **opts):
-        return MockResponse(opts['headers'].get('authorization', ''))
-
-    monkeypatch.setattr(requests, 'request', mockreturn)
-
     credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
     transport = HTTPTransport(credentials=credentials)
-    client = Client(transports=[transport])
 
     # Requests to example.org include credentials.
-    response = transport.make_http_request(client, 'http://example.org/123', 'GET')
-    assert response.content == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
+    headers = transport.get_headers('http://example.org/123')
+    assert 'authorization' in headers
+    assert headers['authorization'] == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
 
     # Requests to other.org do not include credentials.
-    response = transport.make_http_request(client, 'http://other.org/123', 'GET')
-    assert response.content == ''
+    headers = transport.get_headers('http://other.org/123')
+    assert 'authorization' not in headers
 
 
 # Test custom headers
 
 def test_headers(monkeypatch):
-    def mockreturn(method, url, **opts):
-        return MockResponse(headers.get('User-Agent', ''))
-
-    monkeypatch.setattr(requests, 'request', mockreturn)
-
     headers = {'User-Agent': 'Example v1.0'}
     transport = HTTPTransport(headers=headers)
-    client = Client(transports=[transport])
 
     # Requests include custom headers.
-    response = transport.make_http_request(client, 'http://example.org/123', 'GET')
-    assert response.content == 'Example v1.0'
+    headers = transport.get_headers('http://example.org/123')
+    assert 'user-agent' in headers
+    assert headers['user-agent'] == 'Example v1.0'

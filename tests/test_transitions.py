@@ -7,10 +7,12 @@ import pytest
 class MockTransport(HTTPTransport):
     schemes = ['mock']
 
-    def transition(self, link, params=None, client=None, link_ancestors=None):
+    def transition(self, link, params=None, decoders=None, link_ancestors=None):
         if link.action == 'get':
             document = Document(title='new', content={'new': 123})
         elif link.action in ('put', 'post'):
+            if params is None:
+                params = {}
             document = Document(title='new', content={'new': 123, 'foo': params.get('foo')})
         else:
             document = None
@@ -18,7 +20,7 @@ class MockTransport(HTTPTransport):
         return self.handle_inplace_replacements(document, link, link_ancestors)
 
 
-client = Client(codecs=[], transports=[MockTransport()])
+client = Client(transports=[MockTransport()])
 
 
 @pytest.fixture
