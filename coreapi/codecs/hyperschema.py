@@ -76,6 +76,9 @@ def _primative_to_document(data, base_url):
 
 
 class HyperschemaCodec(BaseCodec):
+    """
+    JSON Hyper-Schema.
+    """
     media_type = 'application/schema+json'
 
     def load(self, bytes, base_url=None):
