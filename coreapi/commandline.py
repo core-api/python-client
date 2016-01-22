@@ -80,15 +80,19 @@ def get_document():
 
 def set_document(doc):
     codec = coreapi.codecs.CoreJSONCodec()
-    content_type, content = codec.dump(doc)
+    content = codec.dump(doc)
     store = open(document_path, 'wb')
     store.write(content)
     store.close()
 
 
 def display(doc):
-    codec = coreapi.codecs.PlainTextCodec()
-    return codec.dump(doc, colorize=True)
+    if isinstance(doc, (coreapi.Document, coreapi.Error)):
+        codec = coreapi.codecs.PlainTextCodec()
+        return codec.dump(doc, colorize=True)
+    if doc is None:
+        return ''
+    return json.dumps(doc, indent=4, ensure_ascii=False, separators=coreapi.compat.VERBOSE_SEPARATORS)
 
 
 # Core commands
@@ -123,10 +127,11 @@ def get(url):
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
-    history = history.add(doc)
     click.echo(display(doc))
-    set_document(doc)
-    set_history(history)
+    if isinstance(doc, coreapi.Document):
+        history = history.add(doc)
+        set_document(doc)
+        set_history(history)
 
 
 @click.command(help='Clear the active document and other state.\n\nThis includes the current document, history, credentials, headers and bookmarks.')
@@ -217,10 +222,11 @@ def action(path, param, action, inplace):
     except coreapi.exceptions.LinkLookupError as exc:
         click.echo(exc)
         sys.exit(1)
-    history = history.add(doc)
     click.echo(display(doc))
-    set_document(doc)
-    set_history(history)
+    if isinstance(doc, coreapi.Document):
+        history = history.add(doc)
+        set_document(doc)
+        set_history(history)
 
 
 @click.command(help='Reload the current document.')
@@ -237,10 +243,11 @@ def reload_document():
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
-    history = history.add(doc)
     click.echo(display(doc))
-    set_document(doc)
-    set_history(history)
+    if isinstance(doc, coreapi.Document):
+        history = history.add(doc)
+        set_document(doc)
+        set_history(history)
 
 
 # Credentials
@@ -430,14 +437,20 @@ def bookmarks_get(name):
     if bookmark is None:
         click.echo('Bookmark "%s" does not exist.' % name)
         return
+    url = bookmark['url']
 
     client = get_client()
     history = get_history()
-    doc = client.get(bookmark['url'])
-    history = history.add(doc)
+    try:
+        doc = client.get(url)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     click.echo(display(doc))
-    set_document(doc)
-    set_history(history)
+    if isinstance(doc, coreapi.Document):
+        history = history.add(doc)
+        set_document(doc)
+        set_history(history)
 
 
 # History
@@ -481,10 +494,15 @@ def history_back():
         click.echo("Currently at oldest point in history. Cannot navigate back.")
         return
     doc, history = history.back()
-    doc = client.reload(doc)
+    try:
+        doc = client.reload(doc)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     click.echo(display(doc))
-    set_history(history)
-    set_document(doc)
+    if isinstance(doc, coreapi.Document):
+        set_document(doc)
+        set_history(history)
 
 
 @click.command(help="Navigate forward through the browser history.")
@@ -495,10 +513,15 @@ def history_forward():
         click.echo("Currently at most recent point in history. Cannot navigate forward.")
         return
     doc, history = history.forward()
-    doc = client.reload(doc)
+    try:
+        doc = client.reload(doc)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
     click.echo(display(doc))
-    set_history(history)
-    set_document(doc)
+    if isinstance(doc, coreapi.Document):
+        set_document(doc)
+        set_history(history)
 
 
 client.add_command(get)

@@ -4,6 +4,7 @@ from coreapi.codecs.corejson import CoreJSONCodec
 from coreapi.codecs.hal import HALCodec
 from coreapi.codecs.html import HTMLCodec
 from coreapi.codecs.hyperschema import HyperschemaCodec
+from coreapi.codecs.jsondata import JSONCodec
 from coreapi.codecs.plaintext import PlainTextCodec
 from coreapi.codecs.python import PythonCodec
 from coreapi.exceptions import NotAcceptable, UnsupportedContentType
@@ -12,10 +13,10 @@ import itypes
 
 __all__ = [
     'BaseCodec', 'CoreJSONCodec', 'HALCodec', 'HTMLCodec', 'HyperschemaCodec',
-    'PlainTextCodec', 'PythonCodec',
+    'JSONCodec', 'PlainTextCodec', 'PythonCodec',
 ]
 
-default_decoders = itypes.List([CoreJSONCodec(), HALCodec()])
+default_decoders = itypes.List([CoreJSONCodec(), HALCodec(), HyperschemaCodec(), JSONCodec()])
 default_encoders = itypes.List([CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()])
 
 

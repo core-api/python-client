@@ -76,7 +76,7 @@ def _primative_to_document(data, base_url):
 
 
 class HyperschemaCodec(BaseCodec):
-    media_type = 'application/vnd.heroku+json; version=3'
+    media_type = 'application/schema+json'
 
     def load(self, bytes, base_url=None):
         """

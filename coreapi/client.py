@@ -33,7 +33,7 @@ def _lookup_link(document, keys):
     for idx, key in enumerate(keys):
         try:
             node = node[key]
-        except (KeyError, IndexError):
+        except (KeyError, IndexError, TypeError):
             index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
             msg = 'Index %s did not reference a link. Key %s was not found.'
             raise LinkLookupError(msg % (index_string, repr(key).strip('u')))

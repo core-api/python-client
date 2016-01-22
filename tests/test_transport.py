@@ -101,9 +101,7 @@ def test_delete(monkeypatch, http):
 
     link = Link(url='http://example.org', action='delete')
     doc = http.transition(link)
-    assert doc.url == 'http://example.org'
-    assert not doc.items()
-    assert not doc.title
+    assert doc is None
 
 
 # Test credentials
