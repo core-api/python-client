@@ -1,6 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
+from coreapi.codecs import default_decoders, negotiate_decoder
 from coreapi.compat import urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.exceptions import ErrorMessage, UnsupportedContentType
@@ -29,6 +30,13 @@ def _coerce_to_error_content(node):
     return node
 
 
+def _get_accept_header(decoders=None):
+    if decoders is None:
+        decoders = default_decoders
+
+    return ', '.join([decoder.media_type for decoder in decoders])
+
+
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
@@ -46,17 +54,14 @@ class HTTPTransport(BaseTransport):
     def headers(self):
         return self._headers
 
-    def transition(self, link, params=None, client=None, link_ancestors=None):
-        if client is None:
-            from coreapi import Client
-            client = Client()
-
-        method = self.get_http_method(link.action)
-        url, query_params, form_params = self.get_params(method, link, params)
-        response = self.make_http_request(client, url, method, query_params, form_params)
+    def transition(self, link, params=None, decoders=None, link_ancestors=None):
+        method = self.get_http_method(link)
+        url, query_params, form_params = self.get_url_and_params(method, link, params)
+        headers = self.get_headers(url, decoders)
+        response = self.make_http_request(url, method, headers, query_params, form_params)
         is_error = response.status_code >= 400 and response.status_code <= 599
         try:
-            document = self.load_document(client, response)
+            document = self.load_document(decoders, response)
         except UnsupportedContentType:
             content_type = response.headers.get('content-type').split(';')[0]
             if is_error and content_type == 'application/json':
@@ -86,12 +91,15 @@ class HTTPTransport(BaseTransport):
             document = Document(url=response.url)
         return document
 
-    def get_http_method(self, action=None):
-        if not action:
+    def get_http_method(self, link):
+        if not link.action:
             return 'GET'
-        return action.upper()
+        return link.action.upper()
 
-    def get_params(self, method, link, params=None):
+    def get_url_and_params(self, method, link, params=None):
+        """
+        Return the url, query parameters and form parameters for the request.
+        """
         if params is None:
             return (link.url, {}, {})
 
@@ -116,42 +124,51 @@ class HTTPTransport(BaseTransport):
         url = uritemplate.expand(link.url, path_params)
         return (url, query_params, form_params)
 
-    def make_http_request(self, client, url, method, query_params=None, form_params=None):
+    def get_headers(self, url, decoders=None):
         """
-        Make an HTTP request and return an HTTP response.
+        Return a dictionary of HTTP headers to use in the outgoing request.
         """
-        opts = {
-            "headers": {
-                "accept": client.get_accept_header()
-            }
+        headers = {
+            'accept': _get_accept_header(decoders)
         }
-        if query_params:
-            opts['params'] = query_params
-        elif form_params:
-            opts['data'] = json.dumps(form_params)
-            opts['headers']['content-type'] = 'application/json'
 
         if self.credentials:
             # Include any authorization credentials relevant to this domain.
             url_components = urlparse.urlparse(url)
             host = url_components.netloc
             if host in self.credentials:
-                opts['headers']['authorization'] = self.credentials[host]
+                headers['authorization'] = self.credentials[host]
 
         if self.headers:
             # Include any custom headers associated with this transport.
-            opts['headers'].update(self.headers)
+            headers.update(self.headers)
+
+        return headers
+
+    def make_http_request(self, url, method, headers=None, query_params=None, form_params=None):
+        """
+        Make an HTTP request and return an HTTP response.
+        """
+        opts = {
+            "headers": headers or {}
+        }
+
+        if query_params:
+            opts['params'] = query_params
+        elif form_params:
+            opts['data'] = json.dumps(form_params)
+            opts['headers']['content-type'] = 'application/json'
 
         return requests.request(method, url, **opts)
 
-    def load_document(self, client, response):
+    def load_document(self, decoders, response):
         """
         Given an HTTP response, return the decoded Core API document.
         """
         if not response.content:
             return None
         content_type = response.headers.get('content-type')
-        codec = client.negotiate_decoder(content_type)
+        codec = negotiate_decoder(content_type, decoders=decoders)
         return codec.load(response.content, base_url=response.url)
 
     def handle_inplace_replacements(self, document, link, link_ancestors):
