@@ -1,4 +1,4 @@
-from coreapi.codecs import CoreJSONCodec, HALCodec, HTMLCodec, PlainTextCodec
+from coreapi.codecs import HyperschemaCodec, PlainTextCodec
 from coreapi.compat import string_types, urlparse
 from coreapi.document import Document, Link
 from coreapi.exceptions import LinkLookupError, NotAcceptable, UnsupportedContentType, TransportError
@@ -55,7 +55,7 @@ def lookup_link(document, keys):
 class Client(itypes.Object):
     def __init__(self, codecs=None, transports=None):
         if codecs is None:
-            codecs = [CoreJSONCodec(), HALCodec(), HTMLCodec(), PlainTextCodec()]
+            codecs = [HyperschemaCodec(), PlainTextCodec()]
         if transports is None:
             transports = [HTTPTransport()]
 
@@ -102,7 +102,7 @@ class Client(itypes.Object):
 
         content_type = content_type.split(';')[0].strip().lower()
         for codec in self.decoders:
-            if codec.media_type == content_type:
+            if codec.media_type.split(';')[0] == content_type:
                 break
         else:
             msg = "Unsupported media in Content-Type header '%s'" % content_type

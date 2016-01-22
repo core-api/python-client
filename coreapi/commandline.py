@@ -74,11 +74,13 @@ def get_document():
     store = open(document_path, 'rb')
     content = store.read()
     store.close()
-    return coreapi.load(content)
+    client = coreapi.Client(codecs=[coreapi.codecs.CoreJSONCodec()])
+    return client.load(content)
 
 
 def set_document(doc):
-    content_type, content = coreapi.dump(doc)
+    client = coreapi.Client(codecs=[coreapi.codecs.CoreJSONCodec()])
+    content_type, content = client.dump(doc)
     store = open(document_path, 'wb')
     store.write(content)
     store.close()

@@ -24,6 +24,10 @@ def _get_bool(item, key, default=False):
     return value if isinstance(value, bool) else default
 
 
+def get_dicts(item):
+    return [value for value in item if isinstance(value, dict)]
+
+
 def _mark_as_not_implemented(method):
     # Mark the method as not implemented, for the purposes for determining
     # if a codec supports encoding only, decoding only, or both.

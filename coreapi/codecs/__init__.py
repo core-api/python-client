@@ -3,10 +3,12 @@ from coreapi.codecs.base import BaseCodec
 from coreapi.codecs.corejson import CoreJSONCodec
 from coreapi.codecs.hal import HALCodec
 from coreapi.codecs.html import HTMLCodec
+from coreapi.codecs.hyperschema import HyperschemaCodec
 from coreapi.codecs.plaintext import PlainTextCodec
 from coreapi.codecs.python import PythonCodec
 
 
 __all__ = [
-    'BaseCodec', 'CoreJSONCodec', 'HALCodec', 'HTMLCodec', 'PlainTextCodec', 'PythonCodec',
+    'BaseCodec', 'CoreJSONCodec', 'HALCodec', 'HTMLCodec', 'HyperschemaCodec',
+    'PlainTextCodec', 'PythonCodec',
 ]
