@@ -4,7 +4,7 @@ from collections import OrderedDict
 from coreapi.codecs import default_decoders, negotiate_decoder
 from coreapi.compat import urlparse
 from coreapi.document import Document, Object, Link, Array, Error
-from coreapi.exceptions import ErrorMessage, UnsupportedContentType
+from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
 import requests
 import itypes
@@ -17,17 +17,32 @@ def _coerce_to_error_content(node):
     # If we get a 4xx or 5xx response with a Document, then coerce it
     # into plain data.
     if isinstance(node, (Document, Object)):
+        # Strip Links from Documents, treat Documents as plain dicts.
         return OrderedDict([
             (key, _coerce_to_error_content(value))
             for key, value in node.data.items()
         ])
     elif isinstance(node, Array):
+        # Strip Links from Arrays.
         return [
             _coerce_to_error_content(item)
             for item in node
             if not isinstance(item, Link)
         ]
     return node
+
+
+def _coerce_to_error(obj, default_title):
+    if isinstance(obj, Document):
+        return Error(
+            title=obj.title or default_title,
+            content=_coerce_to_error_content(obj)
+        )
+    elif isinstance(obj, dict):
+        return Error(title=default_title, content=obj)
+    elif isinstance(obj, list):
+        return Error(title=default_title, content={'messages': obj})
+    return Error(title=default_title, content={'message': obj})
 
 
 def _get_accept_header(decoders=None):
@@ -60,32 +75,14 @@ class HTTPTransport(BaseTransport):
         url = self.expand_path_params(link.url, path_params)
         headers = self.get_headers(url, decoders)
         response = self.make_http_request(url, method, headers, query_params, form_params)
-        is_error = response.status_code >= 400 and response.status_code <= 599
-        try:
-            document = self.load_document(decoders, response)
-        except UnsupportedContentType:
-            content_type = response.headers.get('content-type').split(';')[0]
-            if is_error and content_type == 'application/json':
-                content = json.loads(response.content)
-                document = Error(title=response.reason, content=content)
-            else:
-                raise
+        document = self.load_document(response, decoders)
 
-        if isinstance(document, Document) and is_error:
-            # Coerce 4xx and 5xx codes into errors.
-            document = Error(
-                title=document.title,
-                content=_coerce_to_error_content(document)
-            )
+        if isinstance(document, Document) and link_ancestors:
+            document = self.handle_inplace_replacements(document, link, link_ancestors)
 
         if isinstance(document, Error):
             raise ErrorMessage(document)
 
-        if link_ancestors:
-            document = self.handle_inplace_replacements(document, link, link_ancestors)
-
-        if document is None:
-            document = Document(url=response.url)
         return document
 
     def get_http_method(self, action):
@@ -162,15 +159,25 @@ class HTTPTransport(BaseTransport):
 
         return requests.request(method, url, **opts)
 
-    def load_document(self, decoders, response):
+    def load_document(self, response, decoders=None):
         """
         Given an HTTP response, return the decoded Core API document.
         """
-        if not response.content:
-            return None
-        content_type = response.headers.get('content-type')
-        codec = negotiate_decoder(content_type, decoders=decoders)
-        return codec.load(response.content, base_url=response.url)
+        if response.content:
+            # Content returned in response. We should decode it.
+            content_type = response.headers.get('content-type')
+            codec = negotiate_decoder(content_type, decoders=decoders)
+            document = codec.load(response.content, base_url=response.url)
+        else:
+            # No content returned in response.
+            document = None
+
+        # Coerce 4xx and 5xx codes into errors.
+        is_error = response.status_code >= 400 and response.status_code <= 599
+        if is_error and not isinstance(document, Error):
+            document = _coerce_to_error(document, default_title=response.reason)
+
+        return document
 
     def handle_inplace_replacements(self, document, link, link_ancestors):
         """

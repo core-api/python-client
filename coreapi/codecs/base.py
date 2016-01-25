@@ -2,7 +2,7 @@ from coreapi.compat import string_types
 import itypes
 
 
-# Helper functions to get an expected type from a dictionary,
+# Helper functions to get an expected type from a dictionary.
 
 def _get_string(item, key):
     value = item.get(key)
@@ -22,6 +22,12 @@ def _get_list(item, key):
 def _get_bool(item, key, default=False):
     value = item.get(key)
     return value if isinstance(value, bool) else default
+
+
+# Helper functions to get an expected type from a list.
+
+def get_dicts(item):
+    return [value for value in item if isinstance(value, dict)]
 
 
 class BaseCodec(itypes.Object):

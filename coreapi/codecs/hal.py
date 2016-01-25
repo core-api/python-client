@@ -200,6 +200,6 @@ class HALCodec(BaseCodec):
 
         doc = _parse_document(data, base_url)
         if not isinstance(doc, Document):
-            raise ParseError('Top level node must be a document message.')
+            raise ParseError('Top level node must be a document.')
 
         return doc
