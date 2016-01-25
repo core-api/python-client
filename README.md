@@ -2,6 +2,8 @@
 
 Python client library for [Core API][core-api].
 
+Can be used to interact with HAL, JSON Hyper-Schema, and Core JSON APIs.
+
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
 
