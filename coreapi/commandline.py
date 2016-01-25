@@ -87,7 +87,7 @@ def set_document(doc):
 
 
 def display(doc):
-    if isinstance(doc, (coreapi.Document, coreapi.Error)):
+    if isinstance(doc, (coreapi.Document, coreapi.Error, coreapi.Object, coreapi.Array, coreapi.Link)):
         codec = coreapi.codecs.CoreTextCodec()
         return codec.dump(doc, colorize=True)
     if doc is None:
