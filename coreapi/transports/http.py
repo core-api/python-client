@@ -42,14 +42,9 @@ def _coerce_to_error(obj, default_title):
         return Error(title=default_title, content=obj)
     elif isinstance(obj, list):
         return Error(title=default_title, content={'messages': obj})
+    elif obj is None:
+        return Error(title=default_title)
     return Error(title=default_title, content={'message': obj})
-
-
-def _get_accept_header(decoders=None):
-    if decoders is None:
-        decoders = default_decoders
-
-    return ', '.join([decoder.media_type for decoder in decoders])
 
 
 def _get_http_method(action):
@@ -100,8 +95,13 @@ def _get_headers(url, decoders=None, credentials=None, extra_headers=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
+    if decoders is None:
+        decoders = default_decoders
+
+    accept = ', '.join([decoder.media_type for decoder in decoders])
+
     headers = {
-        'accept': _get_accept_header(decoders)
+        'accept': accept
     }
 
     if credentials:
@@ -135,7 +135,7 @@ def _make_http_request(url, method, headers=None, query_params=None, form_params
     return requests.request(method, url, **opts)
 
 
-def _load_document(response, decoders=None):
+def _decode_result(response, decoders=None):
     """
     Given an HTTP response, return the decoded Core API document.
     """
@@ -143,17 +143,17 @@ def _load_document(response, decoders=None):
         # Content returned in response. We should decode it.
         content_type = response.headers.get('content-type')
         codec = negotiate_decoder(content_type, decoders=decoders)
-        document = codec.load(response.content, base_url=response.url)
+        result = codec.load(response.content, base_url=response.url)
     else:
         # No content returned in response.
-        document = None
+        result = None
 
     # Coerce 4xx and 5xx codes into errors.
     is_error = response.status_code >= 400 and response.status_code <= 599
-    if is_error and not isinstance(document, Error):
-        document = _coerce_to_error(document, default_title=response.reason)
+    if is_error and not isinstance(result, Error):
+        result = _coerce_to_error(result, default_title=response.reason)
 
-    return document
+    return result
 
 
 def _handle_inplace_replacements(document, link, link_ancestors):
@@ -202,12 +202,12 @@ class HTTPTransport(BaseTransport):
         url = _expand_path_params(link.url, path_params)
         headers = _get_headers(url, decoders, self.credentials, self.headers)
         response = _make_http_request(url, method, headers, query_params, form_params)
-        document = _load_document(response, decoders)
+        result = _decode_result(response, decoders)
 
-        if isinstance(document, Document) and link_ancestors:
-            document = _handle_inplace_replacements(document, link, link_ancestors)
+        if isinstance(result, Document) and link_ancestors:
+            result = _handle_inplace_replacements(result, link, link_ancestors)
 
-        if isinstance(document, Error):
-            raise ErrorMessage(document)
+        if isinstance(result, Error):
+            raise ErrorMessage(result)
 
-        return document
+        return result
