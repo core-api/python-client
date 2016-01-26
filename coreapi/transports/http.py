@@ -12,41 +12,6 @@ import json
 import uritemplate
 
 
-def _coerce_to_error_content(node):
-    # Errors should not contain nested documents or links.
-    # If we get a 4xx or 5xx response with a Document, then coerce it
-    # into plain data.
-    if isinstance(node, (Document, Object)):
-        # Strip Links from Documents, treat Documents as plain dicts.
-        return OrderedDict([
-            (key, _coerce_to_error_content(value))
-            for key, value in node.data.items()
-        ])
-    elif isinstance(node, Array):
-        # Strip Links from Arrays.
-        return [
-            _coerce_to_error_content(item)
-            for item in node
-            if not isinstance(item, Link)
-        ]
-    return node
-
-
-def _coerce_to_error(obj, default_title):
-    if isinstance(obj, Document):
-        return Error(
-            title=obj.title or default_title,
-            content=_coerce_to_error_content(obj)
-        )
-    elif isinstance(obj, dict):
-        return Error(title=default_title, content=obj)
-    elif isinstance(obj, list):
-        return Error(title=default_title, content={'messages': obj})
-    elif obj is None:
-        return Error(title=default_title)
-    return Error(title=default_title, content={'message': obj})
-
-
 def _get_http_method(action):
     if not action:
         return 'GET'
@@ -133,6 +98,46 @@ def _make_http_request(url, method, headers=None, query_params=None, form_params
         opts['headers']['content-type'] = 'application/json'
 
     return requests.request(method, url, **opts)
+
+
+def _coerce_to_error_content(node):
+    """
+    Errors should not contain nested documents or links.
+    If we get a 4xx or 5xx response with a Document, then coerce
+    the document content into plain data.
+    """
+    if isinstance(node, (Document, Object)):
+        # Strip Links from Documents, treat Documents as plain dicts.
+        return OrderedDict([
+            (key, _coerce_to_error_content(value))
+            for key, value in node.data.items()
+        ])
+    elif isinstance(node, Array):
+        # Strip Links from Arrays.
+        return [
+            _coerce_to_error_content(item)
+            for item in node
+            if not isinstance(item, Link)
+        ]
+    return node
+
+
+def _coerce_to_error(obj, default_title):
+    """
+    Given an arbitrary return result, coerce it into an Error instance.
+    """
+    if isinstance(obj, Document):
+        return Error(
+            title=obj.title or default_title,
+            content=_coerce_to_error_content(obj)
+        )
+    elif isinstance(obj, dict):
+        return Error(title=default_title, content=obj)
+    elif isinstance(obj, list):
+        return Error(title=default_title, content={'messages': obj})
+    elif obj is None:
+        return Error(title=default_title)
+    return Error(title=default_title, content={'message': obj})
 
 
 def _decode_result(response, decoders=None):
