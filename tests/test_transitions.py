@@ -1,6 +1,7 @@
 # coding: utf-8
 from coreapi import Document, Link, Client
 from coreapi.transports import HTTPTransport
+from coreapi.transports.http import _handle_inplace_replacements
 import pytest
 
 
@@ -17,7 +18,7 @@ class MockTransport(HTTPTransport):
         else:
             document = None
 
-        return self.handle_inplace_replacements(document, link, link_ancestors)
+        return _handle_inplace_replacements(document, link, link_ancestors)
 
 
 client = Client(transports=[MockTransport()])

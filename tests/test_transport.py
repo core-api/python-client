@@ -102,31 +102,3 @@ def test_delete(monkeypatch, http):
     link = Link(url='http://example.org', action='delete')
     doc = http.transition(link)
     assert doc is None
-
-
-# Test credentials
-
-def test_credentials(monkeypatch):
-    credentials = {'example.org': 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='}
-    transport = HTTPTransport(credentials=credentials)
-
-    # Requests to example.org include credentials.
-    headers = transport.get_headers('http://example.org/123')
-    assert 'authorization' in headers
-    assert headers['authorization'] == 'Basic QWxhZGRpbjpvcGVuIHNlc2FtZQ=='
-
-    # Requests to other.org do not include credentials.
-    headers = transport.get_headers('http://other.org/123')
-    assert 'authorization' not in headers
-
-
-# Test custom headers
-
-def test_headers(monkeypatch):
-    headers = {'User-Agent': 'Example v1.0'}
-    transport = HTTPTransport(headers=headers)
-
-    # Requests include custom headers.
-    headers = transport.get_headers('http://example.org/123')
-    assert 'user-agent' in headers
-    assert headers['user-agent'] == 'Example v1.0'
