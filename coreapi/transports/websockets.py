@@ -23,14 +23,14 @@ def _decode_content(headers, content, decoders=None, base_url=None):
     return codec.load(content, base_url=base_url)
 
 
-def _apply_diff(content, diff):
-    # TODO: Negotiate diff scheme.
-    previous = json.loads(content.decode('utf-8'))
-    new = jsonpatch.apply_patch(previous, diff)
-    return force_bytes(json.dumps(new))
+def _diff_content(heaaders, body, diff):
+    patch = jsonpatch.JsonPatch.from_string(diff)
+    previous_data = json.loads(body)
+    next_data = jsonpatch.apply_patch(previous_data, patch)
+    return json.dumps(next_data)
 
 
-def _get_request(decoders=None):
+def _generate_request(decoders=None):
     # TODO: Include User-Agent, X-Accept-Diff
     if decoders is None:
         decoders = default_decoders
@@ -44,17 +44,18 @@ class WebSocketsTransport(BaseTransport):
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
         url = link.url
-        ws = create_connection(url)
-        request = _get_request(decoders)
-        ws.send(request)
-        content = ws.recv()
+        connection = create_connection(url)
+        request = _generate_request(decoders)
+        connection.send(request)
+        content = connection.recv()
         headers, body = _get_headers_and_body(content)
         yield _decode_content(headers, body, decoders=decoders, base_url=url)
         while True:
             try:
-                diff = ws.recv()
+                diff = connection.recv()
             except WebSocketConnectionClosedException:
                 return
+            body = _diff_content(headers, body, diff)
             patch = jsonpatch.JsonPatch.from_string(diff)
             body = json.dumps(jsonpatch.apply_patch(json.loads(body), patch))
             yield _decode_content(headers, body, decoders=decoders, base_url=url)
