@@ -3,14 +3,15 @@ from coreapi.compat import urlparse
 from coreapi.exceptions import TransportError
 from coreapi.transports.base import BaseTransport
 from coreapi.transports.http import HTTPTransport
+from coreapi.transports.websockets import WebSocketsTransport
 import itypes
 
 
 __all__ = [
-    'BaseTransport', 'HTTPTransport'
+    'BaseTransport', 'HTTPTransport', 'WebSocketsTransport'
 ]
 
-default_transports = itypes.List([HTTPTransport()])
+default_transports = itypes.List([HTTPTransport(), WebSocketsTransport()])
 
 
 def determine_transport(url, transports=default_transports):

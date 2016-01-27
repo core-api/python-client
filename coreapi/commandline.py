@@ -65,7 +65,8 @@ def get_client():
     credentials = get_credentials()
     headers = get_headers()
     http_transport = coreapi.transports.HTTPTransport(credentials, headers)
-    return coreapi.Client(transports=[http_transport])
+    websocket_transport = coreapi.transports.WebSocketsTransport()
+    return coreapi.Client(transports=[http_transport, websocket_transport])
 
 
 def get_document():
@@ -132,6 +133,28 @@ def get(url):
         history = history.add(doc)
         set_document(doc)
         set_history(history)
+
+
+@click.command(help='Watch a document at the given URL.')
+@click.argument('url')
+def watch(url):
+    client = get_client()
+    history = get_history()
+    heading = click.style('Watching %s' % url, bold=True)
+    watched = client.get(url)
+    try:
+        for doc in watched:
+            click.clear()
+            click.echo(heading)
+            click.echo(display(doc))
+            if isinstance(doc, coreapi.Document):
+                history = history.add(doc)
+                set_document(doc)
+                set_history(history)
+    except coreapi.exceptions.ErrorMessage as exc:
+        click.echo(display(exc.error))
+        sys.exit(1)
+
 
 
 @click.command(help='Load a document from disk.')
@@ -546,6 +569,7 @@ def history_forward():
 
 
 client.add_command(get)
+client.add_command(watch)
 client.add_command(show)
 client.add_command(action)
 client.add_command(reload_document, name='reload')
