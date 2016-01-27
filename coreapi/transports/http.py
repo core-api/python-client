@@ -72,7 +72,7 @@ def _get_headers(url, decoders=None, credentials=None, extra_headers=None):
     if credentials:
         # Include any authorization credentials relevant to this domain.
         url_components = urlparse.urlparse(url)
-        host = url_components.netloc
+        host = url_components.hostname
         if host in credentials:
             headers['authorization'] = credentials[host]
 
