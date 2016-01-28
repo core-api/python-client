@@ -209,7 +209,7 @@ class HTTPTransport(BaseTransport):
         response = _make_http_request(url, method, headers, query_params, form_params)
         result = _decode_result(response, decoders)
 
-        if isinstance(result, Document) and link_ancestors:
+        if (isinstance(result, Document) or result is None) and link_ancestors:
             result = _handle_inplace_replacements(result, link, link_ancestors)
 
         if isinstance(result, Error):

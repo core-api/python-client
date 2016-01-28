@@ -23,7 +23,7 @@ def _decode_content(headers, content, decoders=None, base_url=None):
     return codec.load(content, base_url=base_url)
 
 
-def _diff_content(heaaders, body, diff):
+def _diff_content(headers, body, diff):
     patch = jsonpatch.JsonPatch.from_string(diff)
     previous_data = json.loads(body)
     next_data = jsonpatch.apply_patch(previous_data, patch)
@@ -44,18 +44,17 @@ class WebSocketsTransport(BaseTransport):
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
         url = link.url
+        base_url = url.replace('wss:', 'https:').replace('ws:', 'http:')
         connection = create_connection(url)
         request = _generate_request(decoders)
         connection.send(request)
         content = connection.recv()
         headers, body = _get_headers_and_body(content)
-        yield _decode_content(headers, body, decoders=decoders, base_url=url)
+        yield _decode_content(headers, body, decoders=decoders, base_url=base_url)
         while True:
             try:
                 diff = connection.recv()
             except WebSocketConnectionClosedException:
                 return
             body = _diff_content(headers, body, diff)
-            patch = jsonpatch.JsonPatch.from_string(diff)
-            body = json.dumps(jsonpatch.apply_patch(json.loads(body), patch))
-            yield _decode_content(headers, body, decoders=decoders, base_url=url)
+            yield _decode_content(headers, body, decoders=decoders, base_url=base_url)
