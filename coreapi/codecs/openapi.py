@@ -5,7 +5,11 @@ from coreapi.exceptions import ParseError
 import json
 
 
-def expand_schema(schema):
+def _expand_schema(schema):
+    """
+    When an OpenAPI parameter uses `in="body"`, and the schema type is "object",
+    then we expand out the parameters of the object into individual fields.
+    """
     schema_type = schema.get('type')
     schema_properties = _get_dict(schema, 'properties')
     schema_required = _get_list(schema, 'required')
@@ -18,6 +22,10 @@ def expand_schema(schema):
 
 
 def _get_document_base_url(data, base_url=None):
+    """
+    Get the base url to use when constructing absolute paths from the
+    relative ones provided in the schema defination.
+    """
     prefered_schemes = ['http', 'https']
     if base_url:
         url_components = urlparse.urlparse(base_url)
@@ -32,7 +40,7 @@ def _get_document_base_url(data, base_url=None):
 
     if not host:
         # No host is provided, and we do not have an initial URL.
-        return path
+        return path.strip('/') + '/'
 
     schemes = _get_list(data, 'schemes')
 
@@ -50,7 +58,7 @@ def _get_document_base_url(data, base_url=None):
         else:
             raise ParseError('Unsupported transport schemes "%s"' % schemes)
 
-    return '%s://%s/%s' % (scheme, host, path.lstrip('/'))
+    return '%s://%s/%s/' % (scheme, host, path.strip('/'))
 
 
 def _parse_document(data, base_url=None):
@@ -61,7 +69,7 @@ def _parse_document(data, base_url=None):
     paths = _get_dict(data, 'paths')
     content = {}
     for path in paths.keys():
-        url = urlparse.urljoin(base_url, path)
+        url = urlparse.urljoin(base_url, path.lstrip('/'))
         spec = _get_dict(paths, path)
         default_parameters = get_dicts(_get_list(spec, 'parameters'))
         for action in spec.keys():
@@ -72,23 +80,27 @@ def _parse_document(data, base_url=None):
 
             # Determine any fields on the link.
             fields = []
-            parameters = get_dicts(_get_list(operation, 'parameters'))
+            parameters = get_dicts(_get_list(operation, 'parameters'), dereference_using=data)
             for parameter in parameters:
                 name = _get_string(parameter, 'name')
                 location = _get_string(parameter, 'in')
-                required = _get_bool(parameter, 'required')
-                field = Field(name=name, location=location, required=required)
-                fields.append(field)
+                required = _get_bool(parameter, 'required', default=location=='path')
                 if location == 'body':
                     schema = _get_dict(parameter, 'schema', dereference_using=data)
-                    expanded = expand_schema(schema)
+                    expanded = _expand_schema(schema)
                     if expanded is not None:
-                        fields = [
+                        expanded_fields = [
                             Field(name=name, location='form', required=required)
                             for name, required in expanded
+                            if not any([field.name == name for field in fields])
                         ]
+                        fields += expanded_fields
                     else:
-                        fields = [Field(name=name, required=True)]
+                        field = Field(name=name, location='body', required=True)
+                        fields.append(field)
+                else:
+                    field = Field(name=name, location=location, required=required)
+                    fields.append(field)
             link = Link(url=url, action=action, fields=fields)
 
             # Add the link to the document content.

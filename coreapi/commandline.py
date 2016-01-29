@@ -61,11 +61,11 @@ def get_document_string(doc):
     return '<%s %s>' % (doc.title, json.dumps(doc.url))
 
 
-def get_client():
+def get_client(decoders=None):
     credentials = get_credentials()
     headers = get_headers()
     http_transport = coreapi.transports.HTTPTransport(credentials, headers)
-    return coreapi.Client(transports=[http_transport])
+    return coreapi.Client(decoders=decoders, transports=[http_transport])
 
 
 def get_document():
@@ -119,8 +119,19 @@ def client(ctx, version):
 
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
-def get(url):
-    client = get_client()
+@click.option('--format', default=None, type=click.Choice(['corejson', 'hal', 'hyperschema', 'openapi']))
+def get(url, format):
+    if format:
+        decoder = {
+            'corejson': coreapi.codecs.CoreJSONCodec(),
+            'hal': coreapi.codecs.HALCodec(),
+            'hyperschema': coreapi.codecs.HyperschemaCodec(),
+            'openapi': coreapi.codecs.OpenAPICodec()
+        }[format]
+        decoders = [decoder]
+    else:
+        decoders = None
+    client = get_client(decoders=decoders)
     history = get_history()
     try:
         doc = client.get(url)
@@ -136,18 +147,19 @@ def get(url):
 
 @click.command(help='Load a document from disk.')
 @click.argument('input_file', type=click.File('rb'))
-@click.option('--format', default='corejson', type=click.Choice(['corejson', 'hal', 'hyperschema']))
+@click.option('--format', default='corejson', type=click.Choice(['corejson', 'hal', 'hyperschema', 'openapi']))
 def load(input_file, format):
     input_bytes = input_file.read()
     input_file.close()
-    codec = {
+    decoder = {
         'corejson': coreapi.codecs.CoreJSONCodec(),
         'hal': coreapi.codecs.HALCodec(),
         'hyperschema': coreapi.codecs.HyperschemaCodec(),
+        'openapi': coreapi.codecs.OpenAPICodec()
     }[format]
 
     history = get_history()
-    doc = codec.load(input_bytes)
+    doc = decoder.load(input_bytes)
     click.echo(display(doc))
     if isinstance(doc, coreapi.Document):
         history = history.add(doc)

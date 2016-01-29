@@ -16,6 +16,10 @@ def dereference(lookup_string, struct):
     return node
 
 
+def is_json_pointer(value):
+    return isinstance(value, dict) and ('$ref' in value) and (len(value) == 1)
+
+
 def _get_string(item, key, default=''):
     value = item.get(key)
     return value if isinstance(value, string_types) else default
@@ -24,7 +28,7 @@ def _get_string(item, key, default=''):
 def _get_dict(item, key, default={}, dereference_using=None):
     value = item.get(key)
     if isinstance(value, dict):
-        if dereference_using and ('$ref' in value) and (len(value) == 1):
+        if dereference_using and is_json_pointer(value):
             return dereference(value['$ref'], dereference_using)
         return value
     return default.copy()
@@ -42,8 +46,14 @@ def _get_bool(item, key, default=False):
 
 # Helper functions to get an expected type from a list.
 
-def get_dicts(item):
-    return [value for value in item if isinstance(value, dict)]
+def get_dicts(item, dereference_using=None):
+    ret = [value for value in item if isinstance(value, dict)]
+    if dereference_using:
+        return [
+            dereference(value['$ref'], dereference_using) if is_json_pointer(value) else value
+            for value in ret
+        ]
+    return ret
 
 
 def get_strings(item):
