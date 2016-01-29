@@ -1,6 +1,6 @@
 from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_list, _get_bool, get_strings, get_dicts
 from coreapi.compat import urlparse
-from coreapi.document import Document, Link, Array, Object, Field, Error
+from coreapi.document import Document, Link, Field
 from coreapi.exceptions import ParseError
 import json
 
@@ -80,18 +80,18 @@ def _parse_document(data, base_url=None):
 
             # Determine any fields on the link.
             fields = []
-            parameters = get_dicts(_get_list(operation, 'parameters'), dereference_using=data)
+            parameters = get_dicts(_get_list(operation, 'parameters', default_parameters), dereference_using=data)
             for parameter in parameters:
                 name = _get_string(parameter, 'name')
                 location = _get_string(parameter, 'in')
-                required = _get_bool(parameter, 'required', default=location=='path')
+                required = _get_bool(parameter, 'required', default=(location == 'path'))
                 if location == 'body':
                     schema = _get_dict(parameter, 'schema', dereference_using=data)
                     expanded = _expand_schema(schema)
                     if expanded is not None:
                         expanded_fields = [
-                            Field(name=name, location='form', required=required)
-                            for name, required in expanded
+                            Field(name=field_name, location='form', required=is_required)
+                            for field_name, is_required in expanded
                             if not any([field.name == name for field in fields])
                         ]
                         fields += expanded_fields
