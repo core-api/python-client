@@ -4,19 +4,35 @@ import itypes
 
 # Helper functions to get an expected type from a dictionary.
 
-def _get_string(item, key):
+def dereference(lookup_string, struct):
+    """
+    Dereference a JSON pointer.
+    http://tools.ietf.org/html/rfc6901
+    """
+    keys = lookup_string.strip('#/').split('/')
+    node = struct
+    for key in keys:
+        node = _get_dict(node, key)
+    return node
+
+
+def _get_string(item, key, default=''):
     value = item.get(key)
-    return value if isinstance(value, string_types) else ''
+    return value if isinstance(value, string_types) else default
 
 
-def _get_dict(item, key):
+def _get_dict(item, key, default={}, dereference_using=None):
     value = item.get(key)
-    return value if isinstance(value, dict) else {}
+    if isinstance(value, dict):
+        if dereference_using and ('$ref' in value) and (len(value) == 1):
+            return dereference(value['$ref'], dereference_using)
+        return value
+    return default.copy()
 
 
-def _get_list(item, key):
+def _get_list(item, key, default=[]):
     value = item.get(key)
-    return value if isinstance(value, list) else []
+    return value if isinstance(value, list) else list(default)
 
 
 def _get_bool(item, key, default=False):
@@ -28,6 +44,10 @@ def _get_bool(item, key, default=False):
 
 def get_dicts(item):
     return [value for value in item if isinstance(value, dict)]
+
+
+def get_strings(item):
+    return [value for value in item if isinstance(value, string_types)]
 
 
 class BaseCodec(itypes.Object):
