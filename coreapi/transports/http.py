@@ -18,9 +18,9 @@ def _get_http_method(action):
     return action.upper()
 
 
-def _seperate_params(method, fields, params=None):
+def _separate_params(method, fields, params=None):
     """
-    Seperate the params into their location types: path, query, or form.
+    Separate the params into their location types: path, query, or form.
     """
     if params is None:
         return ({}, {}, {})
@@ -203,7 +203,7 @@ class HTTPTransport(BaseTransport):
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
         method = _get_http_method(link.action)
-        path_params, query_params, form_params = _seperate_params(method, link.fields, params)
+        path_params, query_params, form_params = _separate_params(method, link.fields, params)
         url = _expand_path_params(link.url, path_params)
         headers = _get_headers(url, decoders, self.credentials, self.headers)
         response = _make_http_request(url, method, headers, query_params, form_params)
