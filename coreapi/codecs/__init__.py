@@ -6,6 +6,7 @@ from coreapi.codecs.coretext import CoreTextCodec
 from coreapi.codecs.hal import HALCodec
 from coreapi.codecs.hyperschema import HyperschemaCodec
 from coreapi.codecs.jsondata import JSONCodec
+from coreapi.codecs.openapi import OpenAPICodec
 from coreapi.codecs.plaintext import PlainTextCodec
 from coreapi.codecs.python import PythonCodec
 from coreapi.exceptions import NotAcceptable, UnsupportedContentType
@@ -14,7 +15,8 @@ import itypes
 
 __all__ = [
     'BaseCodec', 'CoreHTMLCodec', 'CoreJSONCodec', 'CoreTextCodec', 'HALCodec',
-    'HyperschemaCodec', 'JSONCodec', 'PlainTextCodec', 'PythonCodec',
+    'HyperschemaCodec', 'OpenAPICodec',
+    'JSONCodec', 'PlainTextCodec', 'PythonCodec',
 ]
 
 # Default set of decoders for clients to accept.

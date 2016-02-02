@@ -23,12 +23,13 @@ def _separate_params(method, fields, params=None):
     Separate the params into their location types: path, query, or form.
     """
     if params is None:
-        return ({}, {}, {})
+        return ({}, {}, {}, {})
 
     field_map = {field.name: field for field in fields}
     path_params = {}
     query_params = {}
-    form_params = {}
+    body_params = {}
+    header_params = {}
     for key, value in params.items():
         if key not in field_map or not field_map[key].location:
             # Default is 'query' for 'GET'/'DELETE', and 'form' others.
@@ -40,10 +41,14 @@ def _separate_params(method, fields, params=None):
             path_params[key] = value
         elif location == 'query':
             query_params[key] = value
+        elif location == 'header':
+            header_params[key] = value
+        elif location == 'body':
+            body_params = value
         else:
-            form_params[key] = value
+            body_params[key] = value
 
-    return path_params, query_params, form_params
+    return path_params, query_params, body_params, header_params
 
 
 def _expand_path_params(url, path_params):
@@ -56,7 +61,7 @@ def _expand_path_params(url, path_params):
     return url
 
 
-def _get_headers(url, decoders=None, credentials=None, extra_headers=None):
+def _get_headers(url, decoders=None, credentials=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
@@ -66,7 +71,8 @@ def _get_headers(url, decoders=None, credentials=None, extra_headers=None):
     accept = ', '.join([decoder.media_type for decoder in decoders])
 
     headers = {
-        'accept': accept
+        'accept': accept,
+        'user-agent': 'coreapi'
     }
 
     if credentials:
@@ -75,10 +81,6 @@ def _get_headers(url, decoders=None, credentials=None, extra_headers=None):
         host = url_components.hostname
         if host in credentials:
             headers['authorization'] = credentials[host]
-
-    if extra_headers:
-        # Include any custom headers associated with this transport.
-        headers.update(extra_headers)
 
     return headers
 
@@ -203,10 +205,12 @@ class HTTPTransport(BaseTransport):
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
         method = _get_http_method(link.action)
-        path_params, query_params, form_params = _separate_params(method, link.fields, params)
+        path_params, query_params, body_params, header_params = _separate_params(method, link.fields, params)
         url = _expand_path_params(link.url, path_params)
-        headers = _get_headers(url, decoders, self.credentials, self.headers)
-        response = _make_http_request(url, method, headers, query_params, form_params)
+        headers = _get_headers(url, decoders, self.credentials)
+        headers.update(self.headers)
+        headers.update(header_params)
+        response = _make_http_request(url, method, headers, query_params, body_params)
         result = _decode_result(response, decoders)
 
         if isinstance(result, Document) and link_ancestors:

@@ -59,7 +59,7 @@ def _get_content(data, base_url, ref):
 
                 if schema_type == ['object'] and schema_properties:
                     fields += [
-                        Field(name=key, required=key in schema_required)
+                        Field(name=key, required=(key in schema_required))
                         for key in schema_properties.keys()
                     ]
                 if rel == 'self':
