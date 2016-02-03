@@ -226,20 +226,12 @@ def validate_params(ctx, param, value):
     return params
 
 
-def validate_inplace(ctx, param, value):
-    if value is None:
-        return
-    if value.lower() not in ('true', 'false'):
-        raise click.BadParameter('"--inplace" needs to be one of "true" or "false"')
-    return value.lower() == 'true'
-
-
 @click.command(help='Interact with the active document.\n\nRequires a PATH to a link in the document.')
 @click.argument('path', nargs=-1)
 @click.option('--param', '-p', multiple=True, callback=validate_params, help='Parameter in the form <field name>=<value>.')
 @click.option('--action', '-a', help='Set the link action explicitly.', default=None)
-@click.option('--inplace', '-i', callback=validate_inplace, help='Set the inplace boolean explicitly.', default=None)
-def action(path, param, action, inplace):
+@click.option('--transform', '-t', help='Set the linke transform explicitly.', default=None)
+def action(path, param, action, transform):
     if not path:
         click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
@@ -253,7 +245,7 @@ def action(path, param, action, inplace):
     history = get_history()
     keys = coerce_key_types(doc, path)
     try:
-        doc = client.action(doc, keys, params=param, action=action, inplace=inplace)
+        doc = client.action(doc, keys, params=param, action=action, transform=transform)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)

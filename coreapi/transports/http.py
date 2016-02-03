@@ -171,12 +171,15 @@ def _handle_inplace_replacements(document, link, link_ancestors):
     * Make an inline replacement and then return the modified document tree.
     * Return the new document as-is.
     """
-    if link.inplace is None:
-        inplace = link.action.lower() in ('put', 'patch', 'delete')
+    if not link.transform:
+        if link.action.lower() in ('put', 'patch', 'delete'):
+            transform = 'inplace'
+        else:
+            transform = 'new'
     else:
-        inplace = link.inplace
+        transform = link.transform
 
-    if inplace:
+    if transform == 'inplace':
         root = link_ancestors[0].document
         keys_to_link_parent = link_ancestors[-1].keys
         if document is None:

@@ -29,7 +29,7 @@ def doc():
     return Document(title='original', content={
         'nested': Document(content={
             'follow': Link(url='mock://example.com', action='get'),
-            'action': Link(url='mock://example.com', action='post', inplace=True, fields=['foo']),
+            'action': Link(url='mock://example.com', action='post', transform='inplace', fields=['foo']),
             'create': Link(url='mock://example.com', action='post', fields=['foo']),
             'update': Link(url='mock://example.com', action='put', fields=['foo']),
             'delete': Link(url='mock://example.com', action='delete')
@@ -77,7 +77,7 @@ def test_override_action(doc):
     assert new.title == 'original'
 
 
-def test_override_inplace(doc):
-    new = client.action(doc, ['nested', 'update'], params={'foo': 456}, inplace=False)
+def test_override_transform(doc):
+    new = client.action(doc, ['nested', 'update'], params={'foo': 456}, transform='new')
     assert new == {'new': 123, 'foo': 456}
     assert new.title == 'new'

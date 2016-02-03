@@ -6,7 +6,7 @@ from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi import codecs, history, transports
 
 
-__version__ = '1.14.1'
+__version__ = '1.15.0'
 __all__ = [
     'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
@@ -22,9 +22,9 @@ def get(url):
     return client.get(url)
 
 
-def action(document, keys, params=None, action=None, inplace=None):
+def action(document, keys, params=None, action=None, transform=None):
     client = Client()
-    return client.action(document, keys, params, action=action, inplace=inplace)
+    return client.action(document, keys, params, action=action, transform=transform)
 
 
 def reload(document):

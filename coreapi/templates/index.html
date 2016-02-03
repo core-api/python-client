@@ -116,20 +116,16 @@
             var document = link.closest('.coreapi-document')
             var href = link.attr('href')
             var method = link.data('action').toUpperCase()
-            var inplace = link.data('inplace')
+            var transform = link.data('transform')
             var fields = splitFields(link.data('fields'))
             var hasParameters = fields.length > 0
 
-            if (inplace === '' || typeof inplace == 'undefined') {
+            if (transform === '' || typeof transform == 'undefined') {
                 if (method === 'PUT' || method === 'PATCH' || method == 'DELETE') {
-                    inplace = true
+                    transform = 'inplace'
                 } else {
-                    inplace = false
+                    transform = 'new'
                 }
-            } else if (inplace === 'true') {
-                inplace = true
-            } else {
-                inplace = false
             }
 
             // Update the modal content.
@@ -155,13 +151,13 @@
                 }
 
                 options['success'] = function(data) {
-                    if (!inplace) {
+                    if (!transform === 'inplace') {
                         // Not in-place. Replace the topmost document.
                         var newDocument = $(data).find('.coreapi-document').first()
                         var top = $('body').find('.coreapi-document').first()
                         top.replaceWith(newDocument)
                         newDocument.find('td, th').effect("highlight", 1000)
-                    } else if (inplace && data) {
+                    } else if (transform === 'inplace' && data) {
                         // In-place and new content. Replace the active document.
                         var newDocument = $(data).find('.coreapi-document').first()
                         document.replaceWith(newDocument)
