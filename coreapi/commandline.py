@@ -1,3 +1,4 @@
+from coreapi.compat import force_bytes
 import click
 import coreapi
 import json
@@ -93,6 +94,10 @@ def display(doc):
     if doc is None:
         return ''
     return json.dumps(doc, indent=4, ensure_ascii=False, separators=coreapi.compat.VERBOSE_SEPARATORS)
+
+
+def json_load_bytes(bytes):
+    return json.loads(bytes.decode('utf-8') or '{}')
 
 
 # Core commands
@@ -289,14 +294,14 @@ def get_credentials():
     if not os.path.isfile(credentials_path):
         return {}
     store = open(credentials_path, 'rb')
-    credentials = json.loads(store.read())
+    credentials = json_load_bytes(store.read())
     store.close()
     return credentials
 
 
 def set_credentials(credentials):
     store = open(credentials_path, 'wb')
-    store.write(json.dumps(credentials))
+    store.write(force_bytes(json.dumps(credentials)))
     store.close
 
 
@@ -346,14 +351,14 @@ def get_headers():
     if not os.path.isfile(headers_path):
         return {}
     headers_file = open(headers_path, 'rb')
-    headers = json.loads(headers_file.read())
+    headers = json_load_bytes(headers_file.read())
     headers_file.close()
     return headers
 
 
 def set_headers(headers):
     headers_file = open(headers_path, 'wb')
-    headers_file.write(json.dumps(headers))
+    headers_file.write(force_bytes(json.dumps(headers)))
     headers_file.close()
 
 
@@ -406,14 +411,14 @@ def get_bookmarks():
     if not os.path.isfile(bookmarks_path):
         return {}
     bookmarks_file = open(bookmarks_path, 'rb')
-    bookmarks = json.loads(bookmarks_file.read())
+    bookmarks = json_load_bytes(bookmarks_file.read())
     bookmarks_file.close()
     return bookmarks
 
 
 def set_bookmarks(bookmarks):
     bookmarks_file = open(bookmarks_path, 'wb')
-    bookmarks_file.write(json.dumps(bookmarks))
+    bookmarks_file.write(force_bytes(json.dumps(bookmarks)))
     bookmarks_file.close()
 
 
