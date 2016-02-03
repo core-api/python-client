@@ -1,7 +1,5 @@
 # coding: utf-8
 
-import json
-
 __all__ = [
     'urlparse', 'string_types',
     'COMPACT_SEPARATORS', 'VERBOSE_SEPARATORS'
@@ -27,7 +25,3 @@ def force_bytes(string):
     if isinstance(string, string_types):
         return string.encode('utf-8')
     return string
-
-
-def json_load_bytes(bytes):
-    return json.loads(bytes.decode('utf-8') or '{}')

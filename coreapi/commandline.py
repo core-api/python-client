@@ -1,4 +1,4 @@
-from coreapi.compat import json_load_bytes, force_bytes
+from coreapi.compat import force_bytes
 import click
 import coreapi
 import json
@@ -94,6 +94,10 @@ def display(doc):
     if doc is None:
         return ''
     return json.dumps(doc, indent=4, ensure_ascii=False, separators=coreapi.compat.VERBOSE_SEPARATORS)
+
+
+def json_load_bytes(bytes):
+    return json.loads(bytes.decode('utf-8') or '{}')
 
 
 # Core commands
