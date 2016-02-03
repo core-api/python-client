@@ -127,6 +127,57 @@ def test_cli_history(cli):
     assert result.output == '<Document "http://2.com">\n'
 
 
+# Credentials
+
+def test_cli_credentials(cli):
+    result = cli('credentials', 'show')
+    assert result.output == 'Credentials\n'
+
+    result = cli('credentials', 'add', 'http://1.com', 'Token 123cat')
+    assert result.output == 'Added credentials\nhttp://1.com "Token 123cat"\n'
+
+    result = cli('credentials', 'show')
+    assert result.output == 'Credentials\nhttp://1.com "Token 123cat"\n'
+
+
+# Bookmarks
+
+def test_cli_bookmarks(cli):
+    set_response(Document('http://example.com', 'Example'))
+    cli('get', 'http://example.com')
+
+    result = cli('bookmarks', 'add', 'example')
+    assert result.output == 'Added bookmark\nexample\n'
+
+    result = cli('bookmarks', 'show')
+    assert result.output == 'Bookmarks\nexample <Example "http://example.com">\n'
+
+    result = cli('bookmarks', 'get', 'example')
+    assert result.output == '<Example "http://example.com">\n'
+
+    result = cli('bookmarks', 'remove', 'example')
+    assert result.output == 'Removed bookmark\nexample\n'
+
+    result = cli('bookmarks', 'show')
+    assert result.output == 'Bookmarks\n'
+
+
+# Headers
+
+def test_cli_headers(cli):
+    result = cli('headers', 'add', 'Cache-Control', 'public')
+    assert result.output == 'Added header\nCache-Control: public\n'
+
+    result = cli('headers', 'show')
+    assert result.output == 'Headers\nCache-Control: public\n'
+
+    result = cli('headers', 'remove', 'Cache-Control')
+    assert result.output == 'Removed header\nCache-Control\n'
+
+    result = cli('headers', 'show')
+    assert result.output == 'Headers\n'
+
+
 # Test dotted path notation maps to list of keys correctly.
 
 def test_dotted_path_notation():
