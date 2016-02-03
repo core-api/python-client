@@ -121,11 +121,9 @@ def test_malformed_json(json_codec):
 
 def test_not_a_document(json_codec):
     """
-    Valid JSON that does not return a document as the top level element
-    should raise a ParseError.
+    Valid JSON that does not return a document should be coerced into one.
     """
-    with pytest.raises(ParseError):
-        json_codec.load(b'{}')
+    assert json_codec.load(b'{}') == Document()
 
 
 # Encodings may have a verbose and a compact style.

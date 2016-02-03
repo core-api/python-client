@@ -195,8 +195,11 @@ class CoreJSONCodec(BaseCodec):
             raise ParseError('Malformed JSON. %s' % exc)
 
         doc = _primative_to_document(data, base_url)
-        if not (isinstance(doc, Document) or isinstance(doc, Error)):
-            raise ParseError('Top level node must be a document or error.')
+
+        if isinstance(doc, Object):
+            doc = Document(content=dict(doc))
+        elif not (isinstance(doc, Document) or isinstance(doc, Error)):
+            raise ParseError('Top level node should be a document or error.')
 
         return doc
 
