@@ -22,9 +22,9 @@ def get(url):
     return client.get(url)
 
 
-def action(document, keys, params=None, action=None, inplace=None):
+def action(document, keys, params=None, action=None, transform=None):
     client = Client()
-    return client.action(document, keys, params, action=action, inplace=inplace)
+    return client.action(document, keys, params, action=action, transform=transform)
 
 
 def reload(document):

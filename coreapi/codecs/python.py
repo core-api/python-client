@@ -37,8 +37,8 @@ def _to_repr(node):
         args = "url=%s" % repr(node.url)
         if node.action:
             args += ", action=%s" % repr(node.action)
-        if node.inplace is not None:
-            args += ", inplace=%s" % repr(node.inplace)
+        if node.transform:
+            args += ", transform=%s" % repr(node.transform)
         if node.fields:
             fields_repr = ', '.join(_to_repr(item) for item in node.fields)
             args += ", fields=[%s]" % fields_repr

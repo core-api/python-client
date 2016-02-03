@@ -150,7 +150,7 @@ def test_link_encodings(json_codec):
     doc = Document(content={
         'link': Link(
             action='post',
-            inplace=True,
+            transform='inplace',
             fields=['optional', Field('required', required=True, location='path')]
         )
     })
@@ -160,7 +160,7 @@ def test_link_encodings(json_codec):
     "link": {
         "_type": "link",
         "action": "post",
-        "inplace": true,
+        "transform": "inplace",
         "fields": [
             {
                 "name": "optional"
