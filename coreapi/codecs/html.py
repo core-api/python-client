@@ -10,7 +10,7 @@ class HTMLCodec(BaseCodec):
     def load(self, bytes, base_url=None):
         content = bytes.decode('utf-8')
         # HTML to text.
-        converter= html2text.HTML2Text()
+        converter = html2text.HTML2Text()
         converter.ignore_links = True
         converter.ignore_images = True
         content = converter.handle(content).strip()
