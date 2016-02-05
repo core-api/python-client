@@ -12,9 +12,12 @@ class HTMLCodec(BaseCodec):
         # HTML to text.
         converter= html2text.HTML2Text()
         converter.ignore_links = True
+        converter.ignore_images = True
         content = converter.handle(content).strip()
         # Strip leading/trailing whitespace in lines.
         content = '\n'.join([line.strip() for line in content.splitlines()])
         # Remove multiple newlines
-        content = re.sub(r'\n\n+', '\n', content)
+        content = re.sub(r'\n\n\n+', '\n\n', content)
+        # Remove generated markdown headers
+        content = re.sub('^#+ ', '', content, flags=re.MULTILINE)
         return content
