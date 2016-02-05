@@ -221,11 +221,6 @@ def test_get_unsupported_decoder():
         negotiate_decoder('application/csv')
 
 
-def test_get_render_only_decoder():
-    with pytest.raises(UnsupportedContentType):
-        negotiate_decoder('text/html')
-
-
 # Tests for 'Accept' header lookup.
 
 def test_get_default_encoder():
