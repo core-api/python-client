@@ -1,6 +1,7 @@
 click==6.2
 coverage==3.7.1
 flake8==2.4.0
+html2text==2016.1.8
 itypes==1.1.0
 jinja2==2.7.3
 pep8==1.5.7
