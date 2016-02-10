@@ -102,6 +102,8 @@ def _document_to_primative(node, base_url=None):
             ret['url'] = url
         if node.action:
             ret['action'] = node.action
+        if node.encoding:
+            ret['encoding'] = node.encoding
         if node.transform:
             ret['transform'] = node.transform
         if node.fields:
@@ -156,6 +158,7 @@ def _primative_to_document(data, base_url=None):
         url = _get_string(data, 'url')
         url = urlparse.urljoin(base_url, url)
         action = _get_string(data, 'action')
+        encoding = _get_string(data, 'encoding')
         transform = _get_string(data, 'transform')
         fields = _get_list(data, 'fields')
         fields = [
@@ -166,7 +169,7 @@ def _primative_to_document(data, base_url=None):
             )
             for item in fields if isinstance(item, dict)
         ]
-        return Link(url=url, action=action, transform=transform, fields=fields)
+        return Link(url=url, action=action, encoding=encoding, transform=transform, fields=fields)
 
     elif isinstance(data, dict):
         # Map

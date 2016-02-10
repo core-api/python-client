@@ -84,18 +84,19 @@ class Client(itypes.Object):
         transport = determine_transport(link.url, transports=self.transports)
         return transport.transition(link, decoders=self.decoders)
 
-    def action(self, document, keys, params=None, action=None, transform=None):
+    def action(self, document, keys, params=None, action=None, encoding=None, transform=None):
         if isinstance(keys, string_types):
             keys = [keys]
 
         # Validate the keys and link parameters.
         link, link_ancestors = _lookup_link(document, keys)
 
-        if (action is not None) or (transform is not None):
+        if (action is not None) or (encoding is not None) or (transform is not None):
             # Handle any explicit overrides.
             action = link.action if (action is None) else action
+            encoding = link.encoding if (encoding is None) else encoding
             transform = link.transform if (transform is None) else transform
-            link = Link(link.url, action, transform, link.fields)
+            link = Link(link.url, action, encoding, transform, link.fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(link.url, transports=self.transports)
