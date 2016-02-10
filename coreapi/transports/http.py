@@ -113,6 +113,18 @@ def _get_headers(url, decoders=None, credentials=None):
     return headers
 
 
+def _get_content_type(file_obj):
+    """
+    When a raw file upload is made, determine a content-type where possible.
+    """
+    content_type = getattr(file_obj, 'content_type')
+    if content_type is None:
+        name = getattr(file_obj, 'name')
+        if name is not None:
+            content_type, encoding = mimetypes.guess_type(name)
+    return content_type
+
+
 def _make_http_request(url, method, headers=None, encoding=None, params=empty_params):
     """
     Make an HTTP request and return an HTTP response.
@@ -137,12 +149,7 @@ def _make_http_request(url, method, headers=None, encoding=None, params=empty_pa
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
             opts['data'] = params.body
-            # Determine a Content-Type header to add, if possible.
-            content_type = getattr(params.body, 'content_type')
-            if content_type is None:
-                name = getattr(params.body, 'name')
-                if name is not None:
-                    content_type, encoding = mimetypes.guess_type(name)
+            content_type = _get_content_type(params.body)
             if content_type:
                 opts['headers']['content-type'] = content_type
 
