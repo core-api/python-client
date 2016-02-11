@@ -1,4 +1,4 @@
-from coreapi.compat import force_bytes
+from coreapi.compat import force_bytes, string_types
 import click
 import coreapi
 import json
@@ -93,6 +93,8 @@ def display(doc):
         return codec.dump(doc, colorize=True)
     if doc is None:
         return ''
+    if isinstance(doc, string_types):
+        return doc
     return json.dumps(doc, indent=4, ensure_ascii=False, separators=coreapi.compat.VERBOSE_SEPARATORS)
 
 
