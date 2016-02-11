@@ -1,5 +1,6 @@
 # coding: utf-8
 from coreapi.codecs.base import BaseCodec
+from coreapi.codecs.csv import CSVCodec
 from coreapi.codecs.corehtml import CoreHTMLCodec
 from coreapi.codecs.corejson import CoreJSONCodec
 from coreapi.codecs.coretext import CoreTextCodec
@@ -17,13 +18,13 @@ import itypes
 __all__ = [
     'BaseCodec', 'CoreHTMLCodec', 'CoreJSONCodec', 'CoreTextCodec', 'HALCodec',
     'HyperschemaCodec', 'OpenAPICodec',
-    'JSONCodec', 'PlainTextCodec', 'HTMLCodec', 'PythonCodec',
+    'JSONCodec', 'CSVCodec', 'PlainTextCodec', 'HTMLCodec', 'PythonCodec',
 ]
 
 # Default set of decoders for clients to accept.
 default_decoders = itypes.List([
     CoreJSONCodec(), HALCodec(), HyperschemaCodec(),  # Document decoders.
-    JSONCodec(), HTMLCodec(), PlainTextCodec()  # Data decoders.
+    JSONCodec(), HTMLCodec(), PlainTextCodec(), CSVCodec()  # Data decoders.
 ])
 
 # Default set of encoders for servers to respond with.
