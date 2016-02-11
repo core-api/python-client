@@ -144,7 +144,7 @@ def _make_http_request(url, method, headers=None, encoding=None, params=empty_pa
                 opts['json'] = params.data
         elif encoding == 'multipart/form-data':
             opts['data'] = params.data
-            opts['files'] = params.file
+            opts['files'] = params.files
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
