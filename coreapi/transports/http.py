@@ -25,7 +25,7 @@ def _get_method(action):
 
 def _get_params(method, fields, params=None):
     """
-    Separate the params into their location types: path, query, or form.
+    Separate the params into their location types.
     """
     if params is None:
         return empty_params
@@ -117,11 +117,11 @@ def _get_content_type(file_obj):
     """
     When a raw file upload is made, determine a content-type where possible.
     """
-    content_type = getattr(file_obj, 'content_type')
-    if content_type is None:
-        name = getattr(file_obj, 'name')
-        if name is not None:
-            content_type, encoding = mimetypes.guess_type(name)
+    name = getattr(file_obj, 'name', None)
+    if name is not None:
+        content_type, encoding = mimetypes.guess_type(name)
+    else:
+        content_type = None
     return content_type
 
 
