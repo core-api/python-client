@@ -10,6 +10,7 @@ try:
     import urlparse
 
     string_types = (type(b''), type(u''))
+    text_type = unicode
     COMPACT_SEPARATORS = (b',', b':')
     VERBOSE_SEPARATORS = (b',', b': ')
 
@@ -17,6 +18,7 @@ except ImportError:
     import urllib.parse as urlparse
 
     string_types = (str,)
+    text_type = str
     COMPACT_SEPARATORS = (',', ':')
     VERBOSE_SEPARATORS = (',', ': ')
 

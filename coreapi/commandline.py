@@ -1,4 +1,4 @@
-from coreapi.compat import force_bytes, string_types
+from coreapi.compat import force_bytes, string_types, text_type
 import click
 import coreapi
 import json
@@ -223,9 +223,9 @@ def parse_json(ctx, param, value):
 
 @click.command(help='Interact with the active document.\n\nRequires a PATH to a link in the document.\n\nExample:\n\ncoreapi action users add_user --str username tom --data is_admin true')
 @click.argument('path', nargs=-1)
-@click.option('strings', '--str', '-s', type=(unicode, unicode), multiple=True, metavar="FIELD STRING", help='String parameter for the action.')
-@click.option('data', '--data', '-d', type=(unicode, unicode), multiple=True, callback=parse_json, metavar="FIELD DATA", help='Data parameter for the action.')
-@click.option('files', '--file', '-f', type=(unicode, click.File('rb')), multiple=True, metavar="FIELD FILENAME", help='File parameter for the action.')
+@click.option('strings', '--str', '-s', type=(text_type, text_type), multiple=True, metavar="FIELD STRING", help='String parameter for the action.')
+@click.option('data', '--data', '-d', type=(text_type, text_type), multiple=True, callback=parse_json, metavar="FIELD DATA", help='Data parameter for the action.')
+@click.option('files', '--file', '-f', type=(text_type, click.File('rb')), multiple=True, metavar="FIELD FILENAME", help='File parameter for the action.')
 @click.option('--action', '-a', metavar="ACTION", help='Set the link action explicitly.', default=None)
 @click.option('--encoding', '-e', metavar="ENCODING", help='Set the link encoding explicitly.', default=None)
 @click.option('--transform', '-t', metavar="TRANSFORM", help='Set the link transform explicitly.', default=None)
