@@ -2,56 +2,84 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.codecs import default_decoders, negotiate_decoder
-from coreapi.compat import urlparse
+from coreapi.compat import is_file, urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
+import collections
 import requests
 import itypes
-import json
+import mimetypes
 import uritemplate
 
 
-def _get_http_method(action):
+Params = collections.namedtuple('Params', ['path', 'query', 'headers', 'body', 'data', 'files'])
+empty_params = Params({}, {}, {}, None, {}, {})
+
+
+def _get_method(action):
     if not action:
         return 'GET'
     return action.upper()
 
 
-def _separate_params(method, fields, params=None):
+def _get_params(method, fields, params=None):
     """
-    Separate the params into their location types: path, query, or form.
+    Separate the params into their location types.
     """
     if params is None:
-        return ({}, {}, {}, {})
+        return empty_params
 
     field_map = {field.name: field for field in fields}
-    path_params = {}
-    query_params = {}
-    body_params = {}
-    header_params = {}
+
+    path = {}
+    query = {}
+    headers = {}
+    body = None
+    data = {}
+    files = {}
+
     for key, value in params.items():
         if key not in field_map or not field_map[key].location:
-            # Default is 'query' for 'GET'/'DELETE', and 'form' others.
-            location = 'query' if method in ('GET', 'DELETE') else 'form'
+            # Default is 'query' for 'GET', and 'form' for others.
+            location = 'query' if method == 'GET' else 'form'
         else:
             location = field_map[key].location
 
         if location == 'path':
-            path_params[key] = value
+            path[key] = value
         elif location == 'query':
-            query_params[key] = value
+            query[key] = value
         elif location == 'header':
-            header_params[key] = value
+            headers[key] = value
         elif location == 'body':
-            body_params = value
-        else:
-            body_params[key] = value
+            body = value
+        elif location == 'form':
+            if is_file(value):
+                files[key] = value
+            else:
+                data[key] = value
 
-    return path_params, query_params, body_params, header_params
+    return Params(path, query, headers, body, data, files)
 
 
-def _expand_path_params(url, path_params):
+def _get_encoding(encoding, params):
+    if encoding:
+        return encoding
+
+    if params.body is not None:
+        if is_file(params.body):
+            return 'application/octet-stream'
+        return 'application/json'
+    elif params.files:
+        return 'multipart/form-data'
+    elif params.data:
+        return 'application/json'
+
+    return ''
+
+
+def _get_url(url, path_params):
     """
     Given a templated URL and some parameters that have been provided,
     expand the URL.
@@ -85,7 +113,19 @@ def _get_headers(url, decoders=None, credentials=None):
     return headers
 
 
-def _make_http_request(url, method, headers=None, query_params=None, form_params=None):
+def _get_content_type(file_obj):
+    """
+    When a raw file upload is made, determine a content-type where possible.
+    """
+    name = getattr(file_obj, 'name', None)
+    if name is not None:
+        content_type, encoding = mimetypes.guess_type(name)
+    else:
+        content_type = None
+    return content_type
+
+
+def _make_http_request(url, method, headers=None, encoding=None, params=empty_params):
     """
     Make an HTTP request and return an HTTP response.
     """
@@ -93,11 +133,25 @@ def _make_http_request(url, method, headers=None, query_params=None, form_params
         "headers": headers or {}
     }
 
-    if query_params:
-        opts['params'] = query_params
-    elif form_params:
-        opts['data'] = json.dumps(form_params)
-        opts['headers']['content-type'] = 'application/json'
+    if params.query:
+        opts['params'] = params.query
+
+    if (params.body is not None) or params.data or params.files:
+        if encoding == 'application/json':
+            if params.body is not None:
+                opts['json'] = params.body
+            else:
+                opts['json'] = params.data
+        elif encoding == 'multipart/form-data':
+            opts['data'] = params.data
+            opts['files'] = params.files
+        elif encoding == 'application/x-www-form-urlencoded':
+            opts['data'] = params.data
+        elif encoding == 'application/octet-stream':
+            opts['data'] = params.body
+            content_type = _get_content_type(params.body)
+            if content_type:
+                opts['headers']['content-type'] = content_type
 
     return requests.request(method, url, **opts)
 
@@ -207,13 +261,14 @@ class HTTPTransport(BaseTransport):
         return self._headers
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
-        method = _get_http_method(link.action)
-        path_params, query_params, body_params, header_params = _separate_params(method, link.fields, params)
-        url = _expand_path_params(link.url, path_params)
+        method = _get_method(link.action)
+        params = _get_params(method, link.fields, params)
+        encoding = _get_encoding(link.encoding, params)
+        url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
-        headers.update(header_params)
-        response = _make_http_request(url, method, headers, query_params, body_params)
+        headers.update(params.headers)
+        response = _make_http_request(url, method, headers, encoding, params)
         result = _decode_result(response, decoders)
 
         if isinstance(result, Document) and link_ancestors:

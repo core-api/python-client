@@ -1,4 +1,4 @@
-from coreapi.compat import force_bytes
+from coreapi.compat import force_bytes, string_types, text_type
 import click
 import coreapi
 import json
@@ -93,6 +93,8 @@ def display(doc):
         return codec.dump(doc, colorize=True)
     if doc is None:
         return ''
+    if isinstance(doc, string_types):
+        return doc
     return json.dumps(doc, indent=4, ensure_ascii=False, separators=coreapi.compat.VERBOSE_SEPARATORS)
 
 
@@ -206,32 +208,33 @@ def show(path):
     click.echo(display(doc))
 
 
-def validate_params(ctx, param, value):
-    if any(['=' not in item for item in value]):
-        raise click.BadParameter('Parameters need to be in format <field name>=<value>')
+def parse_json(ctx, param, value):
+    ret = []
 
-    # Convert to dict.
-    params = dict([tuple(item.split('=', 1)) for item in value])
-
-    # Gracefully handle non-string values.
-    # Eg treat "-p complete=true" as {"complete": True}
-    for key, value in params.items():
+    for field, data in value:
         try:
-            value = json.loads(value)
+            pair = (field, json.loads(data))
         except:
-            pass
-        else:
-            params[key] = value
+            raise click.BadParameter('Invalid JSON for data argument "%s"' % field)
+        ret.append(pair)
 
-    return params
+    return ret
 
 
-@click.command(help='Interact with the active document.\n\nRequires a PATH to a link in the document.')
+@click.command(help='Interact with the active document.\n\nRequires a PATH to a link in the document.\n\nExample:\n\ncoreapi action users add_user --str username tom --data is_admin true')
 @click.argument('path', nargs=-1)
-@click.option('--param', '-p', multiple=True, callback=validate_params, help='Parameter in the form <field name>=<value>.')
-@click.option('--action', '-a', help='Set the link action explicitly.', default=None)
-@click.option('--transform', '-t', help='Set the linke transform explicitly.', default=None)
-def action(path, param, action, transform):
+@click.option('strings', '--str', '-s', type=(text_type, text_type), multiple=True, metavar="FIELD STRING", help='String parameter for the action.')
+@click.option('data', '--data', '-d', type=(text_type, text_type), multiple=True, callback=parse_json, metavar="FIELD DATA", help='Data parameter for the action.')
+@click.option('files', '--file', '-f', type=(text_type, click.File('rb')), multiple=True, metavar="FIELD FILENAME", help='File parameter for the action.')
+@click.option('--action', '-a', metavar="ACTION", help='Set the link action explicitly.', default=None)
+@click.option('--encoding', '-e', metavar="ENCODING", help='Set the link encoding explicitly.', default=None)
+@click.option('--transform', '-t', metavar="TRANSFORM", help='Set the link transform explicitly.', default=None)
+def action(path, strings, data, files, action, encoding, transform):
+    params = {}
+    params.update(dict(strings))
+    params.update(dict(data))
+    params.update(dict(files))
+
     if not path:
         click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
@@ -245,7 +248,10 @@ def action(path, param, action, transform):
     history = get_history()
     keys = coerce_key_types(doc, path)
     try:
-        doc = client.action(doc, keys, params=param, action=action, transform=transform)
+        doc = client.action(
+            doc, keys, params=params,
+            action=action, encoding=encoding, transform=transform
+        )
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)

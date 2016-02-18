@@ -7,7 +7,7 @@ import sys
 
 
 PYTEST_ARGS = ['tests', '--tb=short']
-FLAKE8_ARGS = ['coreapi', 'tests', '--ignore=E501']
+FLAKE8_ARGS = ['coreapi', 'tests', '--ignore=E501', '--exclude', 'compat.py']
 COVERAGE_OPTIONS = {
     'include': ['coreapi/*', 'tests/*'],
     'omit': ['coreapi/compat.py']

@@ -163,11 +163,13 @@ class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, transform=None, fields=None):
+    def __init__(self, url=None, action=None, encoding=None, transform=None, fields=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (action is not None) and (not isinstance(action, string_types)):
             raise TypeError("Argument 'action' must be a string.")
+        if (encoding is not None) and (not isinstance(encoding, string_types)):
+            raise TypeError("Argument 'encoding' must be a string.")
         if (transform is not None) and (not isinstance(transform, string_types)):
             raise TypeError("Argument 'transform' must be a string.")
         if (fields is not None) and (not isinstance(fields, (list, tuple))):
@@ -180,6 +182,7 @@ class Link(itypes.Object):
 
         self._url = '' if (url is None) else url
         self._action = '' if (action is None) else action
+        self._encoding = '' if (encoding is None) else encoding
         self._transform = '' if (transform is None) else transform
         self._fields = () if (fields is None) else tuple([
             item if isinstance(item, Field) else Field(item, required=False, location='')
@@ -195,6 +198,10 @@ class Link(itypes.Object):
         return self._action
 
     @property
+    def encoding(self):
+        return self._encoding
+
+    @property
     def transform(self):
         return self._transform
 
@@ -207,6 +214,7 @@ class Link(itypes.Object):
             isinstance(other, Link) and
             self.url == other.url and
             self.action == other.action and
+            self.encoding == other.encoding and
             self.transform == other.transform and
             set(self.fields) == set(other.fields)
         )

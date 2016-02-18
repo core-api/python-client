@@ -1,5 +1,6 @@
 # coding: utf-8
-from coreapi import Link, Field
+from coreapi import Document, Link, Field
+from coreapi.codecs import CoreJSONCodec
 from coreapi.exceptions import TransportError
 from coreapi.transports import determine_transport, HTTPTransport
 import pytest
@@ -83,8 +84,9 @@ def test_get_with_path_parameter(monkeypatch, http):
 
 def test_post(monkeypatch, http):
     def mockreturn(method, url, **opts):
-        insert = opts['data'].encode('utf-8')
-        return MockResponse(b'{"_type": "document", "data": ' + insert + b'}')
+        codec = CoreJSONCodec()
+        content = codec.dump(Document(content={'data': opts['json']}))
+        return MockResponse(content)
 
     monkeypatch.setattr(requests, 'request', mockreturn)
 

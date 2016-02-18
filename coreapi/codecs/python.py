@@ -37,6 +37,8 @@ def _to_repr(node):
         args = "url=%s" % repr(node.url)
         if node.action:
             args += ", action=%s" % repr(node.action)
+        if node.encoding:
+            args += ", encoding=%s" % repr(node.encoding)
         if node.transform:
             args += ", transform=%s" % repr(node.transform)
         if node.fields:
