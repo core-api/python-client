@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi.codecs import default_decoders, negotiate_decoder
-from coreapi.compat import urlparse
+from coreapi.compat import is_file, urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
@@ -55,7 +55,7 @@ def _get_params(method, fields, params=None):
         elif location == 'body':
             body = value
         elif location == 'form':
-            if isinstance(value, file):
+            if is_file(value):
                 files[key] = value
             else:
                 data[key] = value
