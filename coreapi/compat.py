@@ -29,6 +29,7 @@ except ImportError:
     def is_file(obj):
         return isinstance(obj, IOBase)
 
+
 def force_bytes(string):
     if isinstance(string, string_types):
         return string.encode('utf-8')
