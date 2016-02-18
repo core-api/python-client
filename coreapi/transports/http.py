@@ -68,7 +68,7 @@ def _get_encoding(encoding, params):
         return encoding
 
     if params.body is not None:
-        if isinstance(params.body, file):
+        if is_file(params.body):
             return 'application/octet-stream'
         return 'application/json'
     elif params.files:
