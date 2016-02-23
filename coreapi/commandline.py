@@ -236,14 +236,12 @@ def describe(path):
 
     if node.description:
         click.echo(node.description)
-    if node.description and fields_description:
         click.echo('\n')
-    if fields_description:
-        for field in node.fields:
-            if field.description:
-                click.echo('* %s - %s\n' % (field.name, field.description))
-            else:
-                click.echo('* %s\n' % field.name)
+    for field in node.fields:
+        if field.description:
+            click.echo('* %s - %s\n' % (field.name, field.description))
+        else:
+            click.echo('* %s\n' % field.name)
 
 
 def parse_json(ctx, param, value):
