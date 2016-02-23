@@ -602,6 +602,7 @@ client.add_command(action)
 client.add_command(reload_document, name='reload')
 client.add_command(clear)
 client.add_command(load)
+client.add_command(describe)
 
 client.add_command(credentials)
 credentials.add_command(credentials_add, name='add')
