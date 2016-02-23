@@ -6,7 +6,7 @@ from coreapi.exceptions import ParseError, TransportError, ErrorMessage
 from coreapi import codecs, history, transports
 
 
-__version__ = '1.17.0'
+__version__ = '1.18.0'
 __all__ = [
     'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'ParseError', 'NotAcceptable', 'TransportError', 'ErrorMessage',
