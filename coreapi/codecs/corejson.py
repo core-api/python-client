@@ -106,6 +106,8 @@ def _document_to_primative(node, base_url=None):
             ret['encoding'] = node.encoding
         if node.transform:
             ret['transform'] = node.transform
+        if node.description:
+            ret['description'] = node.description
         if node.fields:
             ret['fields'] = [
                 _document_to_primative(field) for field in node.fields
@@ -118,6 +120,8 @@ def _document_to_primative(node, base_url=None):
             ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
+        if node.description:
+            ret['description'] = node.description
         return ret
 
     elif isinstance(node, Object):
@@ -160,16 +164,21 @@ def _primative_to_document(data, base_url=None):
         action = _get_string(data, 'action')
         encoding = _get_string(data, 'encoding')
         transform = _get_string(data, 'transform')
+        description = _get_string(data, 'description')
         fields = _get_list(data, 'fields')
         fields = [
             Field(
                 name=_get_string(item, 'name'),
                 required=_get_bool(item, 'required'),
-                location=_get_string(item, 'location')
+                location=_get_string(item, 'location'),
+                description=_get_string(item, 'description')
             )
             for item in fields if isinstance(item, dict)
         ]
-        return Link(url=url, action=action, encoding=encoding, transform=transform, fields=fields)
+        return Link(
+            url=url, action=action, encoding=encoding, transform=transform,
+            description=description, fields=fields
+        )
 
     elif isinstance(data, dict):
         # Map

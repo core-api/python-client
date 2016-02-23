@@ -208,6 +208,44 @@ def show(path):
     click.echo(display(doc))
 
 
+@click.command(help='Display the description for link at the given PATH.')
+@click.argument('path')
+def describe(path):
+    doc = get_document()
+    if doc is None:
+        click.echo('No current document. Use `coreapi get` to fetch a document first.')
+        sys.exit(1)
+
+    node = doc
+    keys = coerce_key_types(doc, path)
+    for key in keys:
+        try:
+            node = node[key]
+        except (KeyError, IndexError):
+            click.echo('Key %s not found.' % repr(key).strip('u'))
+            sys.exit(1)
+
+    if not isinstance(node, coreapi.Link):
+        click.echo('Given PATH must index a link, not a %s.' % doc.__class__.__name__)
+        sys.exit(1)
+
+    fields_description = any([field.description for field in node.fields])
+    if not (node.description or fields_description):
+        click.echo('Link has no description.')
+        sys.exit(1)
+
+    if node.description:
+        click.echo(node.description)
+    if node.description and fields_description:
+        click.echo('\n')
+    if fields_description:
+        for field in node.fields:
+            if field.description:
+                click.echo('* %s - %s\n' % (field.name, field.description))
+            else:
+                click.echo('* %s\n' % field.name)
+
+
 def parse_json(ctx, param, value):
     ret = []
 
