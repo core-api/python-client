@@ -96,7 +96,7 @@ class Client(itypes.Object):
             action = link.action if (action is None) else action
             encoding = link.encoding if (encoding is None) else encoding
             transform = link.transform if (transform is None) else transform
-            link = Link(link.url, action, encoding, transform, link.fields)
+            link = Link(link.url, action=action, encoding=encoding, transform=transform, fields=link.fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(link.url, transports=self.transports)
