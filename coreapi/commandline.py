@@ -208,12 +208,16 @@ def show(path):
     click.echo(display(doc))
 
 
-@click.command(help='Display the description for link at the given PATH.')
-@click.argument('path')
+@click.command(help='Display description for link at given PATH.')
+@click.argument('path', nargs=-1)
 def describe(path):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
+        sys.exit(1)
+
+    if not path:
+        click.echo('Missing PATH to a link in the document.')
         sys.exit(1)
 
     node = doc
