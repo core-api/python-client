@@ -242,7 +242,7 @@ def describe(path):
         click.echo(node.description)
         click.echo()
     for field in node.fields:
-        name = field.name if field.required else '[%s]' % name
+        name = field.name if field.required else '[%s]' % field.name
         if field.description:
             click.echo('* %s - %s' % (name, field.description))
         else:
