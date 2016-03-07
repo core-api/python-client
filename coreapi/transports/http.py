@@ -41,8 +41,8 @@ def _get_params(method, fields, params=None):
 
     for key, value in params.items():
         if key not in field_map or not field_map[key].location:
-            # Default is 'query' for 'GET', and 'form' for others.
-            location = 'query' if method == 'GET' else 'form'
+            # Default is 'query' for 'GET' and 'DELETE', and 'form' for others.
+            location = 'query' if method in ('GET', 'DELETE') else 'form'
         else:
             location = field_map[key].location
 
@@ -96,7 +96,7 @@ def _get_headers(url, decoders=None, credentials=None):
     if decoders is None:
         decoders = default_decoders
 
-    accept = '%s, */*' % decoder[0].media_type
+    accept = '%s, */*' % decoders[0].media_type
 
     headers = {
         'accept': accept,
@@ -125,7 +125,7 @@ def _get_content_type(file_obj):
     return content_type
 
 
-def _make_http_request(url, method, headers=None, encoding=None, params=empty_params):
+def _build_http_request(url, method, headers=None, encoding=None, params=empty_params):
     """
     Make an HTTP request and return an HTTP response.
     """
@@ -153,7 +153,15 @@ def _make_http_request(url, method, headers=None, encoding=None, params=empty_pa
             if content_type:
                 opts['headers']['content-type'] = content_type
 
-    return requests.request(method, url, **opts)
+    request = requests.Request(method, url, **opts)
+    request = request.prepare()
+    return request
+
+
+def _send_http_request(request):
+    session = requests.Session()
+    response = session.send(request)
+    return response
 
 
 def _coerce_to_error_content(node):
@@ -246,11 +254,13 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None):
+    def __init__(self, credentials=None, headers=None, request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
+        self._request_callback = request_callback
+        self._response_callback = response_callback
 
     @property
     def credentials(self):
@@ -267,8 +277,15 @@ class HTTPTransport(BaseTransport):
         url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
-        headers.update(params.headers)
-        response = _make_http_request(url, method, headers, encoding, params)
+
+        request = _build_http_request(url, method, headers, encoding, params)
+        if self._request_callback:
+            self._request_callback(request)
+
+        response = _send_http_request(request)
+        if self._response_callback:
+            self._response_callback(response)
+
         result = _decode_result(response, decoders)
 
         if isinstance(result, Document) and link_ancestors:

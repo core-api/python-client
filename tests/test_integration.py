@@ -39,30 +39,30 @@ def test_dump(document):
 
 
 def test_get(monkeypatch):
-    def mockreturn(method, url, headers):
+    def mockreturn(self, request):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     doc = coreapi.get('http://example.org')
     assert doc == {'example': 123}
 
 
 def test_follow(monkeypatch, document):
-    def mockreturn(method, url, headers):
+    def mockreturn(self, request):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     doc = coreapi.action(document, ['next'])
     assert doc == {'example': 123}
 
 
 def test_reload(monkeypatch):
-    def mockreturn(method, url, headers):
+    def mockreturn(self, request):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     doc = coreapi.Document(url='http://example.org')
     doc = coreapi.reload(doc)
@@ -70,10 +70,10 @@ def test_reload(monkeypatch):
 
 
 def test_error(monkeypatch, document):
-    def mockreturn(method, url, headers):
+    def mockreturn(self, request):
         return MockResponse(b'{"_type": "error", "message": ["failed"]}')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     with pytest.raises(coreapi.ErrorMessage):
         coreapi.action(document, ['next'])

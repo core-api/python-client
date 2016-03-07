@@ -5,6 +5,7 @@ from coreapi.exceptions import TransportError
 from coreapi.transports import determine_transport, HTTPTransport
 import pytest
 import requests
+import json
 
 
 @pytest.fixture
@@ -40,10 +41,10 @@ def test_missing_hostname():
 # Test basic transition types.
 
 def test_get(monkeypatch, http):
-    def mockreturn(method, url, **opts):
+    def mockreturn(self, request):
         return MockResponse(b'{"_type": "document", "example": 123}')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     link = Link(url='http://example.org', action='get')
     doc = http.transition(link)
@@ -51,27 +52,27 @@ def test_get(monkeypatch, http):
 
 
 def test_get_with_parameters(monkeypatch, http):
-    def mockreturn(method, url, **opts):
-        insert = opts['params']['example'].encode('utf-8')
+    def mockreturn(self, request):
+        insert = request.path_url.encode('utf-8')
         return MockResponse(
-            b'{"_type": "document", "example": "' + insert + b'"}'
+            b'{"_type": "document", "url": "' + insert + b'"}'
         )
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     link = Link(url='http://example.org', action='get')
     doc = http.transition(link, params={'example': 'abc'})
-    assert doc == {'example': 'abc'}
+    assert doc == {'url': '/?example=abc'}
 
 
 def test_get_with_path_parameter(monkeypatch, http):
-    def mockreturn(method, url, **opts):
-        insert = url.encode('utf-8')
+    def mockreturn(self, request):
+        insert = request.url.encode('utf-8')
         return MockResponse(
             b'{"_type": "document", "example": "' + insert + b'"}'
         )
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     link = Link(
         url='http://example.org/{user_id}/',
@@ -83,12 +84,12 @@ def test_get_with_path_parameter(monkeypatch, http):
 
 
 def test_post(monkeypatch, http):
-    def mockreturn(method, url, **opts):
+    def mockreturn(self, request):
         codec = CoreJSONCodec()
-        content = codec.dump(Document(content={'data': opts['json']}))
+        content = codec.dump(Document(content={'data': json.loads(request.body)}))
         return MockResponse(content)
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     link = Link(url='http://example.org', action='post')
     doc = http.transition(link, params={'example': 'abc'})
@@ -96,10 +97,10 @@ def test_post(monkeypatch, http):
 
 
 def test_delete(monkeypatch, http):
-    def mockreturn(method, url, **opts):
+    def mockreturn(self, request):
         return MockResponse(b'')
 
-    monkeypatch.setattr(requests, 'request', mockreturn)
+    monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
     link = Link(url='http://example.org', action='delete')
     doc = http.transition(link)
