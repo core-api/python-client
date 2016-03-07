@@ -96,7 +96,7 @@ def _get_headers(url, decoders=None, credentials=None):
     if decoders is None:
         decoders = default_decoders
 
-    accept = ', '.join([decoder.media_type for decoder in decoders])
+    accept = '%s, */*' % decoder[0].media_type
 
     headers = {
         'accept': accept,
