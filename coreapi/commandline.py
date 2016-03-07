@@ -1,4 +1,4 @@
-from coreapi.compat import force_bytes, string_types, text_type
+from coreapi.compat import force_bytes, string_types, text_type, urlparse
 import click
 import coreapi
 import json
@@ -62,10 +62,62 @@ def get_document_string(doc):
     return '<%s %s>' % (doc.title, json.dumps(doc.url))
 
 
-def get_client(decoders=None):
+def debug_request(request):
+    def request_echo(fmt, *args):
+        click.echo(click.style('> ', fg='blue') + (fmt % args))
+
+    headers = request.headers
+    headers['host'] = urlparse.urlparse(request.url).hostname
+
+    request_echo(click.style('%s %s HTTP/1.1', bold=True), request.method, request.path_url)
+    for key, value in sorted(headers.items()):
+        request_echo('%s: %s', key.title(), value)
+    if request.body:
+        request_echo('')
+        for line in request.body.splitlines():
+            request_echo(line)
+
+
+def debug_response(response):
+    def success_echo(fmt, *args):
+        click.echo(click.style('< ', fg='green') + (fmt % args))
+
+    def failure_echo(fmt, *args):
+        click.echo(click.style('< ', fg='red') + (fmt % args))
+
+    def info_echo(fmt, *args):
+        click.echo(click.style('< ', fg='yellow') + (fmt % args))
+
+    response_class = ('%s' % response.status_code)[0] + 'xx'
+    if response_class == '2xx':
+        response_echo = success_echo
+    elif response_class in ('4xx', '5xx'):
+        response_echo = failure_echo
+    else:
+        response_echo = info_echo
+
+    response_echo(click.style('%d %s', bold=True), response.status_code, response.reason)
+    for key, value in sorted(response.headers.items()):
+        response_echo('%s: %s', key.title(), value)
+    if response.content:
+        response_echo('')
+        for line in response.content.splitlines():
+            response_echo(line)
+
+    click.echo()
+
+
+def get_client(decoders=None, debug=False):
     credentials = get_credentials()
     headers = get_headers()
-    http_transport = coreapi.transports.HTTPTransport(credentials, headers)
+    if debug:
+        callbacks = {
+            'request_callback': debug_request,
+            'response_callback': debug_response
+        }
+    else:
+        callbacks = {}
+    http_transport = coreapi.transports.HTTPTransport(credentials, headers, **callbacks)
     return coreapi.Client(decoders=decoders, transports=[http_transport])
 
 
@@ -126,8 +178,9 @@ def client(ctx, version):
 
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
+@click.option('--debug', '-d', is_flag=True, help='Display the request/response')
 @click.option('--format', default=None, type=click.Choice(['corejson', 'hal', 'hyperschema', 'openapi']))
-def get(url, format):
+def get(url, debug, format):
     if format:
         decoder = {
             'corejson': coreapi.codecs.CoreJSONCodec(),
@@ -138,7 +191,7 @@ def get(url, format):
         decoders = [decoder]
     else:
         decoders = None
-    client = get_client(decoders=decoders)
+    client = get_client(decoders=decoders, debug=debug)
     history = get_history()
     try:
         doc = client.get(url)
@@ -284,7 +337,8 @@ def parse_json(ctx, param, value):
 @click.option('--action', '-a', metavar="ACTION", help='Set the link action explicitly.', default=None)
 @click.option('--encoding', '-e', metavar="ENCODING", help='Set the link encoding explicitly.', default=None)
 @click.option('--transform', '-t', metavar="TRANSFORM", help='Set the link transform explicitly.', default=None)
-def action(path, params, strings, data, files, action, encoding, transform):
+@click.option('--debug', '-d', is_flag=True, help='Display the request/response')
+def action(path, params, strings, data, files, action, encoding, transform, debug):
     params = dict(params)
     params.update(dict(strings))
     params.update(dict(data))
@@ -299,7 +353,7 @@ def action(path, params, strings, data, files, action, encoding, transform):
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
-    client = get_client()
+    client = get_client(debug=debug)
     history = get_history()
     keys = coerce_key_types(doc, path)
     try:
@@ -321,13 +375,14 @@ def action(path, params, strings, data, files, action, encoding, transform):
 
 
 @click.command(help='Reload the current document.')
-def reload_document():
+@click.option('--debug', '-d', is_flag=True, help='Display the request/response')
+def reload_document(debug):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
-    client = get_client()
+    client = get_client(debug=debug)
     history = get_history()
     try:
         doc = client.reload(doc)
