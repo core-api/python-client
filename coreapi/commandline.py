@@ -1,4 +1,4 @@
-from coreapi.compat import force_bytes, string_types, text_type, urlparse
+from coreapi.compat import b64encode, force_bytes, string_types, text_type, urlparse
 import click
 import coreapi
 import json
@@ -432,8 +432,13 @@ def credentials_show():
 
 @click.command(help="Add CREDENTIALS string for the given DOMAIN.")
 @click.argument('domain', nargs=1)
-@click.argument('header', nargs=1)
-def credentials_add(domain, header):
+@click.argument('credentials_string', nargs=1)
+@click.option('--auth', metavar="AUTH_SCHEME", help='Auth scheme to apply to the credentials string. Options: "none", "basic". Default is "none".', default='none', type=click.Choice(['none', 'basic']))
+def credentials_add(domain, credentials_string, auth):
+    if auth == 'none':
+        header = auth
+    elif auth == 'basic':
+        header = 'Basic ' + b64encode(credentials_string)
     credentials = get_credentials()
     credentials[domain] = header
     set_credentials(credentials)
