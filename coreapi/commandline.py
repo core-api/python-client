@@ -436,7 +436,7 @@ def credentials_show():
 @click.option('--auth', metavar="AUTH_SCHEME", help='Auth scheme to apply to the credentials string. Options: "none", "basic". Default is "none".', default='none', type=click.Choice(['none', 'basic']))
 def credentials_add(domain, credentials_string, auth):
     if auth == 'none':
-        header = auth
+        header = credentials_string
     elif auth == 'basic':
         header = 'Basic ' + b64encode(credentials_string)
     credentials = get_credentials()
