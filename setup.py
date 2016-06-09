@@ -64,8 +64,7 @@ setup(
     install_requires=[
         'requests',
         'click',
-        'html2text',
-        'itypes>=1.1.0',
+        'itypes',
         'jinja2>=2.7',
         'uritemplate'
     ],
