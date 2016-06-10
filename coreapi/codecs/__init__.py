@@ -22,7 +22,7 @@ __all__ = [
 # Default set of decoders for clients to accept.
 default_decoders = itypes.List([
     CoreJSONCodec(), HALCodec(), HyperschemaCodec(),  # Document decoders.
-    JSONCodec(), TextCodec() # Data decoders.
+    JSONCodec(), TextCodec()  # Data decoders.
 ])
 
 # Default set of encoders for servers to respond with.
