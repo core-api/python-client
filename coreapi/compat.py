@@ -36,7 +36,7 @@ except ImportError:
     def is_file(obj):
         return isinstance(obj, IOBase)
 
-    def b64encode(input):
+    def b64encode(input_string):
         # Provide a consistently-as-unicode interface across 2.x and 3.x
         return base64.b64encode(input_string.encode('ascii')).decode('ascii')
 
