@@ -1,4 +1,5 @@
 from coreapi.compat import string_types
+from requests.utils import guess_json_utf
 import itypes
 
 
@@ -60,10 +61,15 @@ def get_strings(item):
     return [value for value in item if isinstance(value, string_types)]
 
 
+def get_json_text(content, charset):
+    charset = charset or guess_json_utf(content) or 'utf-8'
+    return content.decode(charset)
+
+
 class BaseCodec(itypes.Object):
     media_type = None
 
-    def load(self, bytes, base_url=None):
+    def load(self, content, base_url=None, charset=None):
         raise NotImplementedError()  # pragma: nocover
 
     def dump(self, document, **kwargs):

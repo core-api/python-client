@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_bool
+from coreapi.codecs.base import BaseCodec, get_json_text, _get_string, _get_dict, _get_bool
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Field, Error
@@ -189,12 +189,13 @@ class HALCodec(BaseCodec):
         data = _document_to_primative(document)
         return force_bytes(json.dumps(data, **options))
 
-    def load(self, bytes, base_url=None):
+    def load(self, content, base_url=None, charset=None):
         """
         Takes a bytestring and returns a document.
         """
+        text = get_json_text(content, charset)
         try:
-            data = json.loads(bytes.decode('utf-8'))
+            data = json.loads(text)
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 

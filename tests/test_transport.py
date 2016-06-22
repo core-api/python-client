@@ -19,6 +19,7 @@ class MockResponse(object):
         self.headers = {}
         self.url = 'http://example.org'
         self.status_code = 200
+        self.encoding = None
 
 
 # Test transport errors.

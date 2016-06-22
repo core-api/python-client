@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi.codecs.base import BaseCodec, _get_string, _get_list, _get_dict, get_dicts
+from coreapi.codecs.base import BaseCodec, get_json_text, _get_string, _get_list, _get_dict, get_dicts
 from coreapi.compat import urlparse
 from coreapi.document import Document, Link, Field
 from coreapi.exceptions import ParseError
@@ -92,12 +92,13 @@ class HyperschemaCodec(BaseCodec):
     """
     media_type = 'application/schema+json'
 
-    def load(self, bytes, base_url=None):
+    def load(self, content, base_url=None, charset=None):
         """
         Takes a bytestring and returns a document.
         """
+        text = get_json_text(content, charset)
         try:
-            data = json.loads(bytes.decode('utf-8'))
+            data = json.loads(text)
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
