@@ -125,7 +125,7 @@ def _get_content_type(file_obj):
     return content_type
 
 
-def _build_http_request(url, method, headers=None, encoding=None, params=empty_params):
+def _build_http_request(session, url, method, headers=None, encoding=None, params=empty_params):
     """
     Make an HTTP request and return an HTTP response.
     """
@@ -154,14 +154,7 @@ def _build_http_request(url, method, headers=None, encoding=None, params=empty_p
                 opts['headers']['content-type'] = content_type
 
     request = requests.Request(method, url, **opts)
-    request = request.prepare()
-    return request
-
-
-def _send_http_request(request):
-    session = requests.Session()
-    response = session.send(request)
-    return response
+    return session.prepare_request(request)
 
 
 def _coerce_to_error_content(node):
@@ -254,11 +247,15 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, request_callback=None, response_callback=None):
+    def __init__(self, credentials=None, headers=None, session=None,
+                 request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
+        if session is None:
+            session = requests.Session()
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
+        self._session = session
         self._request_callback = request_callback
         self._response_callback = response_callback
 
@@ -271,6 +268,7 @@ class HTTPTransport(BaseTransport):
         return self._headers
 
     def transition(self, link, params=None, decoders=None, link_ancestors=None):
+        session = self._session
         method = _get_method(link.action)
         params = _get_params(method, link.fields, params)
         encoding = _get_encoding(link.encoding, params)
@@ -278,11 +276,11 @@ class HTTPTransport(BaseTransport):
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
 
-        request = _build_http_request(url, method, headers, encoding, params)
+        request = _build_http_request(session, url, method, headers, encoding, params)
         if self._request_callback:
             self._request_callback(request)
 
-        response = _send_http_request(request)
+        response = session.send(request)
         if self._response_callback:
             self._response_callback(response)
 
