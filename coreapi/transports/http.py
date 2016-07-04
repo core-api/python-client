@@ -158,12 +158,6 @@ def _build_http_request(url, method, headers=None, encoding=None, params=empty_p
     return request
 
 
-def _send_http_request(request):
-    session = requests.Session()
-    response = session.send(request)
-    return response
-
-
 def _coerce_to_error_content(node):
     """
     Errors should not contain nested documents or links.
@@ -254,11 +248,15 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, request_callback=None, response_callback=None):
+    def __init__(self, credentials=None, headers=None, session=None,
+                 request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
+        if session is None:
+            session = requests.Session()
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
+        self._session = session
         self._request_callback = request_callback
         self._response_callback = response_callback
 
@@ -282,7 +280,7 @@ class HTTPTransport(BaseTransport):
         if self._request_callback:
             self._request_callback(request)
 
-        response = _send_http_request(request)
+        response = self._session.send(request)
         if self._response_callback:
             self._response_callback(response)
 
