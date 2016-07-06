@@ -68,10 +68,16 @@ setup(
         'jinja2>=2.7',
         'uritemplate'
     ],
-    entry_points="""
-        [console_scripts]
-        coreapi=coreapi.commandline:client
-    """,
+    entry_points={
+        'console_scripts': [
+            'coreapi=coreapi.commandline:client'
+        ],
+        'coreapi.codecs': [
+            'corejson=coreapi.codecs:CoreJSONCodec',
+            'json=coreapi.codecs:JSONCodec',
+            'text=coreapi.codecs:TextCodec',
+        ]
+    },
     classifiers=[
         'Development Status :: 3 - Alpha',
         'Environment :: Web Environment',
