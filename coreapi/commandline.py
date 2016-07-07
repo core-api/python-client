@@ -135,6 +135,10 @@ def get_client(decoders=None, debug=False):
         }
     else:
         callbacks = {}
+
+    if decoders is None:
+        decoders = list(codec_lookup.values())
+
     http_transport = coreapi.transports.HTTPTransport(credentials, headers, **callbacks)
     return coreapi.Client(decoders=decoders, transports=[http_transport])
 
@@ -200,14 +204,15 @@ def client(ctx, version):
 @click.option('--format', default=None, type=click.Choice(codec_keys))
 def get(url, debug, format):
     if format:
-        decoder = codec_lookup[format]
-        decoders = [decoder]
+        decoders = [codec_lookup[format]]
+        force_codec = True
     else:
         decoders = [codec_lookup[key] for key in codec_keys]
+        force_codec = False
     client = get_client(decoders=decoders, debug=debug)
     history = get_history()
     try:
-        doc = client.get(url)
+        doc = client.get(url, force_codec=force_codec)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
@@ -384,16 +389,24 @@ def action(path, params, strings, data, files, action, encoding, transform, debu
 
 @click.command(help='Reload the current document.')
 @click.option('--debug', '-d', is_flag=True, help='Display the request/response')
-def reload_document(debug):
+@click.option('--format', default=None, type=click.Choice(codec_keys))
+def reload_document(debug, format):
     doc = get_document()
     if doc is None:
         click.echo('No current document. Use `coreapi get` to fetch a document first.')
         sys.exit(1)
 
-    client = get_client(debug=debug)
+    if format:
+        decoders = [codec_lookup[format]]
+        force_codec = True
+    else:
+        decoders = [codec_lookup[key] for key in codec_keys]
+        force_codec = False
+
+    client = get_client(debug=debug, decoders=decoders)
     history = get_history()
     try:
-        doc = client.reload(doc)
+        doc = client.reload(doc, force_codec=force_codec)
     except coreapi.exceptions.ErrorMessage as exc:
         click.echo(display(exc.error))
         sys.exit(1)
@@ -692,9 +705,10 @@ def codecs():
 
 @click.command(help="List the installed codecs.")
 def codecs_show():
+    # Note that this omits the data codecs of JSON and Text.
     click.echo(click.style('Codecs', bold=True))
-    for name, codec in codec_lookup.items():
-        click.echo('%s "%s"' % (name, codec.media_type))
+    for key in codec_keys:
+        click.echo('%s "%s"' % (key, codec_lookup[key].media_type))
 
 
 client.add_command(get)

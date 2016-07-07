@@ -5,7 +5,7 @@ from coreapi.document import Array, Document, Link, Object, Error, Field
 from coreapi import codecs, history, transports
 
 
-__version__ = '1.27.0'
+__version__ = '1.28.0'
 __all__ = [
     'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'Client',
