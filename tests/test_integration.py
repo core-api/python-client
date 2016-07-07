@@ -44,7 +44,8 @@ def test_get(monkeypatch):
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
-    doc = coreapi.get('http://example.org')
+    client = coreapi.Client()
+    doc = client.get('http://example.org')
     assert doc == {'example': 123}
 
 
@@ -54,7 +55,8 @@ def test_follow(monkeypatch, document):
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
-    doc = coreapi.action(document, ['next'])
+    client = coreapi.Client()
+    doc = client.action(document, ['next'])
     assert doc == {'example': 123}
 
 
@@ -64,8 +66,9 @@ def test_reload(monkeypatch):
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
+    client = coreapi.Client()
     doc = coreapi.Document(url='http://example.org')
-    doc = coreapi.reload(doc)
+    doc = client.reload(doc)
     assert doc == {'example': 123}
 
 
@@ -75,5 +78,6 @@ def test_error(monkeypatch, document):
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)
 
-    with pytest.raises(coreapi.ErrorMessage):
-        coreapi.action(document, ['next'])
+    client = coreapi.Client()
+    with pytest.raises(coreapi.exceptions.ErrorMessage):
+        client.action(document, ['next'])
