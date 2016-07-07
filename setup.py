@@ -65,7 +65,6 @@ setup(
         'requests',
         'click',
         'itypes',
-        'jinja2>=2.7',
         'uritemplate'
     ],
     entry_points={
