@@ -29,8 +29,8 @@ credentials_path = None
 headers_path = None
 bookmarks_path = None
 
-codecs = get_codecs()
-codec_keys = [key for key in codecs.keys() if key not in ('json', 'text')]
+codec_lookup = get_codecs()
+codec_keys = [key for key in codec_lookup.keys() if key not in ('json', 'text')]
 
 
 def setup_paths():
@@ -200,10 +200,10 @@ def client(ctx, version):
 @click.option('--format', default=None, type=click.Choice(codec_keys))
 def get(url, debug, format):
     if format:
-        decoder = codecs[format]
+        decoder = codec_lookup[format]
         decoders = [decoder]
     else:
-        decoders = list(get_codecs().values())
+        decoders = [codec_lookup[key] for key in codec_keys]
     client = get_client(decoders=decoders, debug=debug)
     history = get_history()
     try:
@@ -224,7 +224,7 @@ def get(url, debug, format):
 def load(input_file, format):
     input_bytes = input_file.read()
     input_file.close()
-    decoder = codecs[format]
+    decoder = codec_lookup[format]
 
     history = get_history()
     doc = decoder.load(input_bytes)
@@ -692,10 +692,8 @@ def codecs():
 
 @click.command(help="List the installed codecs.")
 def codecs_show():
-    codecs = get_codecs()
-
     click.echo(click.style('Codecs', bold=True))
-    for name, codec in codecs.items():
+    for name, codec in codec_lookup.items():
         click.echo('%s "%s"' % (name, codec.media_type))
 
 
