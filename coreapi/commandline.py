@@ -1,9 +1,24 @@
 from coreapi.compat import b64encode, force_bytes, string_types, text_type, urlparse
 import click
+import collections
 import coreapi
 import json
 import os
+import pkg_resources
 import sys
+
+
+def get_codecs():
+    unsorted_codecs = {}
+    for package in pkg_resources.iter_entry_points(group='coreapi.codecs'):
+        codec_class = package.load()
+        unsorted_codecs[package.name] = codec_class()
+
+    codecs = collections.OrderedDict()
+    for name, codec in sorted(unsorted_codecs.items(), key=lambda item: -len(item[1].media_type)):
+        codecs[name] = codec
+
+    return codecs
 
 
 config_path = None
@@ -13,6 +28,9 @@ history_path = None
 credentials_path = None
 headers_path = None
 bookmarks_path = None
+
+codecs = get_codecs()
+codec_keys = list(codecs.keys())
 
 
 def setup_paths():
@@ -179,18 +197,13 @@ def client(ctx, version):
 @click.command(help='Fetch a document from the given URL.')
 @click.argument('url')
 @click.option('--debug', '-d', is_flag=True, help='Display the request/response')
-@click.option('--format', default=None, type=click.Choice(['corejson', 'hal', 'hyperschema', 'openapi']))
+@click.option('--format', default=None, type=click.Choice(codec_keys))
 def get(url, debug, format):
     if format:
-        decoder = {
-            'corejson': coreapi.codecs.CoreJSONCodec(),
-            'hal': coreapi.codecs.HALCodec(),
-            'hyperschema': coreapi.codecs.HyperschemaCodec(),
-            'openapi': coreapi.codecs.OpenAPICodec()
-        }[format]
+        decoder = codecs[format]
         decoders = [decoder]
     else:
-        decoders = None
+        decoders = list(get_codecs().values())
     client = get_client(decoders=decoders, debug=debug)
     history = get_history()
     try:
@@ -207,16 +220,11 @@ def get(url, debug, format):
 
 @click.command(help='Load a document from disk.')
 @click.argument('input_file', type=click.File('rb'))
-@click.option('--format', default='corejson', type=click.Choice(['corejson', 'hal', 'hyperschema', 'openapi']))
+@click.option('--format', default='corejson', type=click.Choice(codec_keys))
 def load(input_file, format):
     input_bytes = input_file.read()
     input_file.close()
-    decoder = {
-        'corejson': coreapi.codecs.CoreJSONCodec(),
-        'hal': coreapi.codecs.HALCodec(),
-        'hyperschema': coreapi.codecs.HyperschemaCodec(),
-        'openapi': coreapi.codecs.OpenAPICodec()
-    }[format]
+    decoder = codecs[format]
 
     history = get_history()
     doc = decoder.load(input_bytes)
@@ -675,6 +683,22 @@ def history_forward():
         set_history(history)
 
 
+# Codecs
+
+@click.group(help="Manage the installed codecs.")
+def codecs():
+    pass
+
+
+@click.command(help="List the installed codecs.")
+def codecs_show():
+    codecs = get_codecs()
+
+    click.echo(click.style('Codecs', bold=True))
+    for name, codec in codecs.items():
+        click.echo('%s "%s"' % (name, codec.media_type))
+
+
 client.add_command(get)
 client.add_command(show)
 client.add_command(action)
@@ -703,6 +727,9 @@ client.add_command(history)
 history.add_command(history_back, name='back')
 history.add_command(history_forward, name='forward')
 history.add_command(history_show, name='show')
+
+client.add_command(codecs)
+codecs.add_command(codecs_show, name='show')
 
 
 if __name__ == '__main__':

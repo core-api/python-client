@@ -1,10 +1,11 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi.codecs.base import BaseCodec, _get_string, _get_dict, _get_list, _get_bool
+from coreapi.codecs.base import BaseCodec
 from coreapi.compat import force_bytes, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.exceptions import ParseError
+from coreapi.utils import get_string, get_dict, get_list, get_bool
 import json
 
 
@@ -143,35 +144,35 @@ def _primative_to_document(data, base_url=None):
     """
     if isinstance(data, dict) and data.get('_type') == 'document':
         # Document
-        meta = _get_dict(data, '_meta')
-        url = _get_string(meta, 'url')
+        meta = get_dict(data, '_meta')
+        url = get_string(meta, 'url')
         url = urlparse.urljoin(base_url, url)
-        title = _get_string(meta, 'title')
+        title = get_string(meta, 'title')
         content = _get_content(data, base_url=url)
         return Document(url=url, title=title, content=content)
 
     if isinstance(data, dict) and data.get('_type') == 'error':
         # Error
-        meta = _get_dict(data, '_meta')
-        title = _get_string(meta, 'title')
+        meta = get_dict(data, '_meta')
+        title = get_string(meta, 'title')
         content = _get_content(data, base_url=base_url)
         return Error(title=title, content=content)
 
     elif isinstance(data, dict) and data.get('_type') == 'link':
         # Link
-        url = _get_string(data, 'url')
+        url = get_string(data, 'url')
         url = urlparse.urljoin(base_url, url)
-        action = _get_string(data, 'action')
-        encoding = _get_string(data, 'encoding')
-        transform = _get_string(data, 'transform')
-        description = _get_string(data, 'description')
-        fields = _get_list(data, 'fields')
+        action = get_string(data, 'action')
+        encoding = get_string(data, 'encoding')
+        transform = get_string(data, 'transform')
+        description = get_string(data, 'description')
+        fields = get_list(data, 'fields')
         fields = [
             Field(
-                name=_get_string(item, 'name'),
-                required=_get_bool(item, 'required'),
-                location=_get_string(item, 'location'),
-                description=_get_string(item, 'description')
+                name=get_string(item, 'name'),
+                required=get_bool(item, 'required'),
+                location=get_string(item, 'location'),
+                description=get_string(item, 'description')
             )
             for item in fields if isinstance(item, dict)
         ]
