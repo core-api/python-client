@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi import negotiate_decoder, negotiate_encoder
-from coreapi.codecs import CoreJSONCodec, CoreHTMLCodec
+from coreapi.codecs import CoreJSONCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, UnsupportedContentType, NotAcceptable
@@ -10,11 +10,6 @@ import pytest
 @pytest.fixture
 def json_codec():
     return CoreJSONCodec()
-
-
-@pytest.fixture
-def html_codec():
-    return CoreHTMLCodec()
 
 
 @pytest.fixture
@@ -241,8 +236,8 @@ def test_get_accepted_encoder():
 
 
 def test_get_underspecified_encoder():
-    codec = negotiate_encoder(accept='text/*')
-    assert isinstance(codec, CoreHTMLCodec)
+    codec = negotiate_encoder(accept='application/*', encoders=[CoreJSONCodec()])
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_unsupported_encoder():
@@ -253,44 +248,3 @@ def test_get_unsupported_encoder():
 def test_get_unsupported_encoder_with_fallback():
     codec = negotiate_encoder(accept='application/csv, */*')
     assert isinstance(codec, CoreJSONCodec)
-
-
-# Tests for HTML rendering
-
-def test_html_document_rendering(html_codec):
-    doc = Document(content={'string': 'abc', 'int': 123, 'bool': True})
-    content = html_codec.dump(doc)
-    assert 'coreapi-document' in content
-    assert '<span>abc</span>' in content
-    assert '<code>123</code>' in content
-    assert '<code>true</code>' in content
-
-
-def test_html_object_rendering(html_codec):
-    doc = Document(content={'object': {'a': 1, 'b': 2}})
-    content = html_codec.dump(doc)
-    assert 'coreapi-object' in content
-    assert '<th>a</th>' in content
-    assert '<th>b</th>' in content
-
-
-def test_html_array_rendering(html_codec):
-    doc = Document(content={'array': [1, 2]})
-    content = html_codec.dump(doc)
-    assert 'coreapi-array' in content
-    assert '<th>0</th>' in content
-    assert '<th>1</th>' in content
-
-
-def test_html_link_rendering(html_codec):
-    doc = Document(content={'link': Link(url='/test/')})
-    content = html_codec.dump(doc)
-    assert 'coreapi-link' in content
-    assert 'href="/test/"' in content
-
-
-def test_html_error_rendering(html_codec):
-    doc = Error(content={'message': ['something failed']})
-    content = html_codec.dump(doc)
-    assert 'coreapi-error' in content
-    assert 'something failed' in content
