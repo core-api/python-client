@@ -30,7 +30,7 @@ headers_path = None
 bookmarks_path = None
 
 codecs = get_codecs()
-codec_keys = list(codecs.keys())
+codec_keys = [key for key in codecs.keys() if key not in ('json', 'text')]
 
 
 def setup_paths():
