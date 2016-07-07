@@ -21,10 +21,11 @@ To install, use pip.
 
 ### Retrieving and inspecting documents
 
-To initially access a Core API interface, use the `get()` function.
+To initially access a Core API interface, create a client, and use the `get()` method.
 
     >>> import coreapi
-    >>> doc = coreapi.get('http://coreapi.herokuapp.com')
+    >>> client = coreapi.Client()
+    >>> doc = client.get('http://coreapi.herokuapp.com')
 
 We can now inspect the returned document.
 
@@ -60,9 +61,9 @@ You can also inspect the document URL and title.
 
 ### Interacting with documents
 
-Documents in the Python Core API library are immutable objects. To perform a transition we use the `coreapi.action()` function and assign the resulting new document.
+Documents in the Python Core API library are immutable objects. To perform a transition we use the `.action()` method and assign the resulting new document.
 
-    >>> doc = coreapi.action(doc, ['add_note'], params={'description': 'My new note.'})
+    >>> doc = client.action(doc, ['add_note'], params={'description': 'My new note.'})
 
 The arguments to `.action()` are:
 
@@ -72,14 +73,14 @@ The arguments to `.action()` are:
 
 Transitions may update part of the document tree.
 
-    >>> doc = coreapi.action(doc, ['notes', 0, 'edit'], params={'complete': True})
+    >>> doc = client.action(doc, ['notes', 0, 'edit'], params={'complete': True})
     >>> doc['notes'][0]['complete']
     True
 
 Or they may remove part of the document tree.
 
     >>> while doc['notes']:
-    >>>     doc = coreapi.action(doc, ['notes', 0, 'delete'])
+    >>>     doc = client.action(doc, ['notes', 0, 'delete'])
     >>> len(doc['notes'])
     0
 
@@ -107,7 +108,7 @@ To load the same document back again.
 
 ## License
 
-Copyright © 2015, Tom Christie.
+Copyright © 2015-2016, Tom Christie.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

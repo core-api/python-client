@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import ErrorMessage
+from coreapi.exceptions import ErrorMessage
 
 
 def test_error_message_repr():

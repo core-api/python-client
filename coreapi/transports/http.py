@@ -197,14 +197,17 @@ def _coerce_to_error(obj, default_title):
     return Error(title=default_title, content={'message': obj})
 
 
-def _decode_result(response, decoders=None):
+def _decode_result(response, decoders=None, force_codec=False):
     """
     Given an HTTP response, return the decoded Core API document.
     """
     if response.content:
         # Content returned in response. We should decode it.
         content_type = response.headers.get('content-type')
-        codec = negotiate_decoder(content_type, decoders=decoders)
+        if force_codec:
+            codec = decoders[0]
+        else:
+            codec = negotiate_decoder(content_type, decoders=decoders)
         result = codec.load(response.content, base_url=response.url)
     else:
         # No content returned in response.
@@ -267,7 +270,7 @@ class HTTPTransport(BaseTransport):
     def headers(self):
         return self._headers
 
-    def transition(self, link, params=None, decoders=None, link_ancestors=None):
+    def transition(self, link, params=None, decoders=None, link_ancestors=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
         params = _get_params(method, link.fields, params)
@@ -284,7 +287,7 @@ class HTTPTransport(BaseTransport):
         if self._response_callback:
             self._response_callback(response)
 
-        result = _decode_result(response, decoders)
+        result = _decode_result(response, decoders, force_codec)
 
         if isinstance(result, Document) and link_ancestors:
             result = _handle_inplace_replacements(result, link, link_ancestors)

@@ -1,5 +1,5 @@
 # coding: utf-8
-from coreapi import action
+from coreapi import Client
 from coreapi import Array, Document, Object, Link, Error, Field
 from coreapi.exceptions import LinkLookupError
 import pytest
@@ -442,23 +442,27 @@ def test_link_field_items_must_be_valid():
 # Invalid calls to '.action()' should error.
 
 def test_keys_should_be_a_list_or_string(doc):
+    client = Client()
     with pytest.raises(TypeError):
-        action(doc, True)
+        client.action(doc, True)
 
 
 def test_keys_should_be_a_list_of_strings_or_ints(doc):
+    client = Client()
     with pytest.raises(TypeError):
-        action(doc, ['nested', {}])
+        client.action(doc, ['nested', {}])
 
 
 def test_keys_should_be_valid_indexes(doc):
+    client = Client()
     with pytest.raises(LinkLookupError):
-        action(doc, 'dummy')
+        client.action(doc, 'dummy')
 
 
 def test_keys_should_access_a_link(doc):
+    client = Client()
     with pytest.raises(LinkLookupError):
-        action(doc, 'dict')
+        client.action(doc, 'dict')
 
 
 # Documents and Objects have `.data` and `.links` attributes
