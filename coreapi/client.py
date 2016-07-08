@@ -1,8 +1,7 @@
-from coreapi.codecs import default_decoders
+from coreapi import codecs, exceptions, transports
 from coreapi.compat import string_types
 from coreapi.document import Document, Link
-from coreapi.exceptions import LinkLookupError
-from coreapi.transports import default_transports, determine_transport
+from coreapi.utils import determine_transport
 import collections
 import itypes
 
@@ -36,7 +35,7 @@ def _lookup_link(document, keys):
         except (KeyError, IndexError, TypeError):
             index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
             msg = 'Index %s did not reference a link. Key %s was not found.'
-            raise LinkLookupError(msg % (index_string, repr(key).strip('u')))
+            raise exceptions.LinkLookupError(msg % (index_string, repr(key).strip('u')))
         if isinstance(node, Document):
             ancestor = LinkAncestor(document=node, keys=keys[:idx + 1])
             link_ancestors.append(ancestor)
@@ -45,7 +44,7 @@ def _lookup_link(document, keys):
     if not isinstance(node, Link):
         index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
         msg = "Can only call 'action' on a Link. Index %s returned type '%s'."
-        raise LinkLookupError(
+        raise exceptions.LinkLookupError(
             msg % (index_string, type(node).__name__)
         )
 
@@ -53,11 +52,18 @@ def _lookup_link(document, keys):
 
 
 class Client(itypes.Object):
+    DEFAULT_TRANSPORTS = [
+        transports.HTTPTransport()
+    ]
+    DEFAULT_DECODERS = [
+        codecs.CoreJSONCodec(), codecs.JSONCodec(), codecs.TextCodec()
+    ]
+
     def __init__(self, decoders=None, transports=None):
         if decoders is None:
-            decoders = default_decoders
+            decoders = self.DEFAULT_DECODERS
         if transports is None:
-            transports = default_transports
+            transports = self.DEFAULT_TRANSPORTS
         self._decoders = itypes.List(decoders)
         self._transports = itypes.List(transports)
 
@@ -73,16 +79,16 @@ class Client(itypes.Object):
         link = Link(url, action='get')
 
         # Perform the action, and return a new document.
-        transport = determine_transport(link.url, transports=self.transports)
-        return transport.transition(link, decoders=self.decoders, force_codec=force_codec)
+        transport = determine_transport(self.transports, link.url)
+        return transport.transition(link, self.decoders, force_codec=force_codec)
 
     def reload(self, document, force_codec=False):
         url = document.url
         link = Link(url, action='get')
 
         # Perform the action, and return a new document.
-        transport = determine_transport(link.url, transports=self.transports)
-        return transport.transition(link, decoders=self.decoders, force_codec=force_codec)
+        transport = determine_transport(self.transports, link.url)
+        return transport.transition(link, self.decoders, force_codec=force_codec)
 
     def action(self, document, keys, params=None, action=None, encoding=None, transform=None):
         if isinstance(keys, string_types):
@@ -99,5 +105,5 @@ class Client(itypes.Object):
             link = Link(link.url, action=action, encoding=encoding, transform=transform, fields=link.fields)
 
         # Perform the action, and return a new document.
-        transport = determine_transport(link.url, transports=self.transports)
-        return transport.transition(link, params, decoders=self.decoders, link_ancestors=link_ancestors)
+        transport = determine_transport(self.transports, link.url)
+        return transport.transition(link, self.decoders, params=params, link_ancestors=link_ancestors)

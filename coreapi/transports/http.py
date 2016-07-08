@@ -1,11 +1,11 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi.codecs import default_decoders, negotiate_decoder
 from coreapi.compat import is_file, urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
+from coreapi.utils import negotiate_decoder
 import collections
 import requests
 import itypes
@@ -89,13 +89,10 @@ def _get_url(url, path_params):
     return url
 
 
-def _get_headers(url, decoders=None, credentials=None):
+def _get_headers(url, decoders, credentials=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
-    if decoders is None:
-        decoders = default_decoders
-
     accept = '%s, */*' % decoders[0].media_type
 
     headers = {
@@ -197,17 +194,17 @@ def _coerce_to_error(obj, default_title):
     return Error(title=default_title, content={'message': obj})
 
 
-def _decode_result(response, decoders=None, force_codec=False):
+def _decode_result(response, decoders, force_codec=False):
     """
     Given an HTTP response, return the decoded Core API document.
     """
     if response.content:
         # Content returned in response. We should decode it.
-        content_type = response.headers.get('content-type')
         if force_codec:
             codec = decoders[0]
         else:
-            codec = negotiate_decoder(content_type, decoders=decoders)
+            content_type = response.headers.get('content-type')
+            codec = negotiate_decoder(decoders, content_type)
         result = codec.load(response.content, base_url=response.url)
     else:
         # No content returned in response.
@@ -270,7 +267,7 @@ class HTTPTransport(BaseTransport):
     def headers(self):
         return self._headers
 
-    def transition(self, link, params=None, decoders=None, link_ancestors=None, force_codec=False):
+    def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
         params = _get_params(method, link.fields, params)

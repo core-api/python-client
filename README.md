@@ -86,11 +86,13 @@ Or they may remove part of the document tree.
 
 ### Saving and loading documents
 
-To save or load documents into raw bytestrings, use `dump()` and `load()`.
+To save or load documents into raw bytestrings, instantiate a codec and then
+use the `dump()` and `load()` methods.
 
 For example, to save a document to disk.
 
-    content_type, content = coreapi.dump(doc)
+    codec = coreapi.codecs.CoreJSONCodec()
+    content = codec.dump(doc)
     file = open('doc.json', 'wb')
     file.write(content)
     file.close()
@@ -100,7 +102,7 @@ To load the same document back again.
     file = open('doc.json', 'rb')
     content = file.read()
     file.close()
-    doc = coreapi.load(content)
+    doc = codec.load(content)
 
 ---
 

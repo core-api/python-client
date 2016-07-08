@@ -8,7 +8,7 @@ import pytest
 class MockTransport(HTTPTransport):
     schemes = ['mock']
 
-    def transition(self, link, params=None, decoders=None, link_ancestors=None):
+    def transition(self, link, decoders, params=None, link_ancestors=None):
         if link.action == 'get':
             document = Document(title='new', content={'new': 123})
         elif link.action in ('put', 'post'):

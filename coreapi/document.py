@@ -19,8 +19,8 @@ def _repr(node):
 
 
 def _str(node):
-    from coreapi.codecs.coretext import CoreTextCodec
-    return CoreTextCodec().dump(node)
+    from coreapi.codecs.display import DisplayCodec
+    return DisplayCodec().dump(node)
 
 
 def _key_sorting(item):
