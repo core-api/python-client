@@ -1,33 +1,69 @@
-from coreapi.compat import string_types
+from coreapi import exceptions
+from coreapi.compat import urlparse
 
 
-# Robust dictionary lookups, that always return an item of the correct
-# type, using an empty default if an incorrect type exists.
-# Useful for liberal parsing of inputs.
+def determine_transport(transports, url):
+    """
+    Given a URL determine the appropriate transport instance.
+    """
+    url_components = urlparse.urlparse(url)
+    scheme = url_components.scheme.lower()
+    netloc = url_components.netloc
 
-def get_string(item, key):
-    value = item.get(key)
-    if isinstance(value, string_types):
-        return value
-    return ''
+    if not scheme:
+        raise exceptions.TransportError("URL missing scheme '%s'." % url)
 
+    if not netloc:
+        raise exceptions.TransportError("URL missing hostname '%s'." % url)
 
-def get_dict(item, key):
-    value = item.get(key)
-    if isinstance(value, dict):
-        return value
-    return {}
+    for transport in transports:
+        if scheme in transport.schemes:
+            return transport
 
-
-def get_list(item, key):
-    value = item.get(key)
-    if isinstance(value, list):
-        return value
-    return []
+    raise exceptions.TransportError("Unsupported URL scheme '%s'." % scheme)
 
 
-def get_bool(item, key):
-    value = item.get(key)
-    if isinstance(value, bool):
-        return value
-    return False
+def negotiate_decoder(decoders, content_type=None):
+    """
+    Given the value of a 'Content-Type' header, return the appropriate
+    codec for decoding the request content.
+    """
+    if content_type is None:
+        return decoders[0]
+
+    content_type = content_type.split(';')[0].strip().lower()
+    main_type = content_type.split('/')[0] + '/*'
+    for codec in decoders:
+        if (codec.media_type == content_type) or (codec.media_type == main_type):
+            return codec
+
+    msg = "Unsupported media in Content-Type header '%s'" % content_type
+    raise exceptions.UnsupportedContentType(msg)
+
+
+def negotiate_encoder(encoders, accept=None):
+    """
+    Given the value of a 'Accept' header, return the appropriate codec for
+    encoding the response content.
+    """
+    if accept is None:
+        return encoders[0]
+
+    acceptable = set([
+        item.split(';')[0].strip().lower()
+        for item in accept.split(',')
+    ])
+
+    for codec in encoders:
+        if codec.media_type in acceptable:
+            return codec
+
+    for codec in encoders:
+        if codec.media_type.split('/')[0] + '/*' in acceptable:
+            return codec
+
+    if '*/*' in acceptable:
+        return encoders[0]
+
+    msg = "Unsupported media in Accept header '%s'" % accept
+    raise exceptions.NotAcceptable(msg)

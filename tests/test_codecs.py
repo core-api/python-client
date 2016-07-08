@@ -1,9 +1,9 @@
 # coding: utf-8
-from coreapi import negotiate_decoder, negotiate_encoder
 from coreapi.codecs import CoreJSONCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, UnsupportedContentType, NotAcceptable
+from coreapi.utils import negotiate_decoder, negotiate_encoder
 import pytest
 
 
@@ -200,51 +200,61 @@ def test_invalid_link_fields_ignored(json_codec):
 # Tests for 'Content-Type' header lookup.
 
 def test_get_default_decoder():
-    assert isinstance(negotiate_decoder(), CoreJSONCodec)
+    codec = negotiate_decoder([CoreJSONCodec()])
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_supported_decoder():
-    assert isinstance(negotiate_decoder('application/vnd.coreapi+json'), CoreJSONCodec)
+    codec = negotiate_decoder([CoreJSONCodec()], 'application/vnd.coreapi+json')
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_supported_decoder_with_parameters():
-    assert isinstance(negotiate_decoder('application/vnd.coreapi+json; verison=1.0'), CoreJSONCodec)
+    codec = negotiate_decoder([CoreJSONCodec()], 'application/vnd.coreapi+json; verison=1.0')
+    assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_unsupported_decoder():
     with pytest.raises(UnsupportedContentType):
-        negotiate_decoder('application/csv')
+        negotiate_decoder([CoreJSONCodec()], 'application/csv')
 
 
 # Tests for 'Accept' header lookup.
 
 def test_get_default_encoder():
-    codec = negotiate_encoder()
+    codec = negotiate_encoder([CoreJSONCodec()])
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_encoder_preference():
     codec = negotiate_encoder(
+        [CoreJSONCodec()],
         accept='text/html; q=1.0, application/vnd.coreapi+json; q=1.0'
     )
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_accepted_encoder():
-    codec = negotiate_encoder(accept='application/vnd.coreapi+json')
+    codec = negotiate_encoder(
+        [CoreJSONCodec()],
+        accept='application/vnd.coreapi+json'
+    )
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_underspecified_encoder():
-    codec = negotiate_encoder(accept='application/*', encoders=[CoreJSONCodec()])
+    codec = negotiate_encoder(
+        [CoreJSONCodec()],
+        accept='application/*'
+    )
     assert isinstance(codec, CoreJSONCodec)
 
 
 def test_get_unsupported_encoder():
     with pytest.raises(NotAcceptable):
-        negotiate_encoder('application/csv')
+        negotiate_encoder([CoreJSONCodec()], 'application/csv')
 
 
 def test_get_unsupported_encoder_with_fallback():
-    codec = negotiate_encoder(accept='application/csv, */*')
+    codec = negotiate_encoder([CoreJSONCodec()], accept='application/csv, */*')
     assert isinstance(codec, CoreJSONCodec)
