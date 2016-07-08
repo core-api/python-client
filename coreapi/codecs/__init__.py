@@ -75,22 +75,3 @@ def negotiate_encoder(accept=None, encoders=None):
 
     msg = "Unsupported media in Accept header '%s'" % accept
     raise NotAcceptable(msg)
-
-
-def load(bytestring, content_type=None, base_url=None, decoders=None):
-    """
-    Given a bytestring and an optional content_type, return the
-    parsed Document.
-    """
-    codec = negotiate_decoder(content_type, decoders=decoders)
-    return codec.load(bytestring, base_url=base_url)
-
-
-def dump(document, accept=None, encoders=None, **kwargs):
-    """
-    Given a document, and an optional accept header, return a two-tuple of
-    the selected media type and encoded bytestring.
-    """
-    codec = negotiate_encoder(accept, encoders=encoders)
-    content = codec.dump(document, **kwargs)
-    return (codec.media_type, content)
