@@ -54,23 +54,19 @@ if sys.argv[-1] == 'publish':
 setup(
     name='coreapi',
     version=version,
-    url='http://www.coreapi.org',
+    url='https://github.com/core-api/python-client',
     license='BSD',
-    description='Hypermedia driven Web APIs.',
+    description='Python client library for Core API.',
     author='Tom Christie',
     author_email='tom@tomchristie.com',
     packages=get_packages('coreapi'),
     package_data=get_package_data('coreapi'),
     install_requires=[
         'requests',
-        'click',
         'itypes',
         'uritemplate'
     ],
     entry_points={
-        'console_scripts': [
-            'coreapi=coreapi.commandline:client'
-        ],
         'coreapi.codecs': [
             'corejson=coreapi.codecs:CoreJSONCodec',
             'json=coreapi.codecs:JSONCodec',
