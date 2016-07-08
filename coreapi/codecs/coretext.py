@@ -1,21 +1,20 @@
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
-from coreapi.compat import string_types
+from coreapi.compat import console_style, string_types
 from coreapi.document import Document, Link, Array, Object, Error
-import click
 import json
 
 
 def _colorize_document(text):
-    return click.style(text, fg='green')  # pragma: nocover
+    return console_style(text, fg='green')  # pragma: nocover
 
 
 def _colorize_error(text):
-    return click.style(text, fg='red')  # pragma: nocover
+    return console_style(text, fg='red')  # pragma: nocover
 
 
 def _colorize_keys(text):
-    return click.style(text, fg='cyan')  # pragma: nocover
+    return console_style(text, fg='cyan')  # pragma: nocover
 
 
 def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=None):

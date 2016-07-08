@@ -45,3 +45,11 @@ def force_bytes(string):
     if isinstance(string, string_types):
         return string.encode('utf-8')
     return string
+
+
+try:
+    import click
+    console_style = click.style
+except ImportError:
+    def console_style(text, **kwargs):
+        return text
