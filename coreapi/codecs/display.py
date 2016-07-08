@@ -110,7 +110,7 @@ def _fields_to_plaintext(link, colorize=False):
     ])
 
 
-class CoreTextCodec(BaseCodec):
+class DisplayCodec(BaseCodec):
     """
     A plaintext representation of a Document, intended for readability.
     """
