@@ -4,6 +4,7 @@
 from setuptools import setup
 import re
 import os
+import shutil
 import sys
 
 
