@@ -64,6 +64,7 @@ class PythonCodec(BaseCodec):
     A Python representation of a Document, for use with '__repr__'.
     """
     media_type = 'text/python'
+    supports = ['encoding']
 
     def dump(self, node, **kwargs):
         # Object and Array only have the class name wrapper if they
