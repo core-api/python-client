@@ -1,7 +1,9 @@
-coverage==3.7.1
-flake8==2.4.0
-itypes==1.1.0
-pep8==1.5.7
-pytest==2.6.4
-requests==2.6.0
-uritemplate==0.6
+# Package requirements
+itypes
+requests
+uritemplate
+
+# Testing requirements
+coverage
+flake8
+pytest
