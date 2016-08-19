@@ -38,6 +38,16 @@ class LinkLookupError(Exception):
     pass
 
 
+class ValidationError(Exception):
+    """
+    Raised when the parameters passed do not match the link fields.
+
+    * One or more parameters were passed that do not have a corresponding field.
+    * One or more required fields did not have a corresponding parameter passed.
+    """
+    pass
+
+
 class ErrorMessage(Exception):
     """
     Raised when the transition returns an error message.

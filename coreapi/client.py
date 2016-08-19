@@ -83,12 +83,7 @@ class Client(itypes.Object):
         return transport.transition(link, self.decoders, force_codec=force_codec)
 
     def reload(self, document, force_codec=False):
-        url = document.url
-        link = Link(url, action='get')
-
-        # Perform the action, and return a new document.
-        transport = determine_transport(self.transports, link.url)
-        return transport.transition(link, self.decoders, force_codec=force_codec)
+        return self.get(document.url, force_codec=force_codec)
 
     def action(self, document, keys, params=None, action=None, encoding=None, transform=None):
         if isinstance(keys, string_types):
