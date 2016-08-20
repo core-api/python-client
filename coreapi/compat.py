@@ -47,6 +47,12 @@ def force_bytes(string):
     return string
 
 
+def force_text(string):
+    if not isinstance(string, string_types):
+        return string.decode('utf-8')
+    return string
+
+
 try:
     import click
     console_style = click.style

@@ -140,8 +140,10 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
             else:
                 opts['json'] = params.data
         elif encoding == 'multipart/form-data':
-            opts['data'] = params.data
-            opts['files'] = params.files
+            files = {}
+            files.update(params.data)
+            files.update(params.files)
+            opts['files'] = files
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
