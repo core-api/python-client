@@ -1,6 +1,7 @@
 # coding: utf-8
 from coreapi import Document, Link, Field
 from coreapi.codecs import CoreJSONCodec
+from coreapi.compat import force_text
 from coreapi.exceptions import TransportError
 from coreapi.transports import HTTPTransport
 from coreapi.utils import determine_transport
@@ -91,7 +92,8 @@ def test_get_with_path_parameter(monkeypatch, http):
 def test_post(monkeypatch, http):
     def mockreturn(self, request):
         codec = CoreJSONCodec()
-        content = codec.dump(Document(content={'data': json.loads(request.body)}))
+        body = force_text(request.body)
+        content = codec.dump(Document(content={'data': json.loads(body)}))
         return MockResponse(content)
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)
