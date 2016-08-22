@@ -10,6 +10,7 @@ __all__ = [
 
 
 try:
+    # Python 2
     import urlparse
 
     string_types = (basestring,)
@@ -25,6 +26,7 @@ try:
         return base64.b64encode(input_string)
 
 except ImportError:
+    # Python 3
     import urllib.parse as urlparse
     from io import IOBase
 
