@@ -51,19 +51,27 @@ def _lookup_link(document, keys):
     return (node, link_ancestors)
 
 
-class Client(itypes.Object):
-    DEFAULT_TRANSPORTS = [
-        transports.HTTPTransport()
-    ]
-    DEFAULT_DECODERS = [
-        codecs.CoreJSONCodec(), codecs.JSONCodec(), codecs.TextCodec()
+def get_default_decoders():
+    return [
+        codecs.CoreJSONCodec(),
+        codecs.JSONCodec(),
+        codecs.TextCodec(),
+        codecs.DownloadCodec()
     ]
 
+
+def get_default_transports():
+    return [
+        transports.HTTPTransport()
+    ]
+
+
+class Client(itypes.Object):
     def __init__(self, decoders=None, transports=None):
         if decoders is None:
-            decoders = self.DEFAULT_DECODERS
+            decoders = get_default_decoders()
         if transports is None:
-            transports = self.DEFAULT_TRANSPORTS
+            transports = get_default_transports()
         self._decoders = itypes.List(decoders)
         self._transports = itypes.List(transports)
 
