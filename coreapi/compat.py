@@ -10,6 +10,7 @@ __all__ = [
 
 
 try:
+    # Python 2
     import urlparse
 
     string_types = (basestring,)
@@ -25,6 +26,7 @@ try:
         return base64.b64encode(input_string)
 
 except ImportError:
+    # Python 3
     import urllib.parse as urlparse
     from io import IOBase
 
@@ -44,6 +46,12 @@ except ImportError:
 def force_bytes(string):
     if isinstance(string, string_types):
         return string.encode('utf-8')
+    return string
+
+
+def force_text(string):
+    if not isinstance(string, string_types):
+        return string.decode('utf-8')
     return string
 
 

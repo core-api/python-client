@@ -10,6 +10,7 @@ import collections
 import requests
 import itypes
 import mimetypes
+import os
 import uritemplate
 
 
@@ -149,6 +150,13 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
             content_type = _get_content_type(params.body)
             if content_type:
                 opts['headers']['content-type'] = content_type
+
+            if hasattr(params.body, 'name'):
+                filename = os.path.basename(params.body.name)
+                content_disposition = 'attachment; filename="%s"' % filename
+            else:
+                content_disposition = 'attachment'
+            opts['headers']['content-disposition'] = content_disposition
 
     request = requests.Request(method, url, **opts)
     return session.prepare_request(request)
