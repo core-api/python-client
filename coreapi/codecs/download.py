@@ -1,14 +1,23 @@
 # coding: utf-8
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import urlparse
-from coreapi.utils import safe_filename
+import cgi
+import mimetypes
 import os
 import posixpath
 import shutil
 import tempfile
 
 
-def _get_available_path(path):
+def _unique_output_path(path):
+    """
+    Given a path like '/a/b/c.txt'
+
+    Return the first available filename that doesn't already exist,
+    using an incrementing suffix if needed.
+
+    For example: '/a/b/c.txt' or '/a/b/c (1).txt' or '/a/b/c (2).txt'...
+    """
     basename, ext = os.path.splitext(path)
     idx = 0
     while os.path.exists(path):
@@ -17,10 +26,54 @@ def _get_available_path(path):
     return path
 
 
-def _get_filename_from_url(url):
+def _safe_filename(filename):
+    filename = os.path.basename(filename)
+
+    keepcharacters = (' ', '.', '_', '-')
+    filename = ''.join(
+        char for char in filename
+        if char.isalnum() or char in keepcharacters
+    ).strip().strip('.')
+
+    return filename
+
+
+def _get_filename_from_content_disposition(content_disposition):
+    params = value, params = cgi.parse_header(content_disposition)
+
+    if 'filename*' in params:
+        try:
+            charset, lang, filename = params['filename*'].split('\'', 2)
+            filename = urlparse.unquote(filename)
+            filename = filename.encode('iso-8859-1').decode(charset)
+            return _safe_filename(filename)
+        except (ValueError, LookupError):
+            pass
+
+    if 'filename' in params:
+        filename = params['filename']
+        return _safe_filename(filename)
+
+    return None
+
+
+def _get_filename_from_url(url, content_type=None):
     parsed = urlparse.urlparse(url)
-    final_path_component = posixpath.basename(parsed.path.rstrip('/'))
-    return safe_filename(final_path_component)
+    filename = _safe_filename(posixpath.basename(parsed.path.rstrip('/')))
+    if filename and ('.' not in filename) and (content_type is not None):
+        ext = mimetypes.guess_extension(content_type)
+        if ext:
+            filename = filename + ext
+    return filename
+
+
+def _get_filename(base_url=None, content_type=None, content_disposition=None):
+    filename = None
+    if content_disposition:
+        filename = _get_filename_from_content_disposition(content_disposition)
+    if base_url and not filename:
+        filename = _get_filename_from_url(base_url, content_type)
+    return filename
 
 
 class DownloadCodec(BaseCodec):
@@ -43,8 +96,9 @@ class DownloadCodec(BaseCodec):
         return self._download_dir
 
     def decode(self, bytestring, **options):
-        filename = options.get('filename')
         base_url = options.get('base_url')
+        content_type = options.get('content_type')
+        content_disposition = options.get('content_disposition')
 
         # Write the download to a temporary .download file.
         fd, temp_path = tempfile.mkstemp(dir=self.download_dir, suffix='.download')
@@ -53,18 +107,14 @@ class DownloadCodec(BaseCodec):
         file_handle.close()
 
         # Determine the output filename.
-        output_filename = None
-        if filename:
-            output_filename = filename
-        elif base_url is not None:
-            output_filename = _get_filename_from_url(base_url)
+        output_filename = _get_filename(base_url, content_type, content_disposition)
         if not output_filename:
-            # Fallback for no filename, or empty filename generated.
-            filename = os.path.basename(temp_path)
+            # Fallback if no output filename could be determined.
+            output_filename = os.path.basename(temp_path)
 
         # Determine the full output path.
         output_path = os.path.join(self.download_dir, output_filename)
-        output_path = _get_available_path(output_path)
+        output_path = _unique_output_path(output_path)
 
         # Move the temporary download file to the final location.
         os.rename(temp_path, output_path)

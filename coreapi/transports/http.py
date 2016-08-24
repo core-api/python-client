@@ -217,6 +217,11 @@ def _decode_result(response, decoders, force_codec=False):
         options = {
             'base_url': response.url
         }
+        if 'content-type' in response.headers:
+            options['content_type'] = response.headers['content-type']
+        if 'content-disposition' in response.headers:
+            options['content_disposition'] = response.headers['content-disposition']
+
         result = codec.decode(response.content, **options)
     else:
         # No content returned in response.
