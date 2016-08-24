@@ -6,5 +6,5 @@ class TextCodec(BaseCodec):
     media_type = 'text/*'
     supports = ['data']
 
-    def load(self, bytes, base_url=None):
-        return bytes.decode('utf-8')
+    def decode(self, bytestring, **options):
+        return bytestring.decode('utf-8')

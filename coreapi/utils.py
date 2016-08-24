@@ -1,5 +1,20 @@
 from coreapi import exceptions
 from coreapi.compat import urlparse
+import os
+
+
+def safe_filename(filename):
+    filename = os.path.basename(filename)
+
+    keepcharacters = (' ', '.', '_')
+    filename = "".join(
+        char for char in filename
+        if char.isalnum() or char in keepcharacters
+    ).strip()
+
+    if filename == '..':
+        return ''
+    return filename
 
 
 def determine_transport(transports, url):

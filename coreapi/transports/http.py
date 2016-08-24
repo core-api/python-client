@@ -213,7 +213,11 @@ def _decode_result(response, decoders, force_codec=False):
         else:
             content_type = response.headers.get('content-type')
             codec = negotiate_decoder(decoders, content_type)
-        result = codec.load(response.content, base_url=response.url)
+
+        options = {
+            'base_url': response.url
+        }
+        result = codec.decode(response.content, **options)
     else:
         # No content returned in response.
         result = None

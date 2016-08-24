@@ -93,7 +93,7 @@ def test_post(monkeypatch, http):
     def mockreturn(self, request):
         codec = CoreJSONCodec()
         body = force_text(request.body)
-        content = codec.dump(Document(content={'data': json.loads(body)}))
+        content = codec.encode(Document(content={'data': json.loads(body)}))
         return MockResponse(content)
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)

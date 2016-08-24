@@ -5,8 +5,8 @@ class BaseCodec(itypes.Object):
     media_type = None
     supports = []  # 'encoding', 'decoding', 'data'
 
-    def load(self, bytes, base_url=None):
+    def decode(self, bytestring, **options):
         raise NotImplementedError()  # pragma: nocover
 
-    def dump(self, document, **kwargs):
+    def encode(self, document, **options):
         raise NotImplementedError()  # pragma: nocover

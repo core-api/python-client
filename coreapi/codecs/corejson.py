@@ -228,14 +228,16 @@ def _primative_to_document(data, base_url=None):
 
 class CoreJSONCodec(BaseCodec):
     media_type = 'application/vnd.coreapi+json'
-    supports = ['encoding', 'decoding']
+    supports = ['encode', 'decode']
 
-    def load(self, bytes, base_url=None):
+    def decode(self, bytestring, **options):
         """
         Takes a bytestring and returns a document.
         """
+        base_url = options.get('base_url')
+
         try:
-            data = json.loads(bytes.decode('utf-8'))
+            data = json.loads(bytestring.decode('utf-8'))
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
@@ -248,22 +250,24 @@ class CoreJSONCodec(BaseCodec):
 
         return doc
 
-    def dump(self, document, indent=False, **kwargs):
+    def encode(self, document, **options):
         """
         Takes a document and returns a bytestring.
         """
+        indent = options.get('indent')
+
         if indent:
-            options = {
+            kwargs = {
                 'ensure_ascii': False,
                 'indent': 4,
                 'separators': VERBOSE_SEPARATORS
             }
         else:
-            options = {
+            kwargs = {
                 'ensure_ascii': False,
                 'indent': None,
                 'separators': COMPACT_SEPARATORS
             }
 
         data = _document_to_primative(document)
-        return force_bytes(json.dumps(data, **options))
+        return force_bytes(json.dumps(data, **kwargs))

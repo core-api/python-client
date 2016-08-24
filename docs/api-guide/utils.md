@@ -1,4 +1,4 @@
-# Utils
+# Utilities
 
 ## lookup_elements(document, keys, strict_types=True)
 

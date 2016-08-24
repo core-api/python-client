@@ -15,12 +15,12 @@ def _to_immutable(value):
 
 def _repr(node):
     from coreapi.codecs.python import PythonCodec
-    return PythonCodec().dump(node)
+    return PythonCodec().encode(node)
 
 
 def _str(node):
     from coreapi.codecs.display import DisplayCodec
-    return DisplayCodec().dump(node)
+    return DisplayCodec().encode(node)
 
 
 def _key_sorting(item):
