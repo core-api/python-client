@@ -9,7 +9,7 @@ import shutil
 import tempfile
 
 
-class DownloadedFile(_TemporaryFileWrapper):
+class DownloadedFile(tempfile._TemporaryFileWrapper):
     """
     A wrapper around the returned file object, in order to provide
     a clearer interface than simply returning a file handle.
