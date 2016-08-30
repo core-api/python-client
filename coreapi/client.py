@@ -121,7 +121,7 @@ class Client(itypes.Object):
     def reload(self, document, force_codec=False):
         return self.get(document.url, force_codec=force_codec)
 
-    def action(self, document, keys, params=None, validate=True, action=None, encoding=None, transform=None):
+    def action(self, document, keys, params=None, validate=True, overrides=None):
         if isinstance(keys, string_types):
             keys = [keys]
 
@@ -133,12 +133,14 @@ class Client(itypes.Object):
         if validate:
             _validate_parameters(link, params)
 
-        if (action is not None) or (encoding is not None) or (transform is not None):
+        if overrides:
             # Handle any explicit overrides.
-            action = link.action if (action is None) else action
-            encoding = link.encoding if (encoding is None) else encoding
-            transform = link.transform if (transform is None) else transform
-            link = Link(link.url, action=action, encoding=encoding, transform=transform, fields=link.fields)
+            url = overrides.get('url', link.url)
+            action = overrides.get('action', link.action)
+            encoding = overrides.get('encoding', link.encoding)
+            transform = overrides.get('transform', link.transform)
+            fields = overrides.get('fields', link.fields)
+            link = Link(url, action=action, encoding=encoding, transform=transform, fields=fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)

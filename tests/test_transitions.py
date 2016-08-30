@@ -72,12 +72,12 @@ def test_delete(doc):
 # Test overrides
 
 def test_override_action(doc):
-    new = client.action(doc, ['nested', 'follow'], action='put')
+    new = client.action(doc, ['nested', 'follow'], overrides={'action': 'put'})
     assert new == {'nested': {'new': 123, 'foo': None}}
     assert new.title == 'original'
 
 
 def test_override_transform(doc):
-    new = client.action(doc, ['nested', 'update'], params={'foo': 456}, transform='new')
+    new = client.action(doc, ['nested', 'update'], params={'foo': 456}, overrides={'transform': 'new'})
     assert new == {'new': 123, 'foo': 456}
     assert new.title == 'new'
