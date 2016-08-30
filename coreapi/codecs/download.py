@@ -9,6 +9,15 @@ import shutil
 import tempfile
 
 
+class DownloadedFile(_TemporaryFileWrapper):
+    """
+    A wrapper around the returned file object, in order to provide
+    a clearer interface than simply returning a file handle.
+    """
+    def __init__(self, file, name):
+        super(DownloadedFile, self).__init__(file, name, delete=False)
+
+
 def _unique_output_path(path):
     """
     Given a path like '/a/b/c.txt'
@@ -27,6 +36,9 @@ def _unique_output_path(path):
 
 
 def _safe_filename(filename):
+    """
+    Sanitize output filenames, to remove any potentially unsafe characters.
+    """
     filename = os.path.basename(filename)
 
     keepcharacters = (' ', '.', '_', '-')
@@ -39,6 +51,9 @@ def _safe_filename(filename):
 
 
 def _get_filename_from_content_disposition(content_disposition):
+    """
+    Determine an output filename based on the `Content-Disposition` header.
+    """
     params = value, params = cgi.parse_header(content_disposition)
 
     if 'filename*' in params:
@@ -58,9 +73,15 @@ def _get_filename_from_content_disposition(content_disposition):
 
 
 def _get_filename_from_url(url, content_type=None):
+    """
+    Determine an output filename based on the download URL.
+    """
     parsed = urlparse.urlparse(url)
-    filename = _safe_filename(posixpath.basename(parsed.path.rstrip('/')))
+    final_path_component = posixpath.basename(parsed.path.rstrip('/'))
+    filename = _safe_filename(final_path_component)
     if filename and ('.' not in filename) and (content_type is not None):
+        # If no extension exists then attempt to add one,
+        # based on the content type.
         ext = mimetypes.guess_extension(content_type)
         if ext:
             filename = filename + ext
@@ -68,6 +89,9 @@ def _get_filename_from_url(url, content_type=None):
 
 
 def _get_filename(base_url=None, content_type=None, content_disposition=None):
+    """
+    Determine an output filename to use for the download.
+    """
     filename = None
     if content_disposition:
         filename = _get_filename_from_content_disposition(content_disposition)
@@ -77,10 +101,16 @@ def _get_filename(base_url=None, content_type=None, content_disposition=None):
 
 
 class DownloadCodec(BaseCodec):
+    """
+    A codec to handle raw file downloads, such as images and other media.
+    """
     media_type = '*/*'
     supports = ['data']
 
     def __init__(self, download_dir=None):
+        """
+        `download_dir` - The path to use for file downloads.
+        """
         self._temporary = False
         self._download_dir = download_dir
 
@@ -118,4 +148,5 @@ class DownloadCodec(BaseCodec):
 
         # Move the temporary download file to the final location.
         os.rename(temp_path, output_path)
-        return open(output_path, 'rb')
+        output_file = open(output_path, 'rb')
+        return DownloadedFile(output_file, output_path)
