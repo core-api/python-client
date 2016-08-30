@@ -18,6 +18,17 @@ Params = collections.namedtuple('Params', ['path', 'query', 'headers', 'body', '
 empty_params = Params({}, {}, {}, None, {}, {})
 
 
+class ForceMultiPartDict(dict):
+    # A dictionary that always evaluates as True.
+    # Allows us to force requests to use multipart encoding, even when no
+    # file parameters are passed.
+    def __bool__(self):
+        return True
+
+    def __nonzero__(self):
+        return True
+
+
 def _get_method(action):
     if not action:
         return 'GET'
@@ -136,7 +147,7 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
                 opts['json'] = params.data
         elif encoding == 'multipart/form-data':
             opts['data'] = params.data
-            opts['files'] = params.files
+            opts['files'] = ForceMultiPartDict(params.files)
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
