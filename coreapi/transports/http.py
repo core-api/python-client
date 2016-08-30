@@ -14,8 +14,8 @@ import os
 import uritemplate
 
 
-Params = collections.namedtuple('Params', ['path', 'query', 'headers', 'body', 'data', 'files'])
-empty_params = Params({}, {}, {}, None, {}, {})
+Params = collections.namedtuple('Params', ['path', 'query', 'body', 'data', 'files'])
+empty_params = Params({}, {}, None, {}, {})
 
 
 class ForceMultiPartDict(dict):
@@ -46,7 +46,6 @@ def _get_params(method, fields, params=None):
 
     path = {}
     query = {}
-    headers = {}
     body = None
     data = {}
     files = {}
@@ -62,8 +61,6 @@ def _get_params(method, fields, params=None):
             path[key] = value
         elif location == 'query':
             query[key] = value
-        elif location == 'header':
-            headers[key] = value
         elif location == 'body':
             body = value
         elif location == 'form':
@@ -72,7 +69,7 @@ def _get_params(method, fields, params=None):
             else:
                 data[key] = value
 
-    return Params(path, query, headers, body, data, files)
+    return Params(path, query, body, data, files)
 
 
 def _get_encoding(encoding, method):
