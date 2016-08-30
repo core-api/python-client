@@ -64,20 +64,14 @@ def _get_params(method, fields, params=None):
     return Params(path, query, headers, body, data, files)
 
 
-def _get_encoding(encoding, params):
+def _get_encoding(encoding, method):
     if encoding:
         return encoding
 
-    if params.body is not None:
-        if is_file(params.body):
-            return 'application/octet-stream'
-        return 'application/json'
-    elif params.files:
-        return 'multipart/form-data'
-    elif params.data:
-        return 'application/json'
+    if method in ('GET', 'DELETE'):
+        return ''
 
-    return ''
+    return 'application/json'
 
 
 def _get_url(url, path_params):
@@ -287,8 +281,8 @@ class HTTPTransport(BaseTransport):
     def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
+        encoding = _get_encoding(link.encoding, method)
         params = _get_params(method, link.fields, params)
-        encoding = _get_encoding(link.encoding, params)
         url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
