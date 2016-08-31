@@ -1,11 +1,10 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
+from coreapi import exceptions, utils
 from coreapi.compat import is_file, urlparse
 from coreapi.document import Document, Object, Link, Array, Error
-from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
-from coreapi.utils import negotiate_decoder
 import collections
 import requests
 import itypes
@@ -14,8 +13,8 @@ import os
 import uritemplate
 
 
-Params = collections.namedtuple('Params', ['path', 'query', 'body', 'data', 'files'])
-empty_params = Params({}, {}, None, {}, {})
+Params = collections.namedtuple('Params', ['path', 'query', 'data', 'files'])
+empty_params = Params({}, {}, {}, {})
 
 
 class ForceMultiPartDict(dict):
@@ -35,9 +34,9 @@ def _get_method(action):
     return action.upper()
 
 
-def _get_params(method, fields, params=None):
+def _get_params(method, encoding, fields, params=None):
     """
-    Separate the params into their location types.
+    Separate the params into the various types.
     """
     if params is None:
         return empty_params
@@ -46,7 +45,6 @@ def _get_params(method, fields, params=None):
 
     path = {}
     query = {}
-    body = None
     data = {}
     files = {}
 
@@ -58,18 +56,18 @@ def _get_params(method, fields, params=None):
             location = field_map[key].location
 
         if location == 'path':
-            path[key] = value
+            path[key] = utils.validate_path_param(value, name=key)
         elif location == 'query':
-            query[key] = value
+            query[key] = utils.validate_query_param(value, name=key)
         elif location == 'body':
-            body = value
+            data = utils.validate_body_param(value, encoding=encoding, name=key)
         elif location == 'form':
             if is_file(value):
-                files[key] = value
+                files[key] = utils.validate_form_files(value, encoding=encoding, name=key)
             else:
-                data[key] = value
+                data[key] = utils.validate_form_data(value, encoding=encoding, name=key)
 
-    return Params(path, query, body, data, files)
+    return Params(path, query, data, files)
 
 
 def _get_encoding(encoding, method):
@@ -113,7 +111,7 @@ def _get_headers(url, decoders, credentials=None):
     return headers
 
 
-def _get_content_type(file_obj):
+def _get_upload_content_type(file_obj):
     """
     When a raw file upload is made, determine a content-type where possible.
     """
@@ -121,8 +119,21 @@ def _get_content_type(file_obj):
     if name is not None:
         content_type, encoding = mimetypes.guess_type(name)
     else:
-        content_type = None
+        content_type = 'application/octet-stream'
     return content_type
+
+
+def _get_upload_content_disposition(file_obj):
+    """
+    When a raw file upload is made, determine a content-type where possible.
+    """
+    name = getattr(file_obj, 'name', None)
+    if name is not None:
+        filename = os.path.basename(file_obj.name)
+        content_disposition = 'attachment; filename="%s"' % filename
+    else:
+        content_disposition = 'attachment'
+    return content_disposition
 
 
 def _build_http_request(session, url, method, headers=None, encoding=None, params=empty_params):
@@ -136,28 +147,19 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
     if params.query:
         opts['params'] = params.query
 
-    if (params.body is not None) or params.data or params.files:
+    if params.data or params.files:
         if encoding == 'application/json':
-            if params.body is not None:
-                opts['json'] = params.body
-            else:
-                opts['json'] = params.data
+            opts['json'] = params.data
         elif encoding == 'multipart/form-data':
             opts['data'] = params.data
             opts['files'] = ForceMultiPartDict(params.files)
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
-            opts['data'] = params.body
-            content_type = _get_content_type(params.body)
-            if content_type:
-                opts['headers']['content-type'] = content_type
-
-            if hasattr(params.body, 'name'):
-                filename = os.path.basename(params.body.name)
-                content_disposition = 'attachment; filename="%s"' % filename
-            else:
-                content_disposition = 'attachment'
+            opts['data'] = params.data
+            content_type = _get_upload_content_type(params.data)
+            content_disposition = _get_upload_content_disposition(params.data)
+            opts['headers']['content-type'] = content_type
             opts['headers']['content-disposition'] = content_disposition
 
     request = requests.Request(method, url, **opts)
@@ -214,7 +216,7 @@ def _decode_result(response, decoders, force_codec=False):
             codec = decoders[0]
         else:
             content_type = response.headers.get('content-type')
-            codec = negotiate_decoder(decoders, content_type)
+            codec = utils.negotiate_decoder(decoders, content_type)
 
         options = {
             'base_url': response.url
@@ -290,7 +292,7 @@ class HTTPTransport(BaseTransport):
         session = self._session
         method = _get_method(link.action)
         encoding = _get_encoding(link.encoding, method)
-        params = _get_params(method, link.fields, params)
+        params = _get_params(method, encoding, link.fields, params)
         url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
@@ -309,6 +311,6 @@ class HTTPTransport(BaseTransport):
             result = _handle_inplace_replacements(result, link, link_ancestors)
 
         if isinstance(result, Error):
-            raise ErrorMessage(result)
+            raise exceptions.ErrorMessage(result)
 
         return result
