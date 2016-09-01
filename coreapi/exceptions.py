@@ -48,10 +48,6 @@ class ValidationError(Exception):
     pass
 
 
-class InvalidLinkError(Exception):
-    pass
-
-
 class ErrorMessage(Exception):
     """
     Raised when the transition returns an error message.

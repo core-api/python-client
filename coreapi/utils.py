@@ -1,5 +1,5 @@
 from coreapi import exceptions
-from coreapi.compat import string_types, urlparse
+from coreapi.compat import is_file, string_types, text_type, urlparse
 
 
 def determine_transport(transports, url):
@@ -72,7 +72,7 @@ def negotiate_encoder(encoders, accept=None):
 
 
 def validate_path_param(value, name):
-    value = _validate_form_primative(value, name, _allow_list=False)
+    value = _validate_form_primative(value, name, allow_list=False)
     if not value:
         msg = 'Parameter %s: May not be empty.'
         raise exceptions.ValidationError(msg % name)
@@ -86,35 +86,40 @@ def validate_query_param(value, name):
 def validate_body_param(value, encoding, name):
     if encoding == 'application/json':
         return _validate_json_data(value, name)
-    elif encoding in ('multipart/form', 'application/x-www-form-urlencoded'):
-        if not isinstance(value, dict):
-            msg = 'Parameter %s: Must be an object.'
+    elif encoding == 'multipart/form':
+        return _validate_form_object(value, name, allow_files=True)
+    elif encoding == 'application/x-www-form-urlencoded':
+        return _validate_form_object(value, name)
+    elif encoding == 'application/octet-stream':
+        if not is_file(value):
+            msg = 'Parameter %s: Must be an file upload.'
             raise exceptions.ValidationError(msg % name)
-        return {
-            item_key: _validate_form_primative(item_val, name)
-            for item_key, item_val in value.items()
-        }
-    _unsupported_encoding(encoding)
+    msg = 'Unsupported encoding "%s" for outgoing request.'
+    raise exceptions.TransportError(msg % encoding)
 
 
-def validate_form_data(value, encoding, name):
+def validate_form_param(value, encoding, name):
     if encoding == 'application/json':
         return _validate_json_data(value, name)
-    elif encoding in ('multipart/form', 'application/x-www-form-urlencoded'):
+    elif encoding == 'multipart/form':
+        return _validate_form_primative(value, name, allow_files=True)
+    elif encoding == 'application/x-www-form-urlencoded':
         return _validate_form_primative(value, name)
-    _unsupported_encoding(encoding)
+    msg = 'Unsupported encoding "%s" for outgoing request.'
+    raise exceptions.TransportError(msg % encoding)
 
 
-def validate_form_files(value, encoding, name):
-    if encoding == 'multipart/form':
-        return value
-    elif encoding in ('application/json', 'application/x-www-form-urlencoded'):
-        msg = 'Parameter %s: File uploads not supported.'
+def _validate_form_object(value, name, allow_files=False):
+    if not isinstance(value, dict):
+        msg = 'Parameter %s: Must be an object.'
         raise exceptions.ValidationError(msg % name)
-    _unsupported_encoding(encoding)
+    return {
+        text_type(item_key): _validate_form_primative(item_val, name, allow_files=allow_files)
+        for item_key, item_val in value.items()
+    }
 
 
-def _validate_form_primative(value, name, _allow_list=True):
+def _validate_form_primative(value, name, allow_files=False, allow_list=True):
     """
     Parameters in query parameters or form data should be basic types, that
     have a simple string representation. A list of basic types is also valid.
@@ -125,11 +130,14 @@ def _validate_form_primative(value, name, _allow_list=True):
         return {True: 'true', False: 'false', None: ''}[value]
     elif isinstance(value, (int, float)):
         return "%s" % value
-    elif _allow_list and isinstance(value, (list, tuple)):
+    elif allow_list and isinstance(value, (list, tuple)):
+        # Only the top-level element may be a list.
         return [
-            _validate_form_primative(item, name, _allow_list=False)
+            _validate_form_primative(item, name, allow_files=False, allow_list=False)
             for item in value
         ]
+    elif allow_files and is_file(value):
+        return value
 
     msg = 'Parameter %s: Must be a primative type.'
     raise exceptions.ValidationError(msg % name)
@@ -142,17 +150,9 @@ def _validate_json_data(value, name):
         return [_validate_json_data(item, name) for item in value]
     elif isinstance(value, dict):
         return {
-            item_key: _validate_json_data(item_val, name)
+            text_type(item_key): _validate_json_data(item_val, name)
             for item_key, item_val in value.items()
         }
 
     msg = 'Parameter %s: Must be a JSON primative.'
     raise exceptions.ValidationError(msg % name)
-
-
-def _unsupported_encoding(encoding):
-    if not encoding:
-        msg = 'Link has no encoding, but includes "body" or "form" parameters.'
-        raise exceptions.InvalidLinkError(msg)
-    msg = 'Link has unsupported encoding "%s".'
-    raise exceptions.InvalidLinkError(msg % encoding)

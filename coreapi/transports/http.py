@@ -34,6 +34,12 @@ def _get_method(action):
     return action.upper()
 
 
+def _get_encoding(encoding):
+    if not encoding:
+        return 'application/json'
+    return encoding
+
+
 def _get_params(method, encoding, fields, params=None):
     """
     Separate the params into the various types.
@@ -48,6 +54,10 @@ def _get_params(method, encoding, fields, params=None):
     data = {}
     files = {}
 
+    # Ensure graceful behavior in edge-case where both location='body' and
+    # location='form' fields are present.
+    seen_body = False
+
     for key, value in params.items():
         if key not in field_map or not field_map[key].location:
             # Default is 'query' for 'GET' and 'DELETE', and 'form' for others.
@@ -55,29 +65,27 @@ def _get_params(method, encoding, fields, params=None):
         else:
             location = field_map[key].location
 
+        if location == 'form' and encoding == 'application/octet-stream':
+            # Raw uploads should always use 'body', not 'form'.
+            location = 'body'
+
         if location == 'path':
             path[key] = utils.validate_path_param(value, name=key)
         elif location == 'query':
             query[key] = utils.validate_query_param(value, name=key)
         elif location == 'body':
             data = utils.validate_body_param(value, encoding=encoding, name=key)
+            seen_body = True
         elif location == 'form':
-            if is_file(value):
-                files[key] = utils.validate_form_files(value, encoding=encoding, name=key)
-            else:
-                data[key] = utils.validate_form_data(value, encoding=encoding, name=key)
+            if not seen_body:
+                data[key] = utils.validate_form_param(value, encoding=encoding, name=key)
+
+    if isinstance(data, dict):
+        for key, value in list(data.items()):
+            if is_file(data[key]):
+                files[key] = data.pop(key)
 
     return Params(path, query, data, files)
-
-
-def _get_encoding(encoding, method):
-    if encoding:
-        return encoding
-
-    if method in ('GET', 'DELETE'):
-        return ''
-
-    return 'application/json'
 
 
 def _get_url(url, path_params):
@@ -291,7 +299,7 @@ class HTTPTransport(BaseTransport):
     def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
-        encoding = _get_encoding(link.encoding, method)
+        encoding = _get_encoding(link.encoding)
         params = _get_params(method, encoding, link.fields, params)
         url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
