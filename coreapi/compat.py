@@ -15,7 +15,6 @@ try:
 
     string_types = (basestring,)
     text_type = unicode
-    basestring = basestring
     COMPACT_SEPARATORS = (b',', b':')
     VERBOSE_SEPARATORS = (b',', b': ')
 
@@ -30,7 +29,6 @@ except ImportError:
 
     string_types = (str,)
     text_type = str
-    basestring = (str, bytes)
     COMPACT_SEPARATORS = (',', ':')
     VERBOSE_SEPARATORS = (',', ': ')
 

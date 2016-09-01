@@ -12,7 +12,7 @@ def is_file(obj):
     if isinstance(obj, File):
         return True
 
-    if hasattr(obj, '__iter__') and not isinstance(obj, (basestring, list, tuple, dict)):
+    if hasattr(obj, '__iter__') and not isinstance(obj, (string_types, list, tuple, dict)):
         # A stream object.
         return True
 
@@ -21,7 +21,7 @@ def is_file(obj):
 
 def guess_filename(obj):
     name = getattr(obj, 'name', None)
-    if name and isinstance(name, basestring) and name[0] != '<' and name[-1] != '>':
+    if name and isinstance(name, string_types) and name[0] != '<' and name[-1] != '>':
         return os.path.basename(name)
     return None
 
@@ -175,7 +175,7 @@ def _validate_json_data(value, name):
     """
     Ensure that `value` can be encoded into JSON.
     """
-    if (value is None) or isinstance(value, (bool, int, float, basestring)):
+    if (value is None) or isinstance(value, (bool, int, float, string_types)):
         return value
     elif isinstance(value, (list, tuple)) and not is_file(value):
         return [_validate_json_data(item, name) for item in value]
