@@ -15,11 +15,9 @@ try:
 
     string_types = (basestring,)
     text_type = unicode
+    basestring = basestring
     COMPACT_SEPARATORS = (b',', b':')
     VERBOSE_SEPARATORS = (b',', b': ')
-
-    def is_file(obj):
-        return isinstance(obj, file)
 
     def b64encode(input_string):
         # Provide a consistently-as-unicode interface across 2.x and 3.x
@@ -32,11 +30,9 @@ except ImportError:
 
     string_types = (str,)
     text_type = str
+    basestring = (str, bytes)
     COMPACT_SEPARATORS = (',', ':')
     VERBOSE_SEPARATORS = (',', ': ')
-
-    def is_file(obj):
-        return isinstance(obj, IOBase)
 
     def b64encode(input_string):
         # Provide a consistently-as-unicode interface across 2.x and 3.x

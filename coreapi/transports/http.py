@@ -2,14 +2,14 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi import exceptions, utils
-from coreapi.compat import is_file, urlparse
+from coreapi.compat import urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.transports.base import BaseTransport
+from coreapi.utils import guess_filename, is_file, File
 import collections
 import requests
 import itypes
 import mimetypes
-import os
 import uritemplate
 
 
@@ -119,29 +119,29 @@ def _get_headers(url, decoders, credentials=None):
     return headers
 
 
-def _get_upload_content_type(file_obj):
+def _get_upload_headers(file_obj):
     """
-    When a raw file upload is made, determine a content-type where possible.
+    When a raw file upload is made, determine the Content-Type and
+    Content-Disposition headers to use with the request.
     """
-    name = getattr(file_obj, 'name', None)
-    if name is not None:
+    name = guess_filename(file_obj)
+    content_type = None
+    content_disposition = None
+
+    # Determine the content type of the upload.
+    if getattr(file_obj, 'content_type', None):
+        content_type = file_obj.content_type
+    elif name:
         content_type, encoding = mimetypes.guess_type(name)
-    else:
-        content_type = 'application/octet-stream'
-    return content_type
 
+    # Determine the content disposition of the upload.
+    if name:
+        content_disposition = 'attachment; filename="%s"' % name
 
-def _get_upload_content_disposition(file_obj):
-    """
-    When a raw file upload is made, determine a content-type where possible.
-    """
-    name = getattr(file_obj, 'name', None)
-    if name is not None:
-        filename = os.path.basename(file_obj.name)
-        content_disposition = 'attachment; filename="%s"' % filename
-    else:
-        content_disposition = 'attachment'
-    return content_disposition
+    return {
+        'Content-Type': content_type or 'application/octet-stream',
+        'Content-Disposition': content_disposition or 'attachment'
+    }
 
 
 def _build_http_request(session, url, method, headers=None, encoding=None, params=empty_params):
@@ -164,11 +164,12 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
-            opts['data'] = params.data
-            content_type = _get_upload_content_type(params.data)
-            content_disposition = _get_upload_content_disposition(params.data)
-            opts['headers']['content-type'] = content_type
-            opts['headers']['content-disposition'] = content_disposition
+            if isinstance(params.data, File):
+                opts['data'] = params.data.content
+            else:
+                opts['data'] = params.data
+            upload_headers = _get_upload_headers(params.data)
+            opts['headers'].update(upload_headers)
 
     request = requests.Request(method, url, **opts)
     return session.prepare_request(request)

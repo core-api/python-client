@@ -1,5 +1,29 @@
 from coreapi import exceptions
-from coreapi.compat import is_file, string_types, text_type, urlparse
+from coreapi.compat import string_types, text_type, urlparse
+from collections import namedtuple
+import os
+
+
+File = namedtuple('File', 'name content content_type')
+File.__new__.__defaults__ = (None,)
+
+
+def is_file(obj):
+    if isinstance(obj, File):
+        return True
+
+    if hasattr(obj, '__iter__') and not isinstance(obj, (basestring, list, tuple, dict)):
+        # A stream object.
+        return True
+
+    return False
+
+
+def guess_filename(obj):
+    name = getattr(obj, 'name', None)
+    if name and isinstance(name, basestring) and name[0] != '<' and name[-1] != '>':
+        return os.path.basename(name)
+    return None
 
 
 def determine_transport(transports, url):
@@ -72,7 +96,7 @@ def negotiate_encoder(encoders, accept=None):
 
 
 def validate_path_param(value, name):
-    value = _validate_form_primative(value, name, allow_list=False)
+    value = _validate_form_field(value, name, allow_list=False)
     if not value:
         msg = 'Parameter %s: May not be empty.'
         raise exceptions.ValidationError(msg % name)
@@ -80,7 +104,7 @@ def validate_path_param(value, name):
 
 
 def validate_query_param(value, name):
-    return _validate_form_primative(value, name)
+    return _validate_form_field(value, name)
 
 
 def validate_body_param(value, encoding, name):
@@ -102,27 +126,31 @@ def validate_form_param(value, encoding, name):
     if encoding == 'application/json':
         return _validate_json_data(value, name)
     elif encoding == 'multipart/form':
-        return _validate_form_primative(value, name, allow_files=True)
+        return _validate_form_field(value, name, allow_files=True)
     elif encoding == 'application/x-www-form-urlencoded':
-        return _validate_form_primative(value, name)
+        return _validate_form_field(value, name)
     msg = 'Unsupported encoding "%s" for outgoing request.'
     raise exceptions.TransportError(msg % encoding)
 
 
 def _validate_form_object(value, name, allow_files=False):
+    """
+    Ensure that `value` can be encoded as form data or as query parameters.
+    """
     if not isinstance(value, dict):
         msg = 'Parameter %s: Must be an object.'
         raise exceptions.ValidationError(msg % name)
     return {
-        text_type(item_key): _validate_form_primative(item_val, name, allow_files=allow_files)
+        text_type(item_key): _validate_form_field(item_val, name, allow_files=allow_files)
         for item_key, item_val in value.items()
     }
 
 
-def _validate_form_primative(value, name, allow_files=False, allow_list=True):
+def _validate_form_field(value, name, allow_files=False, allow_list=True):
     """
-    Parameters in query parameters or form data should be basic types, that
-    have a simple string representation. A list of basic types is also valid.
+    Ensure that `value` can be encoded as a single form data or a query parameter.
+    Basic types that has a simple string representation are supported.
+    A list of basic types is also valid.
     """
     if isinstance(value, string_types):
         return value
@@ -130,10 +158,10 @@ def _validate_form_primative(value, name, allow_files=False, allow_list=True):
         return {True: 'true', False: 'false', None: ''}[value]
     elif isinstance(value, (int, float)):
         return "%s" % value
-    elif allow_list and isinstance(value, (list, tuple)):
+    elif allow_list and isinstance(value, (list, tuple)) and not is_file(value):
         # Only the top-level element may be a list.
         return [
-            _validate_form_primative(item, name, allow_files=False, allow_list=False)
+            _validate_form_field(item, name, allow_files=False, allow_list=False)
             for item in value
         ]
     elif allow_files and is_file(value):
@@ -144,9 +172,12 @@ def _validate_form_primative(value, name, allow_files=False, allow_list=True):
 
 
 def _validate_json_data(value, name):
-    if (value is None) or isinstance(value, string_types + (bool, int, float)):
+    """
+    Ensure that `value` can be encoded into JSON.
+    """
+    if (value is None) or isinstance(value, (bool, int, float, basestring)):
         return value
-    elif isinstance(value, (list, tuple)):
+    elif isinstance(value, (list, tuple)) and not is_file(value):
         return [_validate_json_data(item, name) for item in value]
     elif isinstance(value, dict):
         return {

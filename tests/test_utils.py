@@ -49,6 +49,12 @@ def test_validate_form_data():
     with pytest.raises(exceptions.ValidationError):
         utils.validate_body_param(data, 'application/json', name='example')
 
+    data = utils.File('abc.txt', None)
+    with pytest.raises(exceptions.ValidationError):
+        utils.validate_form_param(data, 'application/json', name='example')
+    with pytest.raises(exceptions.ValidationError):
+        utils.validate_body_param(data, 'application/json', name='example')
+
     # URL Encoded
     assert utils.validate_form_param(123, 'application/x-www-form-urlencoded', name='example') == '123'
     assert utils.validate_body_param({'a': 123}, 'application/x-www-form-urlencoded', name='example') == {'a': '123'}
@@ -56,10 +62,16 @@ def test_validate_form_data():
         utils.validate_form_param({'a': {'foo': 'bar'}}, 'application/x-www-form-urlencoded', name='example')
     with pytest.raises(exceptions.ValidationError):
         utils.validate_body_param(123, 'application/x-www-form-urlencoded', name='example')
+    with pytest.raises(exceptions.ValidationError):
+        utils.validate_form_param(utils.File('abc.txt', None), 'application/x-www-form-urlencoded', name='example')
+    with pytest.raises(exceptions.ValidationError):
+        utils.validate_body_param({'a': utils.File('abc.txt', None)}, 'application/x-www-form-urlencoded', name='example')
 
     # Multipart
     assert utils.validate_form_param(123, 'multipart/form', name='example') == '123'
+    assert utils.validate_form_param(utils.File('abc.txt', None), 'multipart/form', name='example') == utils.File('abc.txt', None)
     assert utils.validate_body_param({'a': 123}, 'multipart/form', name='example') == {'a': '123'}
+    assert utils.validate_body_param({'a': utils.File('abc.txt', None)}, 'multipart/form', name='example') == {'a': utils.File('abc.txt', None)}
     with pytest.raises(exceptions.ValidationError):
         utils.validate_form_param({'a': {'foo': 'bar'}}, 'multipart/form', name='example')
     with pytest.raises(exceptions.ValidationError):
