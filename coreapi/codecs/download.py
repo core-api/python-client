@@ -10,12 +10,13 @@ import tempfile
 
 
 class DownloadedFile(tempfile._TemporaryFileWrapper):
-    """
-    A wrapper around the returned file object, in order to provide
-    a clearer interface than simply returning a file handle.
-    """
-    def __init__(self, file, name):
-        super(DownloadedFile, self).__init__(file, name, delete=False)
+    def __repr__(self):
+        state = "closed" if self.close_called else "open"
+        mode = "" if self.close_called else " '%s'" % self.file.mode
+        return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
+
+    def __str__(self):
+        return self.__repr__()
 
 
 def _unique_output_path(path):
@@ -111,7 +112,7 @@ class DownloadCodec(BaseCodec):
         """
         `download_dir` - The path to use for file downloads.
         """
-        self._temporary = False
+        self._temporary = download_dir is None
         self._download_dir = download_dir
 
     def __del__(self):
@@ -121,7 +122,6 @@ class DownloadCodec(BaseCodec):
     @property
     def download_dir(self):
         if self._download_dir is None:
-            self._temporary = True
             self._download_dir = tempfile.mkdtemp(prefix='temp-coreapi-download-')
         return self._download_dir
 
@@ -131,7 +131,7 @@ class DownloadCodec(BaseCodec):
         content_disposition = options.get('content_disposition')
 
         # Write the download to a temporary .download file.
-        fd, temp_path = tempfile.mkstemp(dir=self.download_dir, suffix='.download')
+        fd, temp_path = tempfile.mkstemp(suffix='.download')
         file_handle = os.fdopen(fd, 'wb')
         file_handle.write(bytestring)
         file_handle.close()
@@ -149,4 +149,4 @@ class DownloadCodec(BaseCodec):
         # Move the temporary download file to the final location.
         os.rename(temp_path, output_path)
         output_file = open(output_path, 'rb')
-        return DownloadedFile(output_file, output_path)
+        return DownloadedFile(output_file, output_path, delete=self._temporary)

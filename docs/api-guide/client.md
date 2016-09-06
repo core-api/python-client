@@ -7,6 +7,8 @@ interactions against the API.
 
 An example client session might look something like this:
 
+    from coreapi import Client
+
     client = Client()
     document = client.get('https://api.example.org/')
     data = client.action(document, ['flights', 'search'], params={
@@ -48,7 +50,8 @@ When no arguments are passed, the following defaults are used:
     decoders = [
         codecs.CoreJSONCodec(),     # application/vnd.coreapi+json
         codecs.JSONCodec(),         # application/json
-        codecs.TextCodec()          # text/*
+        codecs.TextCodec(),         # text/*
+        codecs.DownloadCodec()      # */*
     ]
 
     transports = [
@@ -65,17 +68,22 @@ properties on a client instance:
 
 ## Making an initial request
 
-* get(url)
+* `get(url)`
 
 Make a network request to the given URL, and return a decoded `Document`.
+
+**TODO**
 
 ---
 
 ## Interacting with an API
 
-* action(self, document, keys, params=None, overrides=None, validate=True)
+* `action(self, document, keys, params=None, overrides=None, validate=True)`
 
 Effect an interaction against the given document.
 
-* `keys` - A list of strings that index a link within the document.
+* `document` - A `Document` instance.
+* `keys` - A list of strings that index a `Link` within the document.
 * `params` - A dictionary of parameters to use for the API interaction.
+
+**TODO**

@@ -2,7 +2,7 @@
 from coreapi.codecs import CoreJSONCodec
 from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
 from coreapi.document import Document, Link, Error, Field
-from coreapi.exceptions import ParseError, UnsupportedContentType, NotAcceptable
+from coreapi.exceptions import ParseError, NoCodecAvailable
 from coreapi.utils import negotiate_decoder, negotiate_encoder
 import pytest
 
@@ -215,7 +215,7 @@ def test_get_supported_decoder_with_parameters():
 
 
 def test_get_unsupported_decoder():
-    with pytest.raises(UnsupportedContentType):
+    with pytest.raises(NoCodecAvailable):
         negotiate_decoder([CoreJSONCodec()], 'application/csv')
 
 
@@ -251,7 +251,7 @@ def test_get_underspecified_encoder():
 
 
 def test_get_unsupported_encoder():
-    with pytest.raises(NotAcceptable):
+    with pytest.raises(NoCodecAvailable):
         negotiate_encoder([CoreJSONCodec()], 'application/csv')
 
 

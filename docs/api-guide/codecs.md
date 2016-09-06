@@ -10,7 +10,7 @@ the bytestring returned in the body of the response.
 When using a Core API client, HTTP responses are decoded with an appropriate
 codec, based on the `Content-Type` of the response.
 
-## Using codecs
+## Using a Codec
 
 All the codecs provided by the `coreapi` library are instantiated without
 arguments, for example:
@@ -21,11 +21,15 @@ A codec will provide either one or both of the `decode` or `encode` methods.
 
 ### Decoding
 
-* decode(content, url=None)
+* `decode(bytestring, **options)`
+
+**TODO**
 
 ### Encoding
 
-* encode(document, **options)
+* `encode(document, **options)`
+
+**TODO**
 
 ### Attributes
 
@@ -36,12 +40,12 @@ The following attributes are available on codec instances:
 
 The `supports` option should be one of the four following options:
 
-* `['decode', 'encode']`  # Supports both decoding and encoding documents.
-* `['decode']`            # Supports decoding documents only.
-* `['encode']`            # Supports encoding documents only.
-* `['data']`              # Indicates that the codec supports decoding,
-                          # but that it is expected to return plain data,
-                          # rather than a `Document` object.
+* `['decode', 'encode']` - Supports both decoding and encoding documents.
+* `['decode']` - Supports decoding documents only.
+* `['encode']` - Supports encoding documents only.
+* `['data']` - Indicates that the codec supports decoding,
+               but that it is expected to return plain data,
+               rather than a `Document` object.
 
 ---
 
@@ -57,8 +61,9 @@ Supports decoding or encoding the Core JSON format.
 
 Example of decoding a Core JSON bytestring into a `Document` instance:
 
-    >>> codec = codecs.TextCodec()
-    >>> content = b'{"_type": "document", ...'
+    >>> from coreapi import codecs
+    >>> codec = codecs.CoreJSONCodec()
+    >>> content = b'{"_type": "document", ...}'
     >>> document = codec.decode(content)
     >>> print(document)
     <Flight Search API 'http://api.example.com/'>
@@ -72,6 +77,15 @@ Example of encoding a `Document` instance into a Core JSON bytestring:
         "_type": "document"
     }
 
+#### Encoding options
+
+**indent**: Set to `True` for an indented representation. The default is to generate a compact representation.
+
+#### Decoding options
+
+**base_url**: The URL from which the document was retrieved. Used to resolve any relative
+URLs in the document.
+
 ---
 
 ### JSONCodec
@@ -84,7 +98,8 @@ Supports decoding JSON data.
 
 Example:
 
-    >>> codec = codecs.TextCodec()
+    >>> from coreapi import codecs
+    >>> codec = codecs.JSONCodec()
     >>> content = b'{"string": "abc", "boolean": true, "null": null}'
     >>> data = codec.decode(content)
     >>> print(data)
@@ -102,10 +117,53 @@ Supports decoding plain-text responses.
 
 Example:
 
+    >>> from coreapi import codecs
     >>> codec = codecs.TextCodec()
     >>> data = codec.decode(b'hello, world!')
     >>> print(data)
     hello, world!
+
+---
+
+### DownloadCodec
+
+Supports decoding arbitrary media as a download file. Returns a temporary file
+that will be deleted once it goes out of scope.
+
+**.media_type**: `*/*`
+
+**.supports**: `['data']`
+
+Example:
+
+    >>> from coreapi import codecs
+    >>> codec = codecs.DownloadCodec()
+    >>> data = codec.decode(b'...')
+    >>> print(data)
+    <DownloadedFile '.../tmpYbxNXT.download', open 'rb'>
+
+#### Instantiation
+
+By default this codec returns a temporary file that will be deleted once it
+goes out of scope. If you want to return temporary files that are not
+deleted when they go out of scope then you can instantiate the `DownloadCodec`
+with a `download_dir` argument.
+
+For example, to download files to the current working directory:
+
+    >>> import os
+    >>> codecs.DownloadCodec(download_dir=os.getcwd())
+
+#### Decoding options
+
+**base_url**: The URL from which the document was retrieved. May be used to
+generate an output filename if no `Content-Disposition` header exists.
+
+**content_type**: The response Content-Type header. May be used to determine a
+suffix for the output filename if no `Content-Disposition` header exists.
+
+**content_disposition**: The response Content-Disposition header. May be [used to
+indicate the download filename][content-disposition-filename].
 
 ---
 
@@ -119,11 +177,17 @@ Supports encoding a `Document` to a display representation.
 
 Example:
 
+    >>> from coreapi import codecs
     >>> codec = codecs.DisplayCodec()
-    >>> content = codec.encode(document, indent=True)
+    >>> content = codec.encode(document)
     >>> print(content)
     <Flight Search API 'http://api.example.com/'>
         'search': link(from, to, date)
+
+#### Options
+
+**colorize**: Set to `True` to include ANSI color escapes for terminal representations.
+See the Python `click` package [for more details][click-ansi].
 
 ---
 
@@ -137,8 +201,9 @@ Supports encoding a `Document` to an its Python representation.
 
 Example:
 
+    >>> from coreapi import codecs
     >>> codec = codecs.PythonCodec()
-    >>> content = codec.encode(document, indent=True)
+    >>> content = codec.encode(document)
     >>> print(content)
     Document(
         title='Flight Search API',
@@ -166,12 +231,15 @@ of the `decode` or `encode` methods.
 
 For example:
 
+    from coreapi import codecs
+    import yaml
+
     class YAMLCodec(codecs.BaseCodec):
         media_type = 'application/yaml'
         supports = ['data']
 
-        def decode(content, url=None):
-            return yaml...
+        def decode(content, **options):
+            return yaml.safe_load(content)
 
 ### The codec registry
 
@@ -196,6 +264,48 @@ codecs which are registered by the `coreapi` package itself is as follows:
                 'corejson=coreapi.codecs:CoreJSONCodec',
                 'json=coreapi.codecs:JSONCodec',
                 'text=coreapi.codecs:TextCodec',
+                'download=coreapi.codecs:DownloadCodec',
             ]
         }
     )
+
+---
+
+## External packages
+
+The following third-party packages are available.
+
+### OpenAPI
+
+A codec for [OpenAPI][openapi] schemas, also known as "Swagger". Installable [from PyPI][openapi-pypi] as `openapi-codec`, and [available on GitHub][openapi-github].
+
+### JSON Hyper-Schema
+
+A codec for [JSON Hyper-Schema][jsonhyperschema]. Installable [from PyPI][jsonhyperschema-pypi] as `jsonhyperschema-codec`, and [available on GitHub][jsonhyperschema-github].
+
+### API Blueprint
+
+A codec for [API Blueprint][apiblueprint] schemas. Installable [from PyPI][apiblueprint-pypi] as `apiblueprint-codec`, and [available on GitHub][apiblueprint-github].
+
+### HAL
+
+A codec for the [HAL][hal] hypermedia format. Installable [from PyPI][hal-pypi] as `hal-codec`, and [available on GitHub][hal-github].
+
+[content-disposition-filename]: https://tools.ietf.org/html/draft-ietf-httpbis-content-disp-00#section-3.3
+[click-ansi]: http://click.pocoo.org/5/utils/#ansi-colors
+
+[openapi]: https://openapis.org/specification
+[openapi-pypi]: https://pypi.python.org/pypi/openapi-codec
+[openapi-github]: https://github.com/core-api/python-openapi-codec
+
+[jsonhyperschema]: http://json-schema.org/latest/json-schema-hypermedia.html
+[jsonhyperschema-pypi]: https://pypi.python.org/pypi/jsonhyperschema-codec
+[jsonhyperschema-github]: https://github.com/core-api/python-jsonhyperschema-codec
+
+[apiblueprint]: https://apiblueprint.org/
+[apiblueprint-pypi]: https://pypi.python.org/pypi/apiblueprint-codec
+[apiblueprint-github]: https://github.com/core-api/python-apiblueprint-codec
+
+[hal]: http://stateless.co/hal_specification.html
+[hal-pypi]: https://pypi.python.org/pypi/hal-codec
+[hal-github]: https://github.com/core-api/python-hal-codec

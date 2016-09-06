@@ -64,19 +64,20 @@ def _validate_parameters(link, parameters):
         field.name for field in link.fields if not field.required
     ])
 
-    # Determine any parameter names supplied that are not valid.
-    unexpected = provided - (optional | required)
-    unexpected = ['"' + item + '"' for item in sorted(unexpected)]
-    if unexpected:
-        prefix = len(unexpected) > 1 and 'parameters: ' or 'parameter: '
-        raise exceptions.ValidationError('Unknown ' + prefix + ', '.join(unexpected))
+    errors = {}
 
     # Determine if any required field names not supplied.
     missing = required - provided
-    missing = ['"' + item + '"' for item in sorted(missing)]
-    if missing:
-        prefix = len(missing) > 1 and 'parameters: ' or 'parameter: '
-        raise exceptions.ValidationError('Missing required ' + prefix + ', '.join(missing))
+    for item in missing:
+        errors[item] = 'This parameter is required.'
+
+    # Determine any parameter names supplied that are not valid.
+    unexpected = provided - (optional | required)
+    for item in unexpected:
+        errors[item] = 'Unknown parameter.'
+
+    if errors:
+        raise exceptions.ValidationError(errors)
 
 
 def get_default_decoders():

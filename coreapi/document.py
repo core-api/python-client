@@ -50,20 +50,20 @@ class Document(itypes.Dict):
     and the actions that the client may perform.
     """
     def __init__(self, url=None, title=None, content=None):
-        data = {} if (content is None) else content
+        content = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
             raise TypeError("'url' must be a string.")
         if title is not None and not isinstance(title, string_types):
             raise TypeError("'title' must be a string.")
-        if content is not None and not isinstance(content, dict):
+        if not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
-        if any([not isinstance(key, string_types) for key in data.keys()]):
+        if any([not isinstance(key, string_types) for key in content.keys()]):
             raise TypeError('content keys must be strings.')
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
-        self._data = {key: _to_immutable(value) for key, value in data.items()}
+        self._data = {key: _to_immutable(value) for key, value in content.items()}
 
     def clone(self, data):
         return self.__class__(self.url, self.title, data)

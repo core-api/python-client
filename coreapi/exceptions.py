@@ -2,53 +2,53 @@
 from __future__ import unicode_literals
 
 
-class ParseError(Exception):
+class CoreAPIException(Exception):
+    """
+    A base class for all `coreapi` exceptions.
+    """
+    pass
+
+
+class ParseError(CoreAPIException):
     """
     Raised when an invalid Core API encoding is encountered.
     """
     pass
 
 
-class UnsupportedContentType(Exception):
+class NoCodecAvailable(CoreAPIException):
     """
-    Raised when the media specified in the reponse 'Content-Type' header
-    is not supported.
-    """
-    pass
-
-
-class NotAcceptable(Exception):
-    """
-    Raised when the client 'Accept' header could not be satisfied.
+    Raised when there is no available codec that can handle the given media.
     """
     pass
 
 
-class TransportError(Exception):
+class NetworkError(CoreAPIException):
     """
     Raised when the transport layer fails to make a request or get a response.
     """
     pass
 
 
-class LinkLookupError(Exception):
+class LinkLookupError(CoreAPIException):
     """
     Raised when `.action` fails to index a link in the document.
     """
     pass
 
 
-class ValidationError(Exception):
+class ValidationError(CoreAPIException):
     """
     Raised when the parameters passed do not match the link fields.
 
-    * One or more parameters were passed that do not have a corresponding field.
-    * One or more required fields did not have a corresponding parameter passed.
+    * A required field was not included.
+    * An unknown field was included.
+    * A field was passed an invalid type for the link location/encoding.
     """
     pass
 
 
-class ErrorMessage(Exception):
+class ErrorMessage(CoreAPIException):
     """
     Raised when the transition returns an error message.
     """
@@ -56,7 +56,7 @@ class ErrorMessage(Exception):
         self.error = error
 
     def __repr__(self):
-        return 'ErrorMessage(%s)' % repr(self.error)
+        return '%s(%s)' % (self.__class__.__name__, repr(self.error))
 
     def __str__(self):
         return str(self.error)

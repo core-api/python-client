@@ -35,16 +35,16 @@ def determine_transport(transports, url):
     netloc = url_components.netloc
 
     if not scheme:
-        raise exceptions.TransportError("URL missing scheme '%s'." % url)
+        raise exceptions.NetworkError("URL missing scheme '%s'." % url)
 
     if not netloc:
-        raise exceptions.TransportError("URL missing hostname '%s'." % url)
+        raise exceptions.NetworkError("URL missing hostname '%s'." % url)
 
     for transport in transports:
         if scheme in transport.schemes:
             return transport
 
-    raise exceptions.TransportError("Unsupported URL scheme '%s'." % scheme)
+    raise exceptions.NetworkError("Unsupported URL scheme '%s'." % scheme)
 
 
 def negotiate_decoder(decoders, content_type=None):
@@ -64,7 +64,7 @@ def negotiate_decoder(decoders, content_type=None):
             return codec
 
     msg = "Unsupported media in Content-Type header '%s'" % content_type
-    raise exceptions.UnsupportedContentType(msg)
+    raise exceptions.NoCodecAvailable(msg)
 
 
 def negotiate_encoder(encoders, accept=None):
@@ -92,61 +92,61 @@ def negotiate_encoder(encoders, accept=None):
         return encoders[0]
 
     msg = "Unsupported media in Accept header '%s'" % accept
-    raise exceptions.NotAcceptable(msg)
+    raise exceptions.NoCodecAvailable(msg)
 
 
-def validate_path_param(value, name):
-    value = _validate_form_field(value, name, allow_list=False)
+def validate_path_param(value):
+    value = _validate_form_field(value, allow_list=False)
     if not value:
         msg = 'Parameter %s: May not be empty.'
-        raise exceptions.ValidationError(msg % name)
+        raise exceptions.ValidationError(msg)
     return value
 
 
-def validate_query_param(value, name):
-    return _validate_form_field(value, name)
+def validate_query_param(value):
+    return _validate_form_field(value)
 
 
-def validate_body_param(value, encoding, name):
+def validate_body_param(value, encoding):
     if encoding == 'application/json':
-        return _validate_json_data(value, name)
+        return _validate_json_data(value)
     elif encoding == 'multipart/form':
-        return _validate_form_object(value, name, allow_files=True)
+        return _validate_form_object(value, allow_files=True)
     elif encoding == 'application/x-www-form-urlencoded':
-        return _validate_form_object(value, name)
+        return _validate_form_object(value)
     elif encoding == 'application/octet-stream':
         if not is_file(value):
-            msg = 'Parameter %s: Must be an file upload.'
-            raise exceptions.ValidationError(msg % name)
+            msg = 'Must be an file upload.'
+            raise exceptions.ValidationError(msg)
     msg = 'Unsupported encoding "%s" for outgoing request.'
-    raise exceptions.TransportError(msg % encoding)
+    raise exceptions.NetworkError(msg % encoding)
 
 
-def validate_form_param(value, encoding, name):
+def validate_form_param(value, encoding):
     if encoding == 'application/json':
-        return _validate_json_data(value, name)
+        return _validate_json_data(value)
     elif encoding == 'multipart/form':
-        return _validate_form_field(value, name, allow_files=True)
+        return _validate_form_field(value, allow_files=True)
     elif encoding == 'application/x-www-form-urlencoded':
-        return _validate_form_field(value, name)
+        return _validate_form_field(value)
     msg = 'Unsupported encoding "%s" for outgoing request.'
-    raise exceptions.TransportError(msg % encoding)
+    raise exceptions.NetworkError(msg % encoding)
 
 
-def _validate_form_object(value, name, allow_files=False):
+def _validate_form_object(value, allow_files=False):
     """
     Ensure that `value` can be encoded as form data or as query parameters.
     """
     if not isinstance(value, dict):
-        msg = 'Parameter %s: Must be an object.'
-        raise exceptions.ValidationError(msg % name)
+        msg = 'Must be an object.'
+        raise exceptions.ValidationError(msg)
     return {
-        text_type(item_key): _validate_form_field(item_val, name, allow_files=allow_files)
+        text_type(item_key): _validate_form_field(item_val, allow_files=allow_files)
         for item_key, item_val in value.items()
     }
 
 
-def _validate_form_field(value, name, allow_files=False, allow_list=True):
+def _validate_form_field(value, allow_files=False, allow_list=True):
     """
     Ensure that `value` can be encoded as a single form data or a query parameter.
     Basic types that has a simple string representation are supported.
@@ -161,29 +161,29 @@ def _validate_form_field(value, name, allow_files=False, allow_list=True):
     elif allow_list and isinstance(value, (list, tuple)) and not is_file(value):
         # Only the top-level element may be a list.
         return [
-            _validate_form_field(item, name, allow_files=False, allow_list=False)
+            _validate_form_field(item, allow_files=False, allow_list=False)
             for item in value
         ]
     elif allow_files and is_file(value):
         return value
 
-    msg = 'Parameter %s: Must be a primative type.'
-    raise exceptions.ValidationError(msg % name)
+    msg = 'Must be a primative type.'
+    raise exceptions.ValidationError(msg)
 
 
-def _validate_json_data(value, name):
+def _validate_json_data(value):
     """
     Ensure that `value` can be encoded into JSON.
     """
     if (value is None) or isinstance(value, (bool, int, float, string_types)):
         return value
     elif isinstance(value, (list, tuple)) and not is_file(value):
-        return [_validate_json_data(item, name) for item in value]
+        return [_validate_json_data(item) for item in value]
     elif isinstance(value, dict):
         return {
-            text_type(item_key): _validate_json_data(item_val, name)
+            text_type(item_key): _validate_json_data(item_val)
             for item_key, item_val in value.items()
         }
 
-    msg = 'Parameter %s: Must be a JSON primative.'
-    raise exceptions.ValidationError(msg % name)
+    msg = 'Must be a JSON primative.'
+    raise exceptions.ValidationError(msg)

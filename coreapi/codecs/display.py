@@ -117,5 +117,6 @@ class DisplayCodec(BaseCodec):
     media_type = 'text/plain'
     supports = ['encode']
 
-    def encode(self, node, colorize=False, **kwargs):
-        return _to_plaintext(node, colorize=colorize)
+    def encode(self, document, **options):
+        colorize = options.get('colorize', False)
+        return _to_plaintext(document, colorize=colorize)

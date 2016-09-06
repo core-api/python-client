@@ -54,6 +54,8 @@ def _get_params(method, encoding, fields, params=None):
     data = {}
     files = {}
 
+    errors = {}
+
     # Ensure graceful behavior in edge-case where both location='body' and
     # location='form' fields are present.
     seen_body = False
@@ -69,16 +71,22 @@ def _get_params(method, encoding, fields, params=None):
             # Raw uploads should always use 'body', not 'form'.
             location = 'body'
 
-        if location == 'path':
-            path[key] = utils.validate_path_param(value, name=key)
-        elif location == 'query':
-            query[key] = utils.validate_query_param(value, name=key)
-        elif location == 'body':
-            data = utils.validate_body_param(value, encoding=encoding, name=key)
-            seen_body = True
-        elif location == 'form':
-            if not seen_body:
-                data[key] = utils.validate_form_param(value, encoding=encoding, name=key)
+        try:
+            if location == 'path':
+                path[key] = utils.validate_path_param(value)
+            elif location == 'query':
+                query[key] = utils.validate_query_param(value)
+            elif location == 'body':
+                data = utils.validate_body_param(value, encoding=encoding)
+                seen_body = True
+            elif location == 'form':
+                if not seen_body:
+                    data[key] = utils.validate_form_param(value, encoding=encoding)
+        except exceptions.ValidationError as exc:
+            errors[key] = exc.message
+
+    if errors:
+        raise exceptions.ValidationError(errors)
 
     if isinstance(data, dict):
         for key, value in list(data.items()):

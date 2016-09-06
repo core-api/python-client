@@ -1,1 +1,12 @@
-site_name: My Docs
+site_name: CoreAPI - Python Client
+pages:
+- Home: index.md
+- API Guide:
+    - Clients: api-guide/client.md
+    - Documents: api-guide/document.md
+    - Codecs: api-guide/codecs.md
+    - Transports: api-guide/transports.md
+    - Exceptions: api-guide/exceptions.md
+    - Utilities: api-guide/utils.md
+- Topics:
+    - Release Notes: topics/release-notes.md
