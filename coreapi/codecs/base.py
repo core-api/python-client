@@ -35,3 +35,10 @@ class BaseCodec(itypes.Object):
         if hasattr(self, 'decode'):
             ret.append('decoding')
         return ret
+
+    def get_media_types(self):
+        # Fallback, while transitioning from `application/vnd.coreapi+json`
+        # to simply `application/coreapi+json`.
+        if hasattr(self, 'media_types'):
+            return self.media_types
+        return [self.media_type]

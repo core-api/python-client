@@ -110,7 +110,7 @@ def _get_headers(url, decoders, credentials=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
-    accept = '%s, */*' % decoders[0].media_type
+    accept = '%s, */*' % ', '.join(decoders[0].get_media_types())
 
     headers = {
         'accept': accept,

@@ -63,7 +63,7 @@ The following attribute is available on codec instances:
 
 Supports decoding or encoding the Core JSON format.
 
-**.media_type**: `application/vnd.coreapi+json`
+**.media_type**: `application/coreapi+json`
 
 Example of decoding a Core JSON bytestring into a `Document` instance:
 

@@ -63,8 +63,9 @@ def negotiate_decoder(decoders, content_type=None):
     wildcard_type = '*/*'
 
     for codec in decoders:
-        if codec.media_type in (content_type, main_type, wildcard_type):
-            return codec
+        for media_type in codec.get_media_types():
+            if media_type in (content_type, main_type, wildcard_type):
+                return codec
 
     msg = "Unsupported media in Content-Type header '%s'" % content_type
     raise exceptions.NoCodecAvailable(msg)
@@ -84,12 +85,14 @@ def negotiate_encoder(encoders, accept=None):
     ])
 
     for codec in encoders:
-        if codec.media_type in acceptable:
-            return codec
+        for media_type in codec.get_media_types():
+            if media_type in acceptable:
+                return codec
 
     for codec in encoders:
-        if codec.media_type.split('/')[0] + '/*' in acceptable:
-            return codec
+        for media_type in codec.get_media_types():
+            if codec.media_type.split('/')[0] + '/*' in acceptable:
+                return codec
 
     if '*/*' in acceptable:
         return encoders[0]

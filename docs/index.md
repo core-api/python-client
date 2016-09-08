@@ -34,16 +34,16 @@ Interact with the API:
 The following schema and hypermedia formats are currently supported, either
 through [built-in support][built-in-codecs], or as a [third-party codec][third-party-codecs]:
 
-Name                | Notes
---------------------|--------------------------------|------------------------------------
-CoreJSON            | `application/vnd.coreapi+json` | Supports both Schemas & Hypermedia.
-OpenAPI ("Swagger") | `application/openapi+json`     | Schema support.
-JSON Hyper-Schema   | `application/schema+json`      | Schema support.
-HAL                 | `application/hal+json`         | Hypermedia support.
+Name                | Media type                 | Notes
+--------------------|----------------------------|------------------------------------
+CoreJSON            | `application/coreapi+json` | Supports both Schemas & Hypermedia.
+OpenAPI ("Swagger") | `application/openapi+json` | Schema support.
+JSON Hyper-Schema   | `application/schema+json`  | Schema support.
+HAL                 | `application/hal+json`     | Hypermedia support.
 
 Additionally, the following plain data content types [are supported][built-in-codecs]:
 
-Name        | Content type       | Notes
+Name        | Media type         | Notes
 ------------|--------------------|---------------------------------
 JSON        | `application/json` | Returns Python primitive types.
 Plain text  | `text/*`           | Returns a Python string instance.

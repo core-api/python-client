@@ -230,7 +230,10 @@ def _primative_to_document(data, base_url=None):
 
 
 class CoreJSONCodec(BaseCodec):
-    media_type = 'application/vnd.coreapi+json'
+    media_type = 'application/coreapi+json'
+
+    # The following is due to be deprecated...
+    media_types = ['application/coreapi+json', 'application/vnd.coreapi+json']
 
     def decode(self, bytestring, **options):
         """
