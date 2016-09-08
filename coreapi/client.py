@@ -122,19 +122,19 @@ class Client(itypes.Object):
     def reload(self, document, force_codec=False):
         return self.get(document.url, force_codec=force_codec)
 
-    def action(self, document, keys, params=None, validate=True, overrides=None, **kwargs):
-        if kwargs:
+    def action(self, document, keys, params=None, validate=True, overrides=None,
+               action=None, encoding=None, transform=None):
+        if (action is not None) or (encoding is not None) or (transform is not None):
             # Fallback for v1.x overrides.
             # Will be removed at some point, most likely in a 2.1 release.
             if overrides is None:
                 overrides = {}
-                if 'action' in kwargs:
-                    overrides['action'] = kwargs.pop('action')
-                if 'encoding' in kwargs:
-                    overrides['encoding'] = kwargs.pop('encoding')
-                if 'transform' in kwargs:
-                    overrides['transform'] = kwargs.pop('transform')
-            assert not kwargs, 'Unknown keyword argument(s) passed: ' + ', '.join(kwargs.keys())
+            if action is not None:
+                overrides['action'] = action
+            if encoding is not None:
+                overrides['encoding'] = encoding
+            if transform is not None:
+                overrides['transform'] = transform
 
         if isinstance(keys, string_types):
             keys = [keys]

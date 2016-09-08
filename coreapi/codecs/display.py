@@ -1,3 +1,6 @@
+# Note that `DisplayCodec` is deliberately omitted from the documentation,
+# as it is considered an implementation detail.
+# It may move into a utility function in the future.
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import console_style, string_types
