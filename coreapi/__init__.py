@@ -8,5 +8,5 @@ __version__ = '2.0.0'
 __all__ = [
     'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'Client',
-    'codecs', 'exceptions', 'transports', 'utils'
+    'codecs', 'exceptions', 'transports', 'utils',
 ]

@@ -10,16 +10,18 @@ the bytestring returned in the body of the response.
 When using a Core API client, HTTP responses are decoded with an appropriate
 codec, based on the `Content-Type` of the response.
 
-## Using a Codec
+## Using a codec
 
 All the codecs provided by the `coreapi` library are instantiated without
 arguments, for example:
 
+    from coreapi import codecs
+
     codec = codecs.CoreJSONCodec()
 
-A codec will provide either one or both of the `decode` or `encode` methods.
+A codec will provide either one or both of the `decode()` or `encode()` methods.
 
-### Decoding
+#### Decoding
 
 **Signature**: `decode(bytestring, **options)`
 
@@ -27,13 +29,12 @@ Given a bytestring, returns a decoded `Document`, `Error`, or raw data.
 
 An example of decoding a document:
 
-    codec = codecs.CoreJSONCodec()
     bytestring = open('document.corejson', 'rb').read()
     document = codec.decode(bytestring)
 
 The available `options` keywords depend on the codec.
 
-### Encoding
+#### Encoding
 
 **Signature**: `encode(document, **options)`
 
@@ -41,7 +42,6 @@ Given a `Document` or `Error`, return an encoded representation as a bytestring.
 
 An example of encoding a document:
 
-    codec = codecs.CoreJSONCodec()
     bytestring = codec.encode(document)
     output = open('document.corejson', 'wb')
     output.write(bytestring)
@@ -49,25 +49,21 @@ An example of encoding a document:
 
 The available `options` keywords depend on the codec.
 
-### Attributes
+#### Attributes
 
-The following attributes are available on codec instances:
+The following attribute is available on codec instances:
 
 * `media_type` - A string indicating the media type that the codec represents.
-* `plain_data` - A boolean. May be set to `True` to indicate that the codec is
-                 expected to return plain data, rather than schemas or hypermedia.
 
 ---
 
-## Available Codecs
+## Available codecs
 
 ### CoreJSONCodec
 
 Supports decoding or encoding the Core JSON format.
 
 **.media_type**: `application/vnd.coreapi+json`
-
-**.plain_data**: `False`
 
 Example of decoding a Core JSON bytestring into a `Document` instance:
 
@@ -104,8 +100,6 @@ Supports decoding JSON data.
 
 **.media_type**: `application/json`
 
-**.plain_data**: `True`
-
 Example:
 
     >>> from coreapi import codecs
@@ -123,8 +117,6 @@ Supports decoding plain-text responses.
 
 **.media_type**: `text/*`
 
-**.plain_data**: `True`
-
 Example:
 
     >>> from coreapi import codecs
@@ -141,8 +133,6 @@ Supports decoding arbitrary media as a download file. Returns a temporary file
 that will be deleted once it goes out of scope.
 
 **.media_type**: `*/*`
-
-**.plain_data**: `True`
 
 Example:
 
@@ -177,7 +167,7 @@ indicate the download filename][content-disposition-filename].
 
 ---
 
-## Custom Codecs
+## Custom codecs
 
 Custom codec classes may be created by inheriting from `BaseCodec`, setting
 the `media_type` and `supports` properties, and implementing one or both
@@ -237,10 +227,6 @@ A codec for [OpenAPI][openapi] schemas, also known as "Swagger". Installable [fr
 
 A codec for [JSON Hyper-Schema][jsonhyperschema]. Installable [from PyPI][jsonhyperschema-pypi] as `jsonhyperschema-codec`, and [available on GitHub][jsonhyperschema-github].
 
-### API Blueprint
-
-A codec for [API Blueprint][apiblueprint] schemas. Installable [from PyPI][apiblueprint-pypi] as `apiblueprint-codec`, and [available on GitHub][apiblueprint-github].
-
 ### HAL
 
 A codec for the [HAL][hal] hypermedia format. Installable [from PyPI][hal-pypi] as `hal-codec`, and [available on GitHub][hal-github].
@@ -255,10 +241,6 @@ A codec for the [HAL][hal] hypermedia format. Installable [from PyPI][hal-pypi] 
 [jsonhyperschema]: http://json-schema.org/latest/json-schema-hypermedia.html
 [jsonhyperschema-pypi]: https://pypi.python.org/pypi/jsonhyperschema-codec
 [jsonhyperschema-github]: https://github.com/core-api/python-jsonhyperschema-codec
-
-[apiblueprint]: https://apiblueprint.org/
-[apiblueprint-pypi]: https://pypi.python.org/pypi/apiblueprint-codec
-[apiblueprint-github]: https://github.com/core-api/python-apiblueprint-codec
 
 [hal]: http://stateless.co/hal_specification.html
 [hal-pypi]: https://pypi.python.org/pypi/hal-codec

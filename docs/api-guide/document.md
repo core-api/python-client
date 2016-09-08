@@ -161,4 +161,4 @@ The following are available attributes, and may be passed when instantiating an 
 * `content` - A dictionary containing all the data or links made available by this error.
 
 
-[link-behaviour]: transports.md#link-behaviour
+[link-behaviour]: transports.md#making-requests

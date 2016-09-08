@@ -10,31 +10,33 @@ By default only an HTTP transport implementation is included, but this approach 
 that other network protocols can also be supported by Core API, while remaining
 transparent to the user of the client library.
 
-## HTTPTransport
+## Available transports
+
+### HTTPTransport
 
 The `HTTPTransport` class supports the `http` and `https` schemes.
 
-### Instantiation
+#### Instantiation
 
 **Signature**: `HTTPTransport(credentials=None, headers=None, session=None)`
 
 * `credentials` - A dictionary of items that maps domain name to values that should be used in the request `Authorization` header for each domain.
 * `headers` - A dictionary of items that should be included in the outgoing request headers.
-* `session` - A [requests session instance][sessions] to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing [transport adapaters][transport-adapters] to be attached to the underlying session.
+* `session` - A [requests session instance][sessions] to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing [transport adapters][transport-adapters] to be attached to the underlying session.
 
-### Link behaviour
+#### Making requests
 
 The following describes how the various Link and Field properties are used when
 making an HTTP network request.
 
-#### Link.action
+**Link.action**
 
 The link `action` property is uppercased and then used to determine the HTTP
 method for the request.
 
 If left blank then the `GET` method is used.
 
-#### Link.encoding
+**Link.encoding**
 
 The link `encoding` property is used to determine how any `location='form'` or
 `location='body'` parameters should be encoded in order to form the body of
@@ -49,7 +51,7 @@ Supported encodings are:
 
 If left blank and a request body is included, then `'application/json'` is used.
 
-#### Link.transform
+**Link.transform**
 
 The link `transform` property is *only relevant when the link is contained in an
 embedded document*. This allows hypermedia documents to effect partial updates.
@@ -60,7 +62,7 @@ embedded document*. This allows hypermedia documents to effect partial updates.
 
 If left blank and a link in an embedded document is acted on, then `'inplace'` is used for `'PUT'`, `'PATCH'`, and `'DELETE'` requests. For any other request `'new'` is used.
 
-#### Field.location
+**Field.location**
 
 The link `location` property determines how the parameter is used to build the outgoing request.
 
@@ -73,6 +75,15 @@ The link `location` property determines how the parameter is used to build the o
              parameters, and included as the body of the request.
 
 If left blank, then `'query'` is used for `'GET'` and `'DELETE'` requests. For any other request `'form'` is used.
+
+## Custom transports
+
+The transport interface is not yet finalized, as it may still be subject to minor
+changes in a future release.
+
+## External packages
+
+No third party transport classes are currently available.
 
 [sessions]: http://docs.python-requests.org/en/master/user/advanced/#session-objects
 [transport-adapters]: http://docs.python-requests.org/en/master/user/advanced/#transport-adapters

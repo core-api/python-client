@@ -1,4 +1,4 @@
-site_name: CoreAPI - Python Client
+site_name: Core API - Python Client
 pages:
 - Home: index.md
 - API Guide:
@@ -10,3 +10,5 @@ pages:
     - Utilities: api-guide/utils.md
 - Topics:
     - Release Notes: topics/release-notes.md
+
+repo_url: https://github.com/core-api/python-client/

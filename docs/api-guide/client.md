@@ -68,17 +68,22 @@ properties on a client instance:
 
 ## Making an initial request
 
-* `get(url)`
+**Signature**: `get(url)`
 
-Make a network request to the given URL, and return a decoded `Document`.
+Make a network request to the given URL. If fetching an API schema or hypermedia
+resource, then this should typically return a decoded `Document`.
 
-**TODO**
+* `url` - The URL that should be retrieved.
+
+For example:
+
+    document = client.get('https://api.example.org/')
 
 ---
 
 ## Interacting with an API
 
-* `action(self, document, keys, params=None, overrides=None, validate=True)`
+**Signature**: `action(self, document, keys, params=None)`
 
 Effect an interaction against the given document.
 
@@ -86,4 +91,14 @@ Effect an interaction against the given document.
 * `keys` - A list of strings that index a `Link` within the document.
 * `params` - A dictionary of parameters to use for the API interaction.
 
-**TODO**
+For example, making a request without any parameters:
+
+    data = client.action(document, ['flights', 'list_airports'])
+
+Or making a request, with parameters included:
+
+    data = client.action(document, ['flights', 'search'], params={
+        'from': 'LHR',
+        'to': 'PA',
+        'date': '2016-10-12'
+    })

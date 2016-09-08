@@ -1,7 +1,8 @@
-# CoreAPI - Python Client
+# Core API - Python Client
 
-The Python CoreAPI client allows you to interact with any API that exposes
-a supported schema or hypermedia format.
+Python client library for [Core API][core-api].
+
+Allows you to interact with any API that exposes a supported schema or hypermedia format.
 
 ## Installation
 
@@ -11,19 +12,44 @@ Install [from PyPI][coreapi-pypi], using pip:
 
 ## Quickstart
 
-**TODO**
+Create a client instance:
+
+    from coreapi import Client
+    client = Client()
+
+Retrieve an API schema:
+
+    document = client.get('https://api.example.org/')
+
+Interact with the API:
+
+    data = client.action(document, ['flights', 'search'], params={
+        'from': 'LHR',
+        'to': 'PA',
+        'date': '2016-10-12'
+    })
 
 ## Supported formats
 
-The following schema and hypermedia formats are currently supported:
+The following schema and hypermedia formats are currently supported, either
+through [built-in support][built-in-codecs], or as a [third-party codec][third-party-codecs]:
 
-Name                | Description
---------------------|---------------
-CoreJSON            | Schema & Hypermedia
-OpenAPI ("Swagger") | Schema
-API Blueprint       | Schema
-JSON Hyper-Schema   | Schema
-HAL                 | Hypermedia
+Name                | Notes
+--------------------|--------------------------------|------------------------------------
+CoreJSON            | `application/vnd.coreapi+json` | Supports both Schemas & Hypermedia.
+OpenAPI ("Swagger") | `application/openapi+json`     | Schema support.
+JSON Hyper-Schema   | `application/schema+json`      | Schema support.
+HAL                 | `application/hal+json`         | Hypermedia support.
+
+Additionally, the following plain data content types [are supported][built-in-codecs]:
+
+Name        | Content type       | Notes
+------------|--------------------|---------------------------------
+JSON        | `application/json` | Returns Python primitive types.
+Plain text  | `text/*`           | Returns a Python string instance.
+Other media | `*/*`              | Returns a temporary download file.
+
+---
 
 ## License
 
@@ -50,4 +76,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+[core-api]: http://www.coreapi.org/
+[built-in-codecs]: api-guide/codecs.md#available-codecs
+[third-party-codecs]: api-guide/codecs.md#external-packages
 [coreapi-pypi]: https://pypi.python.org/pypi/coreapi

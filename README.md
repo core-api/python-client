@@ -1,108 +1,58 @@
 # Python client library
 
-Python client library for [Core API][core-api].
-
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
+
+Python client library for [Core API][core-api].
 
 **Requirements**: Python 2.7, 3.3+
 
 ---
 
-### Installation
+## Installation
 
-To install, use pip.
+Install from PyPI, using pip:
 
-    pip install coreapi
+    $ pip install coreapi
 
----
+## Quickstart
 
-### Retrieving and inspecting documents
+Create a client instance:
 
-To initially access a Core API interface, create a client, and use the `get()` method.
+    from coreapi import Client
+    client = Client()
 
-    >>> import coreapi
-    >>> client = coreapi.Client()
-    >>> doc = client.get('http://coreapi.herokuapp.com')
+Retrieve an API schema:
 
-We can now inspect the returned document.
+    document = client.get('https://api.example.org/')
 
-    >>> print(doc)
-    <Notes 'http://coreapi.herokuapp.com/'>
-        'notes': [
-            <Note '/e7785f34-2b74-41d2-ab3f-f754f688987c/'>
-                'complete': False,
-                'description': 'Schedule design meeting',
-                'delete': link(),
-                'edit': link([description], [complete]),
-            <Note '/626579bd-b2ba-40d0-92af-9ff0bfa5f276/'>
-                'complete: True,
-                'description': 'Write release notes',
-                'delete': link(),
-                'edit': link([description], [complete])
-        ],
-        'add_note': link(description)
+Interact with the API:
 
-Documents are key-value pairs, and their elements can be accessed by indexing into them.
+    data = client.action(document, ['flights', 'search'], params={
+        'from': 'LHR',
+        'to': 'PA',
+        'date': '2016-10-12'
+    })
 
-    >>> doc['notes'][0]['description']
-    'Schedule design meeting'
+## Supported formats
 
-You can also inspect the document URL and title.
+The following schema and hypermedia formats are currently supported, either
+through built-in support, or as a third-party codec:
 
-    >>> doc.url
-    'http://coreapi.herokuapp.com/'
-    >>> doc.title
-    'Notes'
+Name                | Notes
+--------------------|--------------------------------|------------------------------------
+CoreJSON            | `application/vnd.coreapi+json` | Supports both Schemas & Hypermedia.
+OpenAPI ("Swagger") | `application/openapi+json`     | Schema support.
+JSON Hyper-Schema   | `application/schema+json`      | Schema support.
+HAL                 | `application/hal+json`         | Hypermedia support.
 
----
+Additionally, the following plain data content types are supported:
 
-### Interacting with documents
-
-Documents in the Python Core API library are immutable objects. To perform a transition we use the `.action()` method and assign the resulting new document.
-
-    >>> doc = client.action(doc, ['add_note'], params={'description': 'My new note.'})
-
-The arguments to `.action()` are:
-
-* The existing document.
-* A string or list of strings or integers, indexing the link to act on.
-* Any parameters to use when the acting on the link.
-
-Transitions may update part of the document tree.
-
-    >>> doc = client.action(doc, ['notes', 0, 'edit'], params={'complete': True})
-    >>> doc['notes'][0]['complete']
-    True
-
-Or they may remove part of the document tree.
-
-    >>> while doc['notes']:
-    >>>     doc = client.action(doc, ['notes', 0, 'delete'])
-    >>> len(doc['notes'])
-    0
-
----
-
-### Saving and loading documents
-
-To save or load documents into raw bytestrings, instantiate a codec and then
-use the `dump()` and `load()` methods.
-
-For example, to save a document to disk.
-
-    codec = coreapi.codecs.CoreJSONCodec()
-    content = codec.dump(doc)
-    file = open('doc.json', 'wb')
-    file.write(content)
-    file.close()
-
-To load the same document back again.
-
-    file = open('doc.json', 'rb')
-    content = file.read()
-    file.close()
-    doc = codec.load(content)
+Name        | Content type       | Notes
+------------|--------------------|---------------------------------
+JSON        | `application/json` | Returns Python primitive types.
+Plain text  | `text/*`           | Returns a Python string instance.
+Other media | `*/*`              | Returns a temporary download file.
 
 ---
 
