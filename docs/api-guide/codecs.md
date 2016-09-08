@@ -21,31 +21,41 @@ A codec will provide either one or both of the `decode` or `encode` methods.
 
 ### Decoding
 
-* `decode(bytestring, **options)`
+**Signature**: `decode(bytestring, **options)`
 
-**TODO**
+Given a bytestring, returns a decoded `Document`, `Error`, or raw data.
+
+An example of decoding a document:
+
+    codec = codecs.CoreJSONCodec()
+    bytestring = open('document.corejson', 'rb').read()
+    document = codec.decode(bytestring)
+
+The available `options` keywords depend on the codec.
 
 ### Encoding
 
-* `encode(document, **options)`
+**Signature**: `encode(document, **options)`
 
-**TODO**
+Given a `Document` or `Error`, return an encoded representation as a bytestring.
+
+An example of encoding a document:
+
+    codec = codecs.CoreJSONCodec()
+    bytestring = codec.encode(document)
+    output = open('document.corejson', 'wb')
+    output.write(bytestring)
+    output.close()
+
+The available `options` keywords depend on the codec.
 
 ### Attributes
 
 The following attributes are available on codec instances:
 
 * `media_type` - A string indicating the media type that the codec represents.
-* `supports` - A list of strings, indicating the operations that the codec supports.
-
-The `supports` option should be one of the four following options:
-
-* `['decode', 'encode']` - Supports both decoding and encoding documents.
-* `['decode']` - Supports decoding documents only.
-* `['encode']` - Supports encoding documents only.
-* `['data']` - Indicates that the codec supports decoding,
-               but that it is expected to return plain data,
-               rather than a `Document` object.
+* `plain_data` - A boolean. May be set to `True` to indicate that the codec is
+                 expected to return plain data, rather than schemas or hypermedia.
 
 ---
 
@@ -57,7 +67,7 @@ Supports decoding or encoding the Core JSON format.
 
 **.media_type**: `application/vnd.coreapi+json`
 
-**.supports**: `['decode', 'encode']`
+**.plain_data**: `False`
 
 Example of decoding a Core JSON bytestring into a `Document` instance:
 
@@ -94,7 +104,7 @@ Supports decoding JSON data.
 
 **.media_type**: `application/json`
 
-**.supports**: `['data']`
+**.plain_data**: `True`
 
 Example:
 
@@ -113,7 +123,7 @@ Supports decoding plain-text responses.
 
 **.media_type**: `text/*`
 
-**.supports**: `['data']`
+**.plain_data**: `True`
 
 Example:
 
@@ -132,7 +142,7 @@ that will be deleted once it goes out of scope.
 
 **.media_type**: `*/*`
 
-**.supports**: `['data']`
+**.plain_data**: `True`
 
 Example:
 

@@ -114,6 +114,9 @@ The following are available attributes, and may be passed when instantiating a `
 * `description` - A string describing this link.
 * `fields` - A list of field instances.
 
+Note that the behaviour of link attributes is defined at the transport level,
+rather than at the document level. See [the `HTTPTransport` documentation for more details][link-behaviour].
+
 ### Field
 
 The following are available attributes, and may be passed when instantiating a `Field`:
@@ -122,6 +125,9 @@ The following are available attributes, and may be passed when instantiating a `
 * `required` - A boolean indicating if this is a required parameter on the link.
 * `location` - A string describing how this parameter should be included in the outgoing request.
 * `description` - A string describing this parameter on the link.
+
+Note that the behaviour of the `location` attribute is defined at the transport level,
+rather than at the document level. See [the `HTTPTransport` documentation for more details][link-behaviour].
 
 ---
 
@@ -153,3 +159,6 @@ The following are available attributes, and may be passed when instantiating an 
 
 * `title` - A string describing the error.
 * `content` - A dictionary containing all the data or links made available by this error.
+
+
+[link-behaviour]: transports.md#link-behaviour
