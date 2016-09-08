@@ -36,8 +36,8 @@ def _key_sorting(item):
 
 # The field class, as used by Link objects:
 
-Field = namedtuple('Field', ['name', 'required', 'location', 'description'])
-Field.__new__.__defaults__ = (False, '', '')
+Field = namedtuple('Field', ['name', 'required', 'location', 'type', 'description'])
+Field.__new__.__defaults__ = (False, '', '', '')
 
 
 # The Core API primatives:

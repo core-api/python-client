@@ -124,6 +124,7 @@ The following are available attributes, and may be passed when instantiating a `
 * `name` - A string describing a short name for the parameter.
 * `required` - A boolean indicating if this is a required parameter on the link.
 * `location` - A string describing how this parameter should be included in the outgoing request.
+* `type` - A string describing the kind of [input control][html5-input-control] this parameter represents.
 * `description` - A string describing this parameter on the link.
 
 Note that the behaviour of the `location` attribute is defined at the transport level,
@@ -160,5 +161,5 @@ The following are available attributes, and may be passed when instantiating an 
 * `title` - A string describing the error.
 * `content` - A dictionary containing all the data or links made available by this error.
 
-
 [link-behaviour]: transports.md#making-requests
+[html5-input-control]: https://www.w3.org/TR/html-markup/input.html

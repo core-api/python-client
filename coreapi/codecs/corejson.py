@@ -152,6 +152,8 @@ def _document_to_primative(node, base_url=None):
             ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
+        if node.type:
+            ret['type'] = node.type
         if node.description:
             ret['description'] = node.description
         return ret
@@ -203,6 +205,7 @@ def _primative_to_document(data, base_url=None):
                 name=_get_string(item, 'name'),
                 required=_get_bool(item, 'required'),
                 location=_get_string(item, 'location'),
+                type=_get_string(item, 'type'),
                 description=_get_string(item, 'description')
             )
             for item in fields if isinstance(item, dict)
