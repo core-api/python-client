@@ -115,7 +115,6 @@ class DisplayCodec(BaseCodec):
     A plaintext representation of a Document, intended for readability.
     """
     media_type = 'text/plain'
-    supports = ['encode']
 
     def encode(self, document, **options):
         colorize = options.get('colorize', False)

@@ -26,6 +26,9 @@ def guess_filename(obj):
     return None
 
 
+# Negotiation utilities. USed to determine which codec or transport class
+# should be used, given a list of supported instances.
+
 def determine_transport(transports, url):
     """
     Given a URL determine the appropriate transport instance.
@@ -94,6 +97,10 @@ def negotiate_encoder(encoders, accept=None):
     msg = "Unsupported media in Accept header '%s'" % accept
     raise exceptions.NoCodecAvailable(msg)
 
+
+# Validation utilities. Used to ensure that we get consitent validation
+# exceptions when invalid types are passed as a parameter, rather than
+# an exception occuring when the request is made.
 
 def validate_path_param(value):
     value = _validate_form_field(value, allow_list=False)

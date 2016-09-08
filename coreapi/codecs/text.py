@@ -4,7 +4,7 @@ from coreapi.codecs.base import BaseCodec
 
 class TextCodec(BaseCodec):
     media_type = 'text/*'
-    supports = ['data']
+    plain_data = True
 
     def decode(self, bytestring, **options):
         return bytestring.decode('utf-8')

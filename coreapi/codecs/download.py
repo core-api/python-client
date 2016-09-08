@@ -106,7 +106,7 @@ class DownloadCodec(BaseCodec):
     A codec to handle raw file downloads, such as images and other media.
     """
     media_type = '*/*'
-    supports = ['data']
+    plain_data = True
 
     def __init__(self, download_dir=None):
         """

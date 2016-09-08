@@ -285,8 +285,7 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, session=None,
-                 request_callback=None, response_callback=None):
+    def __init__(self, credentials=None, headers=None, session=None, request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         if session is None:
@@ -294,6 +293,9 @@ class HTTPTransport(BaseTransport):
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
         self._session = session
+
+        # Fallback for v1.x overrides.
+        # Will be removed at some point, most likely in a 2.1 release.
         self._request_callback = request_callback
         self._response_callback = response_callback
 
@@ -315,11 +317,13 @@ class HTTPTransport(BaseTransport):
         headers.update(self.headers)
 
         request = _build_http_request(session, url, method, headers, encoding, params)
-        if self._request_callback:
+
+        if self._request_callback is not None:
             self._request_callback(request)
 
         response = session.send(request)
-        if self._response_callback:
+
+        if self._response_callback is not None:
             self._response_callback(response)
 
         result = _decode_result(response, decoders, force_codec)

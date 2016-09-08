@@ -228,7 +228,6 @@ def _primative_to_document(data, base_url=None):
 
 class CoreJSONCodec(BaseCodec):
     media_type = 'application/vnd.coreapi+json'
-    supports = ['encode', 'decode']
 
     def decode(self, bytestring, **options):
         """
