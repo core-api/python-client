@@ -3,7 +3,6 @@ import itypes
 
 class BaseCodec(itypes.Object):
     media_type = None
-    plain_data = False
 
     # We don't implement stubs, to ensure that we can check which of these
     # two operations a codec supports. For example:
@@ -27,7 +26,7 @@ class BaseCodec(itypes.Object):
     @property
     def supports(self):
         # Fallback for v1.x interface.
-        if self.plain_data:
+        if '+' not in self.media_type:
             return ['data']
 
         ret = []
