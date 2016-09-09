@@ -1,23 +1,12 @@
 # coding: utf-8
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import urlparse
+from coreapi.utils import DownloadedFile
 import cgi
 import mimetypes
 import os
 import posixpath
 import tempfile
-
-
-class DownloadedFile(tempfile._TemporaryFileWrapper):
-    basename = None
-
-    def __repr__(self):
-        state = "closed" if self.close_called else "open"
-        mode = "" if self.close_called else " '%s'" % self.file.mode
-        return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
-
-    def __str__(self):
-        return self.__repr__()
 
 
 def _unique_output_path(path):

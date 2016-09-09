@@ -24,14 +24,14 @@ An issue occurred with the network request.
 
 The keys passed in a [`client.action()`][action] call did not reference a link in the document.
 
-## ValidationError
+## ParameterError
 
 The parameters passed in a [`client.action()`][action] call did not match the set of required and optional fields made available by the link, or if the type of parameters passed could
 not be supported by the given encoding on the link.
 
 ## ErrorMessage
 
-The server returned a CoreAPI [Error][error].
+The server returned a CoreAPI [Error][error] document.
 
 [action]: /api-guide/client.md#interacting-with-an-api
 [error]: /api-guide/document.md#error

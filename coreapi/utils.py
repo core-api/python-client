@@ -2,6 +2,7 @@ from coreapi import exceptions
 from coreapi.compat import string_types, text_type, urlparse
 from collections import namedtuple
 import os
+import tempfile
 
 
 File = namedtuple('File', 'name content content_type')
@@ -24,6 +25,18 @@ def guess_filename(obj):
     if name and isinstance(name, string_types) and name[0] != '<' and name[-1] != '>':
         return os.path.basename(name)
     return None
+
+
+class DownloadedFile(tempfile._TemporaryFileWrapper):
+    basename = None
+
+    def __repr__(self):
+        state = "closed" if self.close_called else "open"
+        mode = "" if self.close_called else " '%s'" % self.file.mode
+        return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
+
+    def __str__(self):
+        return self.__repr__()
 
 
 # Negotiation utilities. USed to determine which codec or transport class
@@ -109,7 +122,7 @@ def validate_path_param(value):
     value = _validate_form_field(value, allow_list=False)
     if not value:
         msg = 'Parameter %s: May not be empty.'
-        raise exceptions.ValidationError(msg)
+        raise exceptions.ParameterError(msg)
     return value
 
 
@@ -127,7 +140,7 @@ def validate_body_param(value, encoding):
     elif encoding == 'application/octet-stream':
         if not is_file(value):
             msg = 'Must be an file upload.'
-            raise exceptions.ValidationError(msg)
+            raise exceptions.ParameterError(msg)
         return value
     msg = 'Unsupported encoding "%s" for outgoing request.'
     raise exceptions.NetworkError(msg % encoding)
@@ -150,7 +163,7 @@ def _validate_form_object(value, allow_files=False):
     """
     if not isinstance(value, dict):
         msg = 'Must be an object.'
-        raise exceptions.ValidationError(msg)
+        raise exceptions.ParameterError(msg)
     return {
         text_type(item_key): _validate_form_field(item_val, allow_files=allow_files)
         for item_key, item_val in value.items()
@@ -179,7 +192,7 @@ def _validate_form_field(value, allow_files=False, allow_list=True):
         return value
 
     msg = 'Must be a primative type.'
-    raise exceptions.ValidationError(msg)
+    raise exceptions.ParameterError(msg)
 
 
 def _validate_json_data(value):
@@ -197,4 +210,4 @@ def _validate_json_data(value):
         }
 
     msg = 'Must be a JSON primative.'
-    raise exceptions.ValidationError(msg)
+    raise exceptions.ParameterError(msg)

@@ -54,7 +54,7 @@ def _lookup_link(document, keys):
 def _validate_parameters(link, parameters):
     """
     Ensure that parameters passed to the link are correct.
-    Raises a `ValidationError` if any parameters do not validate.
+    Raises a `ParameterError` if any parameters do not validate.
     """
     provided = set(parameters.keys())
     required = set([
@@ -77,7 +77,7 @@ def _validate_parameters(link, parameters):
         errors[item] = 'Unknown parameter.'
 
     if errors:
-        raise exceptions.ValidationError(errors)
+        raise exceptions.ParameterError(errors)
 
 
 def get_default_decoders():

@@ -37,7 +37,7 @@ class LinkLookupError(CoreAPIException):
     pass
 
 
-class ValidationError(CoreAPIException):
+class ParameterError(CoreAPIException):
     """
     Raised when the parameters passed do not match the link fields.
 

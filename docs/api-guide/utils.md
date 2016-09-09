@@ -5,6 +5,52 @@ may be useful if writing a custom client or transport class.
 
 ---
 
+## File utilities
+
+The following classes are used to indicate upload and download file content.
+
+### File
+
+May be used as a parameter with links that require a file input.
+
+**Signature**: `File(name, content, content_type=None)`
+
+* `name` - The filename.
+* `content` - A string, bytestring, or stream object.
+* `content_type` - An optional string representing the content type of the file.
+
+An open file or other stream may also be used directly as a parameter, instead
+of a `File` instance, but the `File` instance makes it easier to specify the
+filename and content in code.
+
+Example:
+
+    >>> from coreapi.utils import File
+    >>> upload = File('example.csv', 'a,b,c\n1,2,3\n4,5,6\n')
+    >>> data = client.action(document, ['store', 'upload_media'], params={'upload': upload})
+
+### DownloadedFile
+
+A temporary file instance, used to represent downloaded media.
+
+Available attributes:
+
+* `name` - The full filename, including the path.
+* `basename` - The filename as determined at the point of download.
+
+Example:
+
+    >>> download = client.action(document, ['user', 'get_profile_image'])
+    >>> download.basename
+    'avatar.png'
+    >>> download.read()
+    b'...'
+
+By default the file will be deleted when this object goes out of scope. See
+[the `DownloadCodec` documentation][download-codec] for more details.
+
+---
+
 ## Negotiation utilities
 
 The following functions are used to determine which of a set of transports
@@ -57,7 +103,7 @@ if an invalid value is passed.
 
 Returns the value, coerced into a string primitive. Validates that the value that is suitable for use in URI-encoded path parameters. Empty strings and composite types such as dictionaries are disallowed.
 
-May raise `ValidationError`.
+May raise `ParameterError`.
 
 ### validate_query_param
 
@@ -65,7 +111,7 @@ May raise `ValidationError`.
 
 Returns the value, coerced into a string primitive. Validates that the value is suitable for use in URL query parameters.
 
-May raise `ValidationError`.
+May raise `ParameterError`.
 
 ### validate_body_param
 
@@ -75,7 +121,7 @@ Returns the value, coerced into a primitive that is valid for the given encoding
 
 Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form-data` and `application/octet-stream`.
 
-May raise `ValidationError` for an invalid value, or `NetworkError` for an unsupported encoding.
+May raise `ParameterError` for an invalid value, or `NetworkError` for an unsupported encoding.
 
 ### validate_form_param
 
@@ -85,4 +131,7 @@ Returns the value, coerced into a primitive that is valid for the given encoding
 
 Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form-data`.
 
-May raise `ValidationError`, or `NetworkError` for an unsupported encoding.
+May raise `ParameterError`, or `NetworkError` for an unsupported encoding.
+
+
+[download-codec]: codecs.md#downloadcodec

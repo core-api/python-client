@@ -82,11 +82,11 @@ def _get_params(method, encoding, fields, params=None):
             elif location == 'form':
                 if not seen_body:
                     data[key] = utils.validate_form_param(value, encoding=encoding)
-        except exceptions.ValidationError as exc:
+        except exceptions.ParameterError as exc:
             errors[key] = exc.message
 
     if errors:
-        raise exceptions.ValidationError(errors)
+        raise exceptions.ParameterError(errors)
 
     # Move any files from 'data' into 'files'.
     if isinstance(data, dict):
