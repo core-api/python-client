@@ -68,14 +68,14 @@ def test_validate_form_data():
         utils.validate_body_param({'a': utils.File('abc.txt', None)}, 'application/x-www-form-urlencoded')
 
     # Multipart
-    assert utils.validate_form_param(123, 'multipart/form') == '123'
-    assert utils.validate_form_param(utils.File('abc.txt', None), 'multipart/form') == utils.File('abc.txt', None)
-    assert utils.validate_body_param({'a': 123}, 'multipart/form') == {'a': '123'}
-    assert utils.validate_body_param({'a': utils.File('abc.txt', None)}, 'multipart/form') == {'a': utils.File('abc.txt', None)}
+    assert utils.validate_form_param(123, 'multipart/form-data') == '123'
+    assert utils.validate_form_param(utils.File('abc.txt', None), 'multipart/form-data') == utils.File('abc.txt', None)
+    assert utils.validate_body_param({'a': 123}, 'multipart/form-data') == {'a': '123'}
+    assert utils.validate_body_param({'a': utils.File('abc.txt', None)}, 'multipart/form-data') == {'a': utils.File('abc.txt', None)}
     with pytest.raises(exceptions.ValidationError):
-        utils.validate_form_param({'a': {'foo': 'bar'}}, 'multipart/form')
+        utils.validate_form_param({'a': {'foo': 'bar'}}, 'multipart/form-data')
     with pytest.raises(exceptions.ValidationError):
-        utils.validate_body_param(123, 'multipart/form')
+        utils.validate_body_param(123, 'multipart/form-data')
 
     # Raw upload
     with pytest.raises(exceptions.ValidationError):

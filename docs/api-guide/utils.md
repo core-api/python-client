@@ -45,7 +45,7 @@ May raise `NoCodecAvailable`.
 
 Different request encodings have different capabilities. For example, `application/json`
 supports a range of data primitives, but does not support file uploads. In contrast,
-`multipart/form` only supports string primatives and file uploads.
+`multipart/form-data` only supports string primitives and file uploads.
 
 The following helper functions validate that the types passed to an action are suitable
 for use with the given encoding, and ensure that a consistent exception type is raised
@@ -73,7 +73,7 @@ May raise `ValidationError`.
 
 Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as the body of the outgoing request.
 
-Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form` and `application/octet-stream`.
+Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form-data` and `application/octet-stream`.
 
 May raise `ValidationError` for an invalid value, or `NetworkError` for an unsupported encoding.
 
@@ -83,6 +83,6 @@ May raise `ValidationError` for an invalid value, or `NetworkError` for an unsup
 
 Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as a key-value item for part of the body of the outgoing request.
 
-Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form`.
+Valid encodings are `application/json`, `x-www-form-urlencoded`, `multipart/form-data`.
 
 May raise `ValidationError`, or `NetworkError` for an unsupported encoding.

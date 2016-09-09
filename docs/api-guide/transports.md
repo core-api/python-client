@@ -46,7 +46,7 @@ Supported encodings are:
 
 * `'application/json'` - Suitable for primitive and composite types.
 * `'application/x-www-form-urlencoded'` - Suitable for primitive types.
-* `'multipart/form'` - Suitable for primitive types and file uploads.
+* `'multipart/form-data'` - Suitable for primitive types and file uploads.
 * `'application/octet-stream'` - Suitable for raw file uploads, with a `location='body'` field.
 
 If left blank and a request body is included, then `'application/json'` is used.

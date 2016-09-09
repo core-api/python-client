@@ -120,6 +120,7 @@ class Client(itypes.Object):
         return transport.transition(link, self.decoders, force_codec=force_codec)
 
     def reload(self, document, force_codec=False):
+        # Fallback for v1.x. To be removed in favour of explict `get` style.
         return self.get(document.url, force_codec=force_codec)
 
     def action(self, document, keys, params=None, validate=True, overrides=None,

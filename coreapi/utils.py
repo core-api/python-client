@@ -120,7 +120,7 @@ def validate_query_param(value):
 def validate_body_param(value, encoding):
     if encoding == 'application/json':
         return _validate_json_data(value)
-    elif encoding == 'multipart/form':
+    elif encoding == 'multipart/form-data':
         return _validate_form_object(value, allow_files=True)
     elif encoding == 'application/x-www-form-urlencoded':
         return _validate_form_object(value)
@@ -128,6 +128,7 @@ def validate_body_param(value, encoding):
         if not is_file(value):
             msg = 'Must be an file upload.'
             raise exceptions.ValidationError(msg)
+        return value
     msg = 'Unsupported encoding "%s" for outgoing request.'
     raise exceptions.NetworkError(msg % encoding)
 
@@ -135,7 +136,7 @@ def validate_body_param(value, encoding):
 def validate_form_param(value, encoding):
     if encoding == 'application/json':
         return _validate_json_data(value)
-    elif encoding == 'multipart/form':
+    elif encoding == 'multipart/form-data':
         return _validate_form_field(value, allow_files=True)
     elif encoding == 'application/x-www-form-urlencoded':
         return _validate_form_field(value)
