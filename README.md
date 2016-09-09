@@ -1,4 +1,4 @@
-# Python client library
+# [Python client library][docs]
 
 [![build-status-image]][travis]
 [![pypi-version]][pypi]
@@ -81,6 +81,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+[docs]: http://core-api.github.io/python-client/
 [core-api]: https://github.com/core-api/core-api/
 [build-status-image]: https://secure.travis-ci.org/core-api/python-client.svg?branch=master
 [travis]: http://travis-ci.org/core-api/python-client?branch=master
