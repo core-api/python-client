@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+	<title>Codecs - Core API - Python Client</title>
+
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.5.0.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="../..">Core API - Python Client</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li >
+                        <a href="../..">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">API Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../client/">Clients</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../document/">Documents</a>
+</li>
+
+                        
+                            
+<li class="active">
+    <a href="./">Codecs</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../transports/">Transports</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../exceptions/">Exceptions</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../utils/">Utilities</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Topics <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../../topics/release-notes/">Release Notes</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                </ul>
+            
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                
+                    <li >
+                        <a rel="next" href="../document/">
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../transports/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a href="https://github.com/core-api/python-client/">
+                            
+                                <i class="fa fa-github"></i>
+                            
+                            GitHub
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#codecs">Codecs</a></li>
+        
+            <li><a href="#using-a-codec">Using a codec</a></li>
+        
+            <li><a href="#available-codecs">Available codecs</a></li>
+        
+            <li><a href="#custom-codecs">Custom codecs</a></li>
+        
+            <li><a href="#external-packages">External packages</a></li>
+        
+    
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="codecs">Codecs</h1>
+<p>Codecs are responsible for decoding a bytestring into a <code>Document</code> instance,
+or for encoding a <code>Document</code> instance into a bytestring.</p>
+<p>A codec is associated with a media type. For example in HTTP responses,
+the <code>Content-Type</code> header is used to indicate the media type of
+the bytestring returned in the body of the response.</p>
+<p>When using a Core API client, HTTP responses are decoded with an appropriate
+codec, based on the <code>Content-Type</code> of the response.</p>
+<h2 id="using-a-codec">Using a codec</h2>
+<p>All the codecs provided by the <code>coreapi</code> library are instantiated without
+arguments, for example:</p>
+<pre><code>from coreapi import codecs
+
+codec = codecs.CoreJSONCodec()
+</code></pre>
+<p>A codec will provide either one or both of the <code>decode()</code> or <code>encode()</code> methods.</p>
+<h4 id="decoding">Decoding</h4>
+<p><strong>Signature</strong>: <code>decode(bytestring, **options)</code></p>
+<p>Given a bytestring, returns a decoded <code>Document</code>, <code>Error</code>, or raw data.</p>
+<p>An example of decoding a document:</p>
+<pre><code>bytestring = open('document.corejson', 'rb').read()
+document = codec.decode(bytestring)
+</code></pre>
+<p>The available <code>options</code> keywords depend on the codec.</p>
+<h4 id="encoding">Encoding</h4>
+<p><strong>Signature</strong>: <code>encode(document, **options)</code></p>
+<p>Given a <code>Document</code> or <code>Error</code>, return an encoded representation as a bytestring.</p>
+<p>An example of encoding a document:</p>
+<pre><code>bytestring = codec.encode(document)
+output = open('document.corejson', 'wb')
+output.write(bytestring)
+output.close()
+</code></pre>
+<p>The available <code>options</code> keywords depend on the codec.</p>
+<h4 id="attributes">Attributes</h4>
+<p>The following attribute is available on codec instances:</p>
+<ul>
+<li><code>media_type</code> - A string indicating the media type that the codec represents.</li>
+</ul>
+<hr />
+<h2 id="available-codecs">Available codecs</h2>
+<h3 id="corejsoncodec">CoreJSONCodec</h3>
+<p>Supports decoding or encoding the Core JSON format.</p>
+<p><strong>.media_type</strong>: <code>application/coreapi+json</code></p>
+<p>Example of decoding a Core JSON bytestring into a <code>Document</code> instance:</p>
+<pre><code>&gt;&gt;&gt; from coreapi import codecs
+&gt;&gt;&gt; codec = codecs.CoreJSONCodec()
+&gt;&gt;&gt; content = b'{"_type": "document", ...}'
+&gt;&gt;&gt; document = codec.decode(content)
+&gt;&gt;&gt; print(document)
+&lt;Flight Search API 'http://api.example.com/'&gt;
+    'search': link(from, to, date)
+</code></pre>
+<p>Example of encoding a <code>Document</code> instance into a Core JSON bytestring:</p>
+<pre><code>&gt;&gt;&gt; content = codec.encode(document, indent=True)
+&gt;&gt;&gt; print(content)
+{
+    "_type": "document"
+}
+</code></pre>
+<h4 id="encoding-options">Encoding options</h4>
+<p><strong>indent</strong>: Set to <code>True</code> for an indented representation. The default is to generate a compact representation.</p>
+<h4 id="decoding-options">Decoding options</h4>
+<p><strong>base_url</strong>: The URL from which the document was retrieved. Used to resolve any relative
+URLs in the document.</p>
+<hr />
+<h3 id="jsoncodec">JSONCodec</h3>
+<p>Supports decoding JSON data.</p>
+<p><strong>.media_type</strong>: <code>application/json</code></p>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; from coreapi import codecs
+&gt;&gt;&gt; codec = codecs.JSONCodec()
+&gt;&gt;&gt; content = b'{"string": "abc", "boolean": true, "null": null}'
+&gt;&gt;&gt; data = codec.decode(content)
+&gt;&gt;&gt; print(data)
+{"string": "abc", "boolean": True, "null": None}
+</code></pre>
+<hr />
+<h3 id="textcodec">TextCodec</h3>
+<p>Supports decoding plain-text responses.</p>
+<p><strong>.media_type</strong>: <code>text/*</code></p>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; from coreapi import codecs
+&gt;&gt;&gt; codec = codecs.TextCodec()
+&gt;&gt;&gt; data = codec.decode(b'hello, world!')
+&gt;&gt;&gt; print(data)
+hello, world!
+</code></pre>
+<hr />
+<h3 id="downloadcodec">DownloadCodec</h3>
+<p>Supports decoding arbitrary media as a download file. Returns a <a href="https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryFile">temporary file</a>
+that will be deleted once it goes out of scope.</p>
+<p><strong>.media_type</strong>: <code>*/*</code></p>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; codec = codecs.DownloadCodec()
+&gt;&gt;&gt; download = codec.decode(b'abc...xyz')
+&gt;&gt;&gt; print(download)
+&lt;DownloadedFile '.../tmpYbxNXT.download', open 'rb'&gt;
+&gt;&gt;&gt; content = download.read()
+&gt;&gt;&gt; print(content)
+abc...xyz
+</code></pre>
+<p>The download filename will be determined by either the <code>Content-Disposition</code>
+header, or based on the request URL and the <code>Content-Type</code> header. Download
+collisions are avoided by using incrementing filenames where required.
+The original name used for the download file can be inspected using <code>.basename</code>.</p>
+<pre><code>&gt;&gt;&gt; download = codec.decode(b'abc...xyz', content_type='image/png', base_url='http://example.com/download/')
+&gt;&gt;&gt; download.name
+'/var/folders/2k/qjf3np5s28zf2f58963pz2k40000gn/T/download.png'
+&gt;&gt;&gt; download.basename
+'download.png'
+</code></pre>
+<h4 id="instantiation">Instantiation</h4>
+<p>By default this codec returns a temporary file that will be deleted once it
+goes out of scope. If you want to return temporary files that are not
+deleted when they go out of scope then you can instantiate the <code>DownloadCodec</code>
+with a <code>download_dir</code> argument.</p>
+<p>For example, to download files to the current working directory:</p>
+<pre><code>&gt;&gt;&gt; import os
+&gt;&gt;&gt; codecs.DownloadCodec(download_dir=os.getcwd())
+</code></pre>
+<h4 id="decoding-options_1">Decoding options</h4>
+<p><strong>base_url</strong>: The URL from which the document was retrieved. May be used to
+generate an output filename if no <code>Content-Disposition</code> header exists.</p>
+<p><strong>content_type</strong>: The response Content-Type header. May be used to determine a
+suffix for the output filename if no <code>Content-Disposition</code> header exists.</p>
+<p><strong>content_disposition</strong>: The response Content-Disposition header. May be <a href="https://tools.ietf.org/html/draft-ietf-httpbis-content-disp-00#section-3.3">used to
+indicate the download filename</a>.</p>
+<hr />
+<h2 id="custom-codecs">Custom codecs</h2>
+<p>Custom codec classes may be created by inheriting from <code>BaseCodec</code>, setting
+the <code>media_type</code> and <code>supports</code> properties, and implementing one or both
+of the <code>decode</code> or <code>encode</code> methods.</p>
+<p>For example:</p>
+<pre><code>from coreapi import codecs
+import yaml
+
+class YAMLCodec(codecs.BaseCodec):
+    media_type = 'application/yaml'
+    supports = ['data']
+
+    def decode(content, **options):
+        return yaml.safe_load(content)
+</code></pre>
+<h3 id="the-codec-registry">The codec registry</h3>
+<p>Tools such as the Core API command line client require a method of discovering
+which codecs are installed on the system. This is enabled by using a registry
+system.</p>
+<p>In order to register a custom codec, the PyPI package must contain a correctly
+configured <code>entry_points</code> option. Typically this needs to be added in a
+<code>setup.py</code> module, which is run whenever publishing a new package version.</p>
+<p>The <code>entry_points</code> option must be a dictionary, containing a <code>coreapi.codecs</code>
+item listing the available codec classes. As an example, the listing for the
+codecs which are registered by the <code>coreapi</code> package itself is as follows:</p>
+<pre><code>setup(
+    name='coreapi',
+    license='BSD',
+    ...
+    entry_points={
+        'coreapi.codecs': [
+            'corejson=coreapi.codecs:CoreJSONCodec',
+            'json=coreapi.codecs:JSONCodec',
+            'text=coreapi.codecs:TextCodec',
+            'download=coreapi.codecs:DownloadCodec',
+        ]
+    }
+)
+</code></pre>
+<hr />
+<h2 id="external-packages">External packages</h2>
+<p>The following third-party packages are available.</p>
+<h3 id="openapi">OpenAPI</h3>
+<p>A codec for <a href="https://openapis.org/specification">OpenAPI</a> schemas, also known as "Swagger". Installable <a href="https://pypi.python.org/pypi/openapi-codec">from PyPI</a> as <code>openapi-codec</code>, and <a href="https://github.com/core-api/python-openapi-codec">available on GitHub</a>.</p>
+<h3 id="json-hyper-schema">JSON Hyper-Schema</h3>
+<p>A codec for <a href="http://json-schema.org/latest/json-schema-hypermedia.html">JSON Hyper-Schema</a>. Installable <a href="https://pypi.python.org/pypi/jsonhyperschema-codec">from PyPI</a> as <code>jsonhyperschema-codec</code>, and <a href="https://github.com/core-api/python-jsonhyperschema-codec">available on GitHub</a>.</p>
+<h3 id="hal">HAL</h3>
+<p>A codec for the <a href="http://stateless.co/hal_specification.html">HAL</a> hypermedia format. Installable <a href="https://pypi.python.org/pypi/hal-codec">from PyPI</a> as <code>hal-codec</code>, and <a href="https://github.com/core-api/python-hal-codec">available on GitHub</a>.</p></div>
+            
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <p>Copyright &copy; 2015, <a href="https://twitter.com/_tomchristie">Tom Christie</a>.</p>
+            
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>

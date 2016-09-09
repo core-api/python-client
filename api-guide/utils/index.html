@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+	<title>Utilities - Core API - Python Client</title>
+
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.5.0.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="../..">Core API - Python Client</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li >
+                        <a href="../..">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">API Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../client/">Clients</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../document/">Documents</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../codecs/">Codecs</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../transports/">Transports</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../exceptions/">Exceptions</a>
+</li>
+
+                        
+                            
+<li class="active">
+    <a href="./">Utilities</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Topics <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../../topics/release-notes/">Release Notes</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                </ul>
+            
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                
+                    <li >
+                        <a rel="next" href="../exceptions/">
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../../topics/release-notes/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a href="https://github.com/core-api/python-client/">
+                            
+                                <i class="fa fa-github"></i>
+                            
+                            GitHub
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#utilities">Utilities</a></li>
+        
+            <li><a href="#file-utilities">File utilities</a></li>
+        
+            <li><a href="#negotiation-utilities">Negotiation utilities</a></li>
+        
+            <li><a href="#validation-utilities">Validation utilities</a></li>
+        
+    
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="utilities">Utilities</h1>
+<p>The <code>coreapi.utils</code> module provides a number of helper functions that
+may be useful if writing a custom client or transport class.</p>
+<hr />
+<h2 id="file-utilities">File utilities</h2>
+<p>The following classes are used to indicate upload and download file content.</p>
+<h3 id="file">File</h3>
+<p>May be used as a parameter with links that require a file input.</p>
+<p><strong>Signature</strong>: <code>File(name, content, content_type=None)</code></p>
+<ul>
+<li><code>name</code> - The filename.</li>
+<li><code>content</code> - A string, bytestring, or stream object.</li>
+<li><code>content_type</code> - An optional string representing the content type of the file.</li>
+</ul>
+<p>An open file or other stream may also be used directly as a parameter, instead
+of a <code>File</code> instance, but the <code>File</code> instance makes it easier to specify the
+filename and content in code.</p>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; from coreapi.utils import File
+&gt;&gt;&gt; upload = File('example.csv', 'a,b,c\n1,2,3\n4,5,6\n')
+&gt;&gt;&gt; data = client.action(document, ['store', 'upload_media'], params={'upload': upload})
+</code></pre>
+<h3 id="downloadedfile">DownloadedFile</h3>
+<p>A temporary file instance, used to represent downloaded media.</p>
+<p>Available attributes:</p>
+<ul>
+<li><code>name</code> - The full filename, including the path.</li>
+<li><code>basename</code> - The filename as determined at the point of download.</li>
+</ul>
+<p>Example:</p>
+<pre><code>&gt;&gt;&gt; download = client.action(document, ['user', 'get_profile_image'])
+&gt;&gt;&gt; download.basename
+'avatar.png'
+&gt;&gt;&gt; download.read()
+b'...'
+</code></pre>
+<p>By default the file will be deleted when this object goes out of scope. See
+<a href="../codecs/#downloadcodec">the <code>DownloadCodec</code> documentation</a> for more details.</p>
+<hr />
+<h2 id="negotiation-utilities">Negotiation utilities</h2>
+<p>The following functions are used to determine which of a set of transports
+or codecs should be used when performing an API interaction.</p>
+<h3 id="determine_transport">determine_transport</h3>
+<p><strong>Signature</strong>: <code>determine_transport(transports, url)</code></p>
+<p>Given a list of transports and a URL, return the appropriate transport for
+making network requests to that URL.</p>
+<p>May raise <code>NetworkError</code>.</p>
+<h3 id="negotiate_decoder">negotiate_decoder</h3>
+<p><strong>Signature</strong>: <code>negotiate_decoder(codecs, content_type=None)</code></p>
+<p>Given a list of codecs, and the value of an HTTP response <code>Content-Type</code> header,
+return the appropriate codec for decoding the response content.</p>
+<p>May raise <code>NoCodecAvailable</code>.</p>
+<h3 id="negotiate_encoder">negotiate_encoder</h3>
+<p><strong>Signature</strong>: <code>negotiate_encoder(codecs, accept=None)</code></p>
+<p>Given a list of codecs, and the value of an incoming HTTP request <code>Accept</code>
+header, return the appropriate codec for encoding the outgoing response content.</p>
+<p>Allows server implementations to provide for client-driven content negotiation.</p>
+<p>May raise <code>NoCodecAvailable</code>.</p>
+<hr />
+<h2 id="validation-utilities">Validation utilities</h2>
+<p>Different request encodings have different capabilities. For example, <code>application/json</code>
+supports a range of data primitives, but does not support file uploads. In contrast,
+<code>multipart/form-data</code> only supports string primitives and file uploads.</p>
+<p>The following helper functions validate that the types passed to an action are suitable
+for use with the given encoding, and ensure that a consistent exception type is raised
+if an invalid value is passed.</p>
+<h3 id="validate_path_param">validate_path_param</h3>
+<p><strong>Signature</strong>: <code>validate_path_param(value)</code></p>
+<p>Returns the value, coerced into a string primitive. Validates that the value that is suitable for use in URI-encoded path parameters. Empty strings and composite types such as dictionaries are disallowed.</p>
+<p>May raise <code>ParameterError</code>.</p>
+<h3 id="validate_query_param">validate_query_param</h3>
+<p><strong>Signature</strong>: <code>validate_query_param(value)</code></p>
+<p>Returns the value, coerced into a string primitive. Validates that the value is suitable for use in URL query parameters.</p>
+<p>May raise <code>ParameterError</code>.</p>
+<h3 id="validate_body_param">validate_body_param</h3>
+<p><strong>Signature</strong>: <code>validate_body_param(value, encoding)</code></p>
+<p>Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as the body of the outgoing request.</p>
+<p>Valid encodings are <code>application/json</code>, <code>x-www-form-urlencoded</code>, <code>multipart/form-data</code> and <code>application/octet-stream</code>.</p>
+<p>May raise <code>ParameterError</code> for an invalid value, or <code>NetworkError</code> for an unsupported encoding.</p>
+<h3 id="validate_form_param">validate_form_param</h3>
+<p><strong>Signature</strong>: <code>validate_body_param(value, encoding)</code></p>
+<p>Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as a key-value item for part of the body of the outgoing request.</p>
+<p>Valid encodings are <code>application/json</code>, <code>x-www-form-urlencoded</code>, <code>multipart/form-data</code>.</p>
+<p>May raise <code>ParameterError</code>, or <code>NetworkError</code> for an unsupported encoding.</p></div>
+            
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <p>Copyright &copy; 2015, <a href="https://twitter.com/_tomchristie">Tom Christie</a>.</p>
+            
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+	<title>Transports - Core API - Python Client</title>
+
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.5.0.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="../..">Core API - Python Client</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li >
+                        <a href="../..">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">API Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../client/">Clients</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../document/">Documents</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../codecs/">Codecs</a>
+</li>
+
+                        
+                            
+<li class="active">
+    <a href="./">Transports</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../exceptions/">Exceptions</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../utils/">Utilities</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Topics <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../../topics/release-notes/">Release Notes</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                </ul>
+            
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                
+                    <li >
+                        <a rel="next" href="../codecs/">
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../exceptions/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a href="https://github.com/core-api/python-client/">
+                            
+                                <i class="fa fa-github"></i>
+                            
+                            GitHub
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#transports">Transports</a></li>
+        
+            <li><a href="#available-transports">Available transports</a></li>
+        
+            <li><a href="#custom-transports">Custom transports</a></li>
+        
+            <li><a href="#external-packages">External packages</a></li>
+        
+    
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="transports">Transports</h1>
+<p>Transports are responsible for making the actual network requests, and handling
+the responses.</p>
+<p>Whenever an action is taken on a link, the scheme of the URL is inspected, and
+the responsibility for making a request is passed to an appropriate transport class.</p>
+<p>By default only an HTTP transport implementation is included, but this approach means
+that other network protocols can also be supported by Core API, while remaining
+transparent to the user of the client library.</p>
+<h2 id="available-transports">Available transports</h2>
+<h3 id="httptransport">HTTPTransport</h3>
+<p>The <code>HTTPTransport</code> class supports the <code>http</code> and <code>https</code> schemes.</p>
+<h4 id="instantiation">Instantiation</h4>
+<p><strong>Signature</strong>: <code>HTTPTransport(credentials=None, headers=None, session=None)</code></p>
+<ul>
+<li><code>credentials</code> - A dictionary of items that maps domain name to values that should be used in the request <code>Authorization</code> header for each domain.</li>
+<li><code>headers</code> - A dictionary of items that should be included in the outgoing request headers.</li>
+<li><code>session</code> - A <a href="http://docs.python-requests.org/en/master/user/advanced/#session-objects">requests session instance</a> to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing <a href="http://docs.python-requests.org/en/master/user/advanced/#transport-adapters">transport adapters</a> to be attached to the underlying session.</li>
+</ul>
+<h4 id="making-requests">Making requests</h4>
+<p>The following describes how the various Link and Field properties are used when
+making an HTTP network request.</p>
+<p><strong>Link.action</strong></p>
+<p>The link <code>action</code> property is uppercased and then used to determine the HTTP
+method for the request.</p>
+<p>If left blank then the <code>GET</code> method is used.</p>
+<p><strong>Link.encoding</strong></p>
+<p>The link <code>encoding</code> property is used to determine how any <code>location='form'</code> or
+<code>location='body'</code> parameters should be encoded in order to form the body of
+the request.</p>
+<p>Supported encodings are:</p>
+<ul>
+<li><code>'application/json'</code> - Suitable for primitive and composite types.</li>
+<li><code>'application/x-www-form-urlencoded'</code> - Suitable for primitive types.</li>
+<li><code>'multipart/form-data'</code> - Suitable for primitive types and file uploads.</li>
+<li><code>'application/octet-stream'</code> - Suitable for raw file uploads, with a <code>location='body'</code> field.</li>
+</ul>
+<p>If left blank and a request body is included, then <code>'application/json'</code> is used.</p>
+<p><strong>Link.transform</strong></p>
+<p>The link <code>transform</code> property is <em>only relevant when the link is contained in an
+embedded document</em>. This allows hypermedia documents to effect partial updates.</p>
+<ul>
+<li><code>'new'</code> - The response document should be returned as the result.</li>
+<li><code>'inplace'</code> - The embedded document should be updated in-place, and the resulting
+              top-level document returned as the result.</li>
+</ul>
+<p>If left blank and a link in an embedded document is acted on, then <code>'inplace'</code> is used for <code>'PUT'</code>, <code>'PATCH'</code>, and <code>'DELETE'</code> requests. For any other request <code>'new'</code> is used.</p>
+<p><strong>Field.location</strong></p>
+<p>The link <code>location</code> property determines how the parameter is used to build the outgoing request.</p>
+<ul>
+<li><code>'path'</code> - The parameter is included in the URL, with the link
+             'url' value acting as a <a href="https://tools.ietf.org/html/rfc6570">URI template</a>.</li>
+<li><code>'query'</code> - The parameter is included as a URL query parameter.</li>
+<li><code>'body'</code> - The parameter is encoded and included as the body of the request.</li>
+<li><code>'form'</code> - The parameter is treated as a single key-value item in an
+             dictionary of items. It should be encoded together with any other form
+             parameters, and included as the body of the request.</li>
+</ul>
+<p>If left blank, then <code>'query'</code> is used for <code>'GET'</code> and <code>'DELETE'</code> requests. For any other request <code>'form'</code> is used.</p>
+<h2 id="custom-transports">Custom transports</h2>
+<p>The transport interface is not yet finalized, as it may still be subject to minor
+changes in a future release.</p>
+<h2 id="external-packages">External packages</h2>
+<p>No third party transport classes are currently available.</p></div>
+            
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <p>Copyright &copy; 2015, <a href="https://twitter.com/_tomchristie">Tom Christie</a>.</p>
+            
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>

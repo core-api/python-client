@@ -1,0 +1,414 @@
+{
+    "docs": [
+        {
+            "location": "/", 
+            "text": "Core API - Python Client\n\n\nPython client library for \nCore API\n.\n\n\nAllows you to interact with any API that exposes a supported schema or hypermedia format.\n\n\nInstallation\n\n\nInstall \nfrom PyPI\n, using pip:\n\n\n$ pip install coreapi\n\n\n\nQuickstart\n\n\nCreate a client instance:\n\n\nfrom coreapi import Client\nclient = Client()\n\n\n\nRetrieve an API schema:\n\n\ndocument = client.get('https://api.example.org/')\n\n\n\nInteract with the API:\n\n\ndata = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})\n\n\n\nSupported formats\n\n\nThe following schema and hypermedia formats are currently supported, either\nthrough \nbuilt-in support\n, or as a \nthird-party codec\n:\n\n\n\n\n\n\n\n\nName\n\n\nMedia type\n\n\nNotes\n\n\n\n\n\n\n\n\n\n\nCoreJSON\n\n\napplication/coreapi+json\n\n\nSupports both Schemas \n Hypermedia.\n\n\n\n\n\n\nOpenAPI (\"Swagger\")\n\n\napplication/openapi+json\n\n\nSchema support.\n\n\n\n\n\n\nJSON Hyper-Schema\n\n\napplication/schema+json\n\n\nSchema support.\n\n\n\n\n\n\nHAL\n\n\napplication/hal+json\n\n\nHypermedia support.\n\n\n\n\n\n\n\n\nAdditionally, the following plain data content types \nare supported\n:\n\n\n\n\n\n\n\n\nName\n\n\nMedia type\n\n\nNotes\n\n\n\n\n\n\n\n\n\n\nJSON\n\n\napplication/json\n\n\nReturns Python primitive types.\n\n\n\n\n\n\nPlain text\n\n\ntext/*\n\n\nReturns a Python string instance.\n\n\n\n\n\n\nOther media\n\n\n*/*\n\n\nReturns a temporary download file.\n\n\n\n\n\n\n\n\n\n\nLicense\n\n\nCopyright \u00a9 2015-2016, Tom Christie.\nAll rights reserved.\n\n\nRedistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:\n\n\nRedistributions of source code must retain the above copyright notice, this\nlist of conditions and the following disclaimer.\nRedistributions in binary form must reproduce the above copyright notice, this\nlist of conditions and the following disclaimer in the documentation and/or\nother materials provided with the distribution.\n\n\nTHIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.", 
+            "title": "Home"
+        }, 
+        {
+            "location": "/#core-api-python-client", 
+            "text": "Python client library for  Core API .  Allows you to interact with any API that exposes a supported schema or hypermedia format.", 
+            "title": "Core API - Python Client"
+        }, 
+        {
+            "location": "/#installation", 
+            "text": "Install  from PyPI , using pip:  $ pip install coreapi", 
+            "title": "Installation"
+        }, 
+        {
+            "location": "/#quickstart", 
+            "text": "Create a client instance:  from coreapi import Client\nclient = Client()  Retrieve an API schema:  document = client.get('https://api.example.org/')  Interact with the API:  data = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})", 
+            "title": "Quickstart"
+        }, 
+        {
+            "location": "/#supported-formats", 
+            "text": "The following schema and hypermedia formats are currently supported, either\nthrough  built-in support , or as a  third-party codec :     Name  Media type  Notes      CoreJSON  application/coreapi+json  Supports both Schemas   Hypermedia.    OpenAPI (\"Swagger\")  application/openapi+json  Schema support.    JSON Hyper-Schema  application/schema+json  Schema support.    HAL  application/hal+json  Hypermedia support.     Additionally, the following plain data content types  are supported :     Name  Media type  Notes      JSON  application/json  Returns Python primitive types.    Plain text  text/*  Returns a Python string instance.    Other media  */*  Returns a temporary download file.", 
+            "title": "Supported formats"
+        }, 
+        {
+            "location": "/#license", 
+            "text": "Copyright \u00a9 2015-2016, Tom Christie.\nAll rights reserved.  Redistribution and use in source and binary forms, with or without\nmodification, are permitted provided that the following conditions are met:  Redistributions of source code must retain the above copyright notice, this\nlist of conditions and the following disclaimer.\nRedistributions in binary form must reproduce the above copyright notice, this\nlist of conditions and the following disclaimer in the documentation and/or\nother materials provided with the distribution.  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS \"AS IS\" AND\nANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED\nWARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE\nDISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE\nFOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES\n(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR\nSERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER\nCAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,\nOR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE\nOF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.", 
+            "title": "License"
+        }, 
+        {
+            "location": "/api-guide/client/", 
+            "text": "Clients\n\n\nIn order to interact with an API using Core API, a client instance is required.\n\n\nThe client is used to fetch the initial API description, and to then perform\ninteractions against the API.\n\n\nAn example client session might look something like this:\n\n\nfrom coreapi import Client\n\nclient = Client()\ndocument = client.get('https://api.example.org/')\ndata = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})\n\n\n\n\n\nInstantiating a client\n\n\nThe default client may be obtained by instantiating an object, without\npassing any parameters.\n\n\nclient = Client()\n\n\n\nA client instance holds the configuration about which transports are available\nfor making network requests, and which codecs are available for decoding the\ncontent of network responses.\n\n\nThis configuration is set by passing either or both of the \ndecoders\n and\n\ntransports\n arguments. The signature of the \nClient\n class is:\n\n\nClient(decoders=None, transports=None)\n\n\n\nFor example the following would instantiate a client that is capable of\ndecoding either Core JSON schema responses, or decoding plain JSON\ndata responses:\n\n\ndecoders = [\n    codecs.CoreJSONCodec(),\n    codecs.JSONCodec()\n]\nclient = Client(decoders=decoders)\n\n\n\nWhen no arguments are passed, the following defaults are used:\n\n\ndecoders = [\n    codecs.CoreJSONCodec(),     # application/vnd.coreapi+json\n    codecs.JSONCodec(),         # application/json\n    codecs.TextCodec(),         # text/*\n    codecs.DownloadCodec()      # */*\n]\n\ntransports = [\n    transports.HTTPTransport()  # http, https\n]\n\n\n\nThe configured decoders and transports are made available as read-only\nproperties on a client instance:\n\n\n\n\n.decoders\n\n\n.transports\n\n\n\n\n\n\nMaking an initial request\n\n\nSignature\n: \nget(url)\n\n\nMake a network request to the given URL. If fetching an API schema or hypermedia\nresource, then this should typically return a decoded \nDocument\n.\n\n\n\n\nurl\n - The URL that should be retrieved.\n\n\n\n\nFor example:\n\n\ndocument = client.get('https://api.example.org/')\n\n\n\n\n\nInteracting with an API\n\n\nSignature\n: \naction(self, document, keys, params=None)\n\n\nEffect an interaction against the given document.\n\n\n\n\ndocument\n - A \nDocument\n instance.\n\n\nkeys\n - A list of strings that index a \nLink\n within the document.\n\n\nparams\n - A dictionary of parameters to use for the API interaction.\n\n\n\n\nFor example, making a request without any parameters:\n\n\ndata = client.action(document, ['flights', 'list_airports'])\n\n\n\nOr making a request, with parameters included:\n\n\ndata = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})", 
+            "title": "Clients"
+        }, 
+        {
+            "location": "/api-guide/client/#clients", 
+            "text": "In order to interact with an API using Core API, a client instance is required.  The client is used to fetch the initial API description, and to then perform\ninteractions against the API.  An example client session might look something like this:  from coreapi import Client\n\nclient = Client()\ndocument = client.get('https://api.example.org/')\ndata = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})", 
+            "title": "Clients"
+        }, 
+        {
+            "location": "/api-guide/client/#instantiating-a-client", 
+            "text": "The default client may be obtained by instantiating an object, without\npassing any parameters.  client = Client()  A client instance holds the configuration about which transports are available\nfor making network requests, and which codecs are available for decoding the\ncontent of network responses.  This configuration is set by passing either or both of the  decoders  and transports  arguments. The signature of the  Client  class is:  Client(decoders=None, transports=None)  For example the following would instantiate a client that is capable of\ndecoding either Core JSON schema responses, or decoding plain JSON\ndata responses:  decoders = [\n    codecs.CoreJSONCodec(),\n    codecs.JSONCodec()\n]\nclient = Client(decoders=decoders)  When no arguments are passed, the following defaults are used:  decoders = [\n    codecs.CoreJSONCodec(),     # application/vnd.coreapi+json\n    codecs.JSONCodec(),         # application/json\n    codecs.TextCodec(),         # text/*\n    codecs.DownloadCodec()      # */*\n]\n\ntransports = [\n    transports.HTTPTransport()  # http, https\n]  The configured decoders and transports are made available as read-only\nproperties on a client instance:   .decoders  .transports", 
+            "title": "Instantiating a client"
+        }, 
+        {
+            "location": "/api-guide/client/#making-an-initial-request", 
+            "text": "Signature :  get(url)  Make a network request to the given URL. If fetching an API schema or hypermedia\nresource, then this should typically return a decoded  Document .   url  - The URL that should be retrieved.   For example:  document = client.get('https://api.example.org/')", 
+            "title": "Making an initial request"
+        }, 
+        {
+            "location": "/api-guide/client/#interacting-with-an-api", 
+            "text": "Signature :  action(self, document, keys, params=None)  Effect an interaction against the given document.   document  - A  Document  instance.  keys  - A list of strings that index a  Link  within the document.  params  - A dictionary of parameters to use for the API interaction.   For example, making a request without any parameters:  data = client.action(document, ['flights', 'list_airports'])  Or making a request, with parameters included:  data = client.action(document, ['flights', 'search'], params={\n    'from': 'LHR',\n    'to': 'PA',\n    'date': '2016-10-12'\n})", 
+            "title": "Interacting with an API"
+        }, 
+        {
+            "location": "/api-guide/document/", 
+            "text": "Documents\n\n\nA CoreAPI document is a primitive that may be used to represent either schema of hypermedia responses.\n\n\nBy including information about the available interactions that an API exposes,\nthe document allows users to interact with the API at an interface level, rather\nthan a network level.\n\n\nIn the schema case a document will include only links. Interactions to the API\nendpoints will typically return plain data.\n\n\nIn the hypermedia case a document will include both links and data. interactions\nto the API endpoints will typically return a new document.\n\n\n\n\nUsage\n\n\nRetrieving a document\n\n\nTypically a Document will first be obtained by making a request with a\nclient instance.\n\n\n document = client.get('https://api.example.com/users/')\n\n\n\nA document can also be loaded from a raw bytestring, by using a codec instance.\n\n\n codec = codecs.CoreJSONCodec()\n\n bytestring = open('document.corejson', 'rb').read()\n\n document = codec.decode(bytestring)\n\n\n\nInspecting a document\n\n\nA document has some associated metadata that may be inspected.\n\n\n document.url\n'https://api.example.com/'\n\n document.title\n'Example API'\n\n\n\nA document may contain content, which may include nested dictionaries and list.\nThe top level element is always a dictionary. The instance may be accessed using\nPython's standard dictionary lookup syntax.\n\n\nSchema type documents will contain \nLink\n instances as the leaf nodes in the content.\n\n\n document['users']['create']\nLink(url='https://api.example.com/users/', action='post', fields=[...])\n\n\n\nHypermedia documents will also contain \nLink\n instances, but may also contain\ndata, or nested \nDocument\n instances.\n\n\n document['results']['count']\n45\n\n document['results']['items'][0]\nDocument(url='https://api.example.com/users/0/', content={...})\n\n document['results']['items'][0]['username']\n'tomchristie'\n\n\n\nInteracting with a document\n\n\nIn order to interact with an API, a document is passed as the first argument to\na client instance. A list of strings indexing into a link in the document is passed\nas the second argument.\n\n\n data = client.action(document, ['users', 'list'])\n\n\n\nSome links may accept a set of parameters, each of which may be either required or optional.\n\n\n data = client.action(document, ['users', 'list'], params={'is_admin': True})\n\n\n\nA document may be reloaded, by fetching the \ndocument.url\n property.\n\n\n document = client.get(document.url)  # Reload the current document\n\n\n\n\n\nDocument primitives\n\n\nWhen using the \ncoreapi\n library as an API client, you won't typically be instantiating\ndocument instances, but rather retrieving them using the client.\n\n\nHowever, if you're using the \ncoreapi\n library on the server-side, you can use\nthe document primitives directly, in order to create schema or hypermedia representations.\nThe document should then be encoded using an available codec in order to form the schema response.\n\n\nDocument\n\n\nThe following are available attributes, and may be passed when instantiating a \nDocument\n:\n\n\n\n\nurl\n - A string giving the canonical URL for this document.\n\n\ntitle\n - A string describing this document.\n\n\ncontent\n - A dictionary containing all the data and links made available by this document.\n\n\n\n\nA document instance also supports dictionary-style lookup on it's contents.\n\n\n document['results']['count']\n45\n\n\n\nThe following properties are available on a document instance, and on any\nnested dictionaries it contains:\n\n\n\n\nlinks\n - A dictionary-like property including only items that are \nLink\n instances.\n\n\ndata\n - A dictionary-like property including only items that are not \nLink\n instances.\n\n\n\n\nLink\n\n\nThe following are available attributes, and may be passed when instantiating a \nLink\n:\n\n\n\n\nurl\n - A string giving the URL against which the request should be made.\n\n\naction\n - A string giving the type of outgoing request that should be made.\n\n\nencoding\n - A string giving the encoding used for outgoing requests.\n\n\ntransform\n - A string describing how the response should\n\n\ndescription\n - A string describing this link.\n\n\nfields\n - A list of field instances.\n\n\n\n\nNote that the behaviour of link attributes is defined at the transport level,\nrather than at the document level. See \nthe \nHTTPTransport\n documentation for more details\n.\n\n\nField\n\n\nThe following are available attributes, and may be passed when instantiating a \nField\n:\n\n\n\n\nname\n - A string describing a short name for the parameter.\n\n\nrequired\n - A boolean indicating if this is a required parameter on the link.\n\n\nlocation\n - A string describing how this parameter should be included in the outgoing request.\n\n\ntype\n - A string describing the kind of \ninput control\n this parameter represents.\n\n\ndescription\n - A string describing this parameter on the link.\n\n\n\n\nNote that the behaviour of the \nlocation\n attribute is defined at the transport level,\nrather than at the document level. See \nthe \nHTTPTransport\n documentation for more details\n.\n\n\n\n\nHandling errors\n\n\nError responses are similar to Document responses. Both contain a dictionary of\ncontent. However, an error does not represent a network resource, and so does\nnot have an associated URL, in the same way as a \nDocument\n does.\n\n\nWhen an error response is returned by an API, the \nErrorMessage\n exception is raised.\nThe \nError\n instance itself is available on the exception as the \n.error\n attribute.\n\n\nparams = {\n    'location_code': 'berlin-4353',\n    'start_date': '2018-01-03',\n    'end_date': '2018-01-07',\n    'room_type': 'double',\n}\ntry:\n    data = client.action(document, ['bookings', 'create'], params=params)\nexcept coreapi.exceptions.ErrorMessage as exc:\n    print(\"Error: %s\" % exc.error)\nelse:\n    print(\"Success: %s\" % data)\n\n\n\nError\n\n\nThe following are available attributes, and may be passed when instantiating an \nError\n:\n\n\n\n\ntitle\n - A string describing the error.\n\n\ncontent\n - A dictionary containing all the data or links made available by this error.", 
+            "title": "Documents"
+        }, 
+        {
+            "location": "/api-guide/document/#documents", 
+            "text": "A CoreAPI document is a primitive that may be used to represent either schema of hypermedia responses.  By including information about the available interactions that an API exposes,\nthe document allows users to interact with the API at an interface level, rather\nthan a network level.  In the schema case a document will include only links. Interactions to the API\nendpoints will typically return plain data.  In the hypermedia case a document will include both links and data. interactions\nto the API endpoints will typically return a new document.", 
+            "title": "Documents"
+        }, 
+        {
+            "location": "/api-guide/document/#usage", 
+            "text": "", 
+            "title": "Usage"
+        }, 
+        {
+            "location": "/api-guide/document/#retrieving-a-document", 
+            "text": "Typically a Document will first be obtained by making a request with a\nclient instance.   document = client.get('https://api.example.com/users/')  A document can also be loaded from a raw bytestring, by using a codec instance.   codec = codecs.CoreJSONCodec()  bytestring = open('document.corejson', 'rb').read()  document = codec.decode(bytestring)", 
+            "title": "Retrieving a document"
+        }, 
+        {
+            "location": "/api-guide/document/#inspecting-a-document", 
+            "text": "A document has some associated metadata that may be inspected.   document.url\n'https://api.example.com/'  document.title\n'Example API'  A document may contain content, which may include nested dictionaries and list.\nThe top level element is always a dictionary. The instance may be accessed using\nPython's standard dictionary lookup syntax.  Schema type documents will contain  Link  instances as the leaf nodes in the content.   document['users']['create']\nLink(url='https://api.example.com/users/', action='post', fields=[...])  Hypermedia documents will also contain  Link  instances, but may also contain\ndata, or nested  Document  instances.   document['results']['count']\n45  document['results']['items'][0]\nDocument(url='https://api.example.com/users/0/', content={...})  document['results']['items'][0]['username']\n'tomchristie'", 
+            "title": "Inspecting a document"
+        }, 
+        {
+            "location": "/api-guide/document/#interacting-with-a-document", 
+            "text": "In order to interact with an API, a document is passed as the first argument to\na client instance. A list of strings indexing into a link in the document is passed\nas the second argument.   data = client.action(document, ['users', 'list'])  Some links may accept a set of parameters, each of which may be either required or optional.   data = client.action(document, ['users', 'list'], params={'is_admin': True})  A document may be reloaded, by fetching the  document.url  property.   document = client.get(document.url)  # Reload the current document", 
+            "title": "Interacting with a document"
+        }, 
+        {
+            "location": "/api-guide/document/#document-primitives", 
+            "text": "When using the  coreapi  library as an API client, you won't typically be instantiating\ndocument instances, but rather retrieving them using the client.  However, if you're using the  coreapi  library on the server-side, you can use\nthe document primitives directly, in order to create schema or hypermedia representations.\nThe document should then be encoded using an available codec in order to form the schema response.", 
+            "title": "Document primitives"
+        }, 
+        {
+            "location": "/api-guide/document/#document", 
+            "text": "The following are available attributes, and may be passed when instantiating a  Document :   url  - A string giving the canonical URL for this document.  title  - A string describing this document.  content  - A dictionary containing all the data and links made available by this document.   A document instance also supports dictionary-style lookup on it's contents.   document['results']['count']\n45  The following properties are available on a document instance, and on any\nnested dictionaries it contains:   links  - A dictionary-like property including only items that are  Link  instances.  data  - A dictionary-like property including only items that are not  Link  instances.", 
+            "title": "Document"
+        }, 
+        {
+            "location": "/api-guide/document/#link", 
+            "text": "The following are available attributes, and may be passed when instantiating a  Link :   url  - A string giving the URL against which the request should be made.  action  - A string giving the type of outgoing request that should be made.  encoding  - A string giving the encoding used for outgoing requests.  transform  - A string describing how the response should  description  - A string describing this link.  fields  - A list of field instances.   Note that the behaviour of link attributes is defined at the transport level,\nrather than at the document level. See  the  HTTPTransport  documentation for more details .", 
+            "title": "Link"
+        }, 
+        {
+            "location": "/api-guide/document/#field", 
+            "text": "The following are available attributes, and may be passed when instantiating a  Field :   name  - A string describing a short name for the parameter.  required  - A boolean indicating if this is a required parameter on the link.  location  - A string describing how this parameter should be included in the outgoing request.  type  - A string describing the kind of  input control  this parameter represents.  description  - A string describing this parameter on the link.   Note that the behaviour of the  location  attribute is defined at the transport level,\nrather than at the document level. See  the  HTTPTransport  documentation for more details .", 
+            "title": "Field"
+        }, 
+        {
+            "location": "/api-guide/document/#handling-errors", 
+            "text": "Error responses are similar to Document responses. Both contain a dictionary of\ncontent. However, an error does not represent a network resource, and so does\nnot have an associated URL, in the same way as a  Document  does.  When an error response is returned by an API, the  ErrorMessage  exception is raised.\nThe  Error  instance itself is available on the exception as the  .error  attribute.  params = {\n    'location_code': 'berlin-4353',\n    'start_date': '2018-01-03',\n    'end_date': '2018-01-07',\n    'room_type': 'double',\n}\ntry:\n    data = client.action(document, ['bookings', 'create'], params=params)\nexcept coreapi.exceptions.ErrorMessage as exc:\n    print(\"Error: %s\" % exc.error)\nelse:\n    print(\"Success: %s\" % data)", 
+            "title": "Handling errors"
+        }, 
+        {
+            "location": "/api-guide/document/#error", 
+            "text": "The following are available attributes, and may be passed when instantiating an  Error :   title  - A string describing the error.  content  - A dictionary containing all the data or links made available by this error.", 
+            "title": "Error"
+        }, 
+        {
+            "location": "/api-guide/codecs/", 
+            "text": "Codecs\n\n\nCodecs are responsible for decoding a bytestring into a \nDocument\n instance,\nor for encoding a \nDocument\n instance into a bytestring.\n\n\nA codec is associated with a media type. For example in HTTP responses,\nthe \nContent-Type\n header is used to indicate the media type of\nthe bytestring returned in the body of the response.\n\n\nWhen using a Core API client, HTTP responses are decoded with an appropriate\ncodec, based on the \nContent-Type\n of the response.\n\n\nUsing a codec\n\n\nAll the codecs provided by the \ncoreapi\n library are instantiated without\narguments, for example:\n\n\nfrom coreapi import codecs\n\ncodec = codecs.CoreJSONCodec()\n\n\n\nA codec will provide either one or both of the \ndecode()\n or \nencode()\n methods.\n\n\nDecoding\n\n\nSignature\n: \ndecode(bytestring, **options)\n\n\nGiven a bytestring, returns a decoded \nDocument\n, \nError\n, or raw data.\n\n\nAn example of decoding a document:\n\n\nbytestring = open('document.corejson', 'rb').read()\ndocument = codec.decode(bytestring)\n\n\n\nThe available \noptions\n keywords depend on the codec.\n\n\nEncoding\n\n\nSignature\n: \nencode(document, **options)\n\n\nGiven a \nDocument\n or \nError\n, return an encoded representation as a bytestring.\n\n\nAn example of encoding a document:\n\n\nbytestring = codec.encode(document)\noutput = open('document.corejson', 'wb')\noutput.write(bytestring)\noutput.close()\n\n\n\nThe available \noptions\n keywords depend on the codec.\n\n\nAttributes\n\n\nThe following attribute is available on codec instances:\n\n\n\n\nmedia_type\n - A string indicating the media type that the codec represents.\n\n\n\n\n\n\nAvailable codecs\n\n\nCoreJSONCodec\n\n\nSupports decoding or encoding the Core JSON format.\n\n\n.media_type\n: \napplication/coreapi+json\n\n\nExample of decoding a Core JSON bytestring into a \nDocument\n instance:\n\n\n from coreapi import codecs\n\n codec = codecs.CoreJSONCodec()\n\n content = b'{\"_type\": \"document\", ...}'\n\n document = codec.decode(content)\n\n print(document)\n\nFlight Search API 'http://api.example.com/'\n\n    'search': link(from, to, date)\n\n\n\nExample of encoding a \nDocument\n instance into a Core JSON bytestring:\n\n\n content = codec.encode(document, indent=True)\n\n print(content)\n{\n    \"_type\": \"document\"\n}\n\n\n\nEncoding options\n\n\nindent\n: Set to \nTrue\n for an indented representation. The default is to generate a compact representation.\n\n\nDecoding options\n\n\nbase_url\n: The URL from which the document was retrieved. Used to resolve any relative\nURLs in the document.\n\n\n\n\nJSONCodec\n\n\nSupports decoding JSON data.\n\n\n.media_type\n: \napplication/json\n\n\nExample:\n\n\n from coreapi import codecs\n\n codec = codecs.JSONCodec()\n\n content = b'{\"string\": \"abc\", \"boolean\": true, \"null\": null}'\n\n data = codec.decode(content)\n\n print(data)\n{\"string\": \"abc\", \"boolean\": True, \"null\": None}\n\n\n\n\n\nTextCodec\n\n\nSupports decoding plain-text responses.\n\n\n.media_type\n: \ntext/*\n\n\nExample:\n\n\n from coreapi import codecs\n\n codec = codecs.TextCodec()\n\n data = codec.decode(b'hello, world!')\n\n print(data)\nhello, world!\n\n\n\n\n\nDownloadCodec\n\n\nSupports decoding arbitrary media as a download file. Returns a \ntemporary file\n\nthat will be deleted once it goes out of scope.\n\n\n.media_type\n: \n*/*\n\n\nExample:\n\n\n codec = codecs.DownloadCodec()\n\n download = codec.decode(b'abc...xyz')\n\n print(download)\n\nDownloadedFile '.../tmpYbxNXT.download', open 'rb'\n\n\n content = download.read()\n\n print(content)\nabc...xyz\n\n\n\nThe download filename will be determined by either the \nContent-Disposition\n\nheader, or based on the request URL and the \nContent-Type\n header. Download\ncollisions are avoided by using incrementing filenames where required.\nThe original name used for the download file can be inspected using \n.basename\n.\n\n\n download = codec.decode(b'abc...xyz', content_type='image/png', base_url='http://example.com/download/')\n\n download.name\n'/var/folders/2k/qjf3np5s28zf2f58963pz2k40000gn/T/download.png'\n\n download.basename\n'download.png'\n\n\n\nInstantiation\n\n\nBy default this codec returns a temporary file that will be deleted once it\ngoes out of scope. If you want to return temporary files that are not\ndeleted when they go out of scope then you can instantiate the \nDownloadCodec\n\nwith a \ndownload_dir\n argument.\n\n\nFor example, to download files to the current working directory:\n\n\n import os\n\n codecs.DownloadCodec(download_dir=os.getcwd())\n\n\n\nDecoding options\n\n\nbase_url\n: The URL from which the document was retrieved. May be used to\ngenerate an output filename if no \nContent-Disposition\n header exists.\n\n\ncontent_type\n: The response Content-Type header. May be used to determine a\nsuffix for the output filename if no \nContent-Disposition\n header exists.\n\n\ncontent_disposition\n: The response Content-Disposition header. May be \nused to\nindicate the download filename\n.\n\n\n\n\nCustom codecs\n\n\nCustom codec classes may be created by inheriting from \nBaseCodec\n, setting\nthe \nmedia_type\n and \nsupports\n properties, and implementing one or both\nof the \ndecode\n or \nencode\n methods.\n\n\nFor example:\n\n\nfrom coreapi import codecs\nimport yaml\n\nclass YAMLCodec(codecs.BaseCodec):\n    media_type = 'application/yaml'\n    supports = ['data']\n\n    def decode(content, **options):\n        return yaml.safe_load(content)\n\n\n\nThe codec registry\n\n\nTools such as the Core API command line client require a method of discovering\nwhich codecs are installed on the system. This is enabled by using a registry\nsystem.\n\n\nIn order to register a custom codec, the PyPI package must contain a correctly\nconfigured \nentry_points\n option. Typically this needs to be added in a\n\nsetup.py\n module, which is run whenever publishing a new package version.\n\n\nThe \nentry_points\n option must be a dictionary, containing a \ncoreapi.codecs\n\nitem listing the available codec classes. As an example, the listing for the\ncodecs which are registered by the \ncoreapi\n package itself is as follows:\n\n\nsetup(\n    name='coreapi',\n    license='BSD',\n    ...\n    entry_points={\n        'coreapi.codecs': [\n            'corejson=coreapi.codecs:CoreJSONCodec',\n            'json=coreapi.codecs:JSONCodec',\n            'text=coreapi.codecs:TextCodec',\n            'download=coreapi.codecs:DownloadCodec',\n        ]\n    }\n)\n\n\n\n\n\nExternal packages\n\n\nThe following third-party packages are available.\n\n\nOpenAPI\n\n\nA codec for \nOpenAPI\n schemas, also known as \"Swagger\". Installable \nfrom PyPI\n as \nopenapi-codec\n, and \navailable on GitHub\n.\n\n\nJSON Hyper-Schema\n\n\nA codec for \nJSON Hyper-Schema\n. Installable \nfrom PyPI\n as \njsonhyperschema-codec\n, and \navailable on GitHub\n.\n\n\nHAL\n\n\nA codec for the \nHAL\n hypermedia format. Installable \nfrom PyPI\n as \nhal-codec\n, and \navailable on GitHub\n.", 
+            "title": "Codecs"
+        }, 
+        {
+            "location": "/api-guide/codecs/#codecs", 
+            "text": "Codecs are responsible for decoding a bytestring into a  Document  instance,\nor for encoding a  Document  instance into a bytestring.  A codec is associated with a media type. For example in HTTP responses,\nthe  Content-Type  header is used to indicate the media type of\nthe bytestring returned in the body of the response.  When using a Core API client, HTTP responses are decoded with an appropriate\ncodec, based on the  Content-Type  of the response.", 
+            "title": "Codecs"
+        }, 
+        {
+            "location": "/api-guide/codecs/#using-a-codec", 
+            "text": "All the codecs provided by the  coreapi  library are instantiated without\narguments, for example:  from coreapi import codecs\n\ncodec = codecs.CoreJSONCodec()  A codec will provide either one or both of the  decode()  or  encode()  methods.", 
+            "title": "Using a codec"
+        }, 
+        {
+            "location": "/api-guide/codecs/#decoding", 
+            "text": "Signature :  decode(bytestring, **options)  Given a bytestring, returns a decoded  Document ,  Error , or raw data.  An example of decoding a document:  bytestring = open('document.corejson', 'rb').read()\ndocument = codec.decode(bytestring)  The available  options  keywords depend on the codec.", 
+            "title": "Decoding"
+        }, 
+        {
+            "location": "/api-guide/codecs/#encoding", 
+            "text": "Signature :  encode(document, **options)  Given a  Document  or  Error , return an encoded representation as a bytestring.  An example of encoding a document:  bytestring = codec.encode(document)\noutput = open('document.corejson', 'wb')\noutput.write(bytestring)\noutput.close()  The available  options  keywords depend on the codec.", 
+            "title": "Encoding"
+        }, 
+        {
+            "location": "/api-guide/codecs/#attributes", 
+            "text": "The following attribute is available on codec instances:   media_type  - A string indicating the media type that the codec represents.", 
+            "title": "Attributes"
+        }, 
+        {
+            "location": "/api-guide/codecs/#available-codecs", 
+            "text": "", 
+            "title": "Available codecs"
+        }, 
+        {
+            "location": "/api-guide/codecs/#corejsoncodec", 
+            "text": "Supports decoding or encoding the Core JSON format.  .media_type :  application/coreapi+json  Example of decoding a Core JSON bytestring into a  Document  instance:   from coreapi import codecs  codec = codecs.CoreJSONCodec()  content = b'{\"_type\": \"document\", ...}'  document = codec.decode(content)  print(document) Flight Search API 'http://api.example.com/' \n    'search': link(from, to, date)  Example of encoding a  Document  instance into a Core JSON bytestring:   content = codec.encode(document, indent=True)  print(content)\n{\n    \"_type\": \"document\"\n}", 
+            "title": "CoreJSONCodec"
+        }, 
+        {
+            "location": "/api-guide/codecs/#encoding-options", 
+            "text": "indent : Set to  True  for an indented representation. The default is to generate a compact representation.", 
+            "title": "Encoding options"
+        }, 
+        {
+            "location": "/api-guide/codecs/#decoding-options", 
+            "text": "base_url : The URL from which the document was retrieved. Used to resolve any relative\nURLs in the document.", 
+            "title": "Decoding options"
+        }, 
+        {
+            "location": "/api-guide/codecs/#jsoncodec", 
+            "text": "Supports decoding JSON data.  .media_type :  application/json  Example:   from coreapi import codecs  codec = codecs.JSONCodec()  content = b'{\"string\": \"abc\", \"boolean\": true, \"null\": null}'  data = codec.decode(content)  print(data)\n{\"string\": \"abc\", \"boolean\": True, \"null\": None}", 
+            "title": "JSONCodec"
+        }, 
+        {
+            "location": "/api-guide/codecs/#textcodec", 
+            "text": "Supports decoding plain-text responses.  .media_type :  text/*  Example:   from coreapi import codecs  codec = codecs.TextCodec()  data = codec.decode(b'hello, world!')  print(data)\nhello, world!", 
+            "title": "TextCodec"
+        }, 
+        {
+            "location": "/api-guide/codecs/#downloadcodec", 
+            "text": "Supports decoding arbitrary media as a download file. Returns a  temporary file \nthat will be deleted once it goes out of scope.  .media_type :  */*  Example:   codec = codecs.DownloadCodec()  download = codec.decode(b'abc...xyz')  print(download) DownloadedFile '.../tmpYbxNXT.download', open 'rb'   content = download.read()  print(content)\nabc...xyz  The download filename will be determined by either the  Content-Disposition \nheader, or based on the request URL and the  Content-Type  header. Download\ncollisions are avoided by using incrementing filenames where required.\nThe original name used for the download file can be inspected using  .basename .   download = codec.decode(b'abc...xyz', content_type='image/png', base_url='http://example.com/download/')  download.name\n'/var/folders/2k/qjf3np5s28zf2f58963pz2k40000gn/T/download.png'  download.basename\n'download.png'", 
+            "title": "DownloadCodec"
+        }, 
+        {
+            "location": "/api-guide/codecs/#instantiation", 
+            "text": "By default this codec returns a temporary file that will be deleted once it\ngoes out of scope. If you want to return temporary files that are not\ndeleted when they go out of scope then you can instantiate the  DownloadCodec \nwith a  download_dir  argument.  For example, to download files to the current working directory:   import os  codecs.DownloadCodec(download_dir=os.getcwd())", 
+            "title": "Instantiation"
+        }, 
+        {
+            "location": "/api-guide/codecs/#decoding-options_1", 
+            "text": "base_url : The URL from which the document was retrieved. May be used to\ngenerate an output filename if no  Content-Disposition  header exists.  content_type : The response Content-Type header. May be used to determine a\nsuffix for the output filename if no  Content-Disposition  header exists.  content_disposition : The response Content-Disposition header. May be  used to\nindicate the download filename .", 
+            "title": "Decoding options"
+        }, 
+        {
+            "location": "/api-guide/codecs/#custom-codecs", 
+            "text": "Custom codec classes may be created by inheriting from  BaseCodec , setting\nthe  media_type  and  supports  properties, and implementing one or both\nof the  decode  or  encode  methods.  For example:  from coreapi import codecs\nimport yaml\n\nclass YAMLCodec(codecs.BaseCodec):\n    media_type = 'application/yaml'\n    supports = ['data']\n\n    def decode(content, **options):\n        return yaml.safe_load(content)", 
+            "title": "Custom codecs"
+        }, 
+        {
+            "location": "/api-guide/codecs/#the-codec-registry", 
+            "text": "Tools such as the Core API command line client require a method of discovering\nwhich codecs are installed on the system. This is enabled by using a registry\nsystem.  In order to register a custom codec, the PyPI package must contain a correctly\nconfigured  entry_points  option. Typically this needs to be added in a setup.py  module, which is run whenever publishing a new package version.  The  entry_points  option must be a dictionary, containing a  coreapi.codecs \nitem listing the available codec classes. As an example, the listing for the\ncodecs which are registered by the  coreapi  package itself is as follows:  setup(\n    name='coreapi',\n    license='BSD',\n    ...\n    entry_points={\n        'coreapi.codecs': [\n            'corejson=coreapi.codecs:CoreJSONCodec',\n            'json=coreapi.codecs:JSONCodec',\n            'text=coreapi.codecs:TextCodec',\n            'download=coreapi.codecs:DownloadCodec',\n        ]\n    }\n)", 
+            "title": "The codec registry"
+        }, 
+        {
+            "location": "/api-guide/codecs/#external-packages", 
+            "text": "The following third-party packages are available.", 
+            "title": "External packages"
+        }, 
+        {
+            "location": "/api-guide/codecs/#openapi", 
+            "text": "A codec for  OpenAPI  schemas, also known as \"Swagger\". Installable  from PyPI  as  openapi-codec , and  available on GitHub .", 
+            "title": "OpenAPI"
+        }, 
+        {
+            "location": "/api-guide/codecs/#json-hyper-schema", 
+            "text": "A codec for  JSON Hyper-Schema . Installable  from PyPI  as  jsonhyperschema-codec , and  available on GitHub .", 
+            "title": "JSON Hyper-Schema"
+        }, 
+        {
+            "location": "/api-guide/codecs/#hal", 
+            "text": "A codec for the  HAL  hypermedia format. Installable  from PyPI  as  hal-codec , and  available on GitHub .", 
+            "title": "HAL"
+        }, 
+        {
+            "location": "/api-guide/transports/", 
+            "text": "Transports\n\n\nTransports are responsible for making the actual network requests, and handling\nthe responses.\n\n\nWhenever an action is taken on a link, the scheme of the URL is inspected, and\nthe responsibility for making a request is passed to an appropriate transport class.\n\n\nBy default only an HTTP transport implementation is included, but this approach means\nthat other network protocols can also be supported by Core API, while remaining\ntransparent to the user of the client library.\n\n\nAvailable transports\n\n\nHTTPTransport\n\n\nThe \nHTTPTransport\n class supports the \nhttp\n and \nhttps\n schemes.\n\n\nInstantiation\n\n\nSignature\n: \nHTTPTransport(credentials=None, headers=None, session=None)\n\n\n\n\ncredentials\n - A dictionary of items that maps domain name to values that should be used in the request \nAuthorization\n header for each domain.\n\n\nheaders\n - A dictionary of items that should be included in the outgoing request headers.\n\n\nsession\n - A \nrequests session instance\n to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing \ntransport adapters\n to be attached to the underlying session.\n\n\n\n\nMaking requests\n\n\nThe following describes how the various Link and Field properties are used when\nmaking an HTTP network request.\n\n\nLink.action\n\n\nThe link \naction\n property is uppercased and then used to determine the HTTP\nmethod for the request.\n\n\nIf left blank then the \nGET\n method is used.\n\n\nLink.encoding\n\n\nThe link \nencoding\n property is used to determine how any \nlocation='form'\n or\n\nlocation='body'\n parameters should be encoded in order to form the body of\nthe request.\n\n\nSupported encodings are:\n\n\n\n\n'application/json'\n - Suitable for primitive and composite types.\n\n\n'application/x-www-form-urlencoded'\n - Suitable for primitive types.\n\n\n'multipart/form-data'\n - Suitable for primitive types and file uploads.\n\n\n'application/octet-stream'\n - Suitable for raw file uploads, with a \nlocation='body'\n field.\n\n\n\n\nIf left blank and a request body is included, then \n'application/json'\n is used.\n\n\nLink.transform\n\n\nThe link \ntransform\n property is \nonly relevant when the link is contained in an\nembedded document\n. This allows hypermedia documents to effect partial updates.\n\n\n\n\n'new'\n - The response document should be returned as the result.\n\n\n'inplace'\n - The embedded document should be updated in-place, and the resulting\n              top-level document returned as the result.\n\n\n\n\nIf left blank and a link in an embedded document is acted on, then \n'inplace'\n is used for \n'PUT'\n, \n'PATCH'\n, and \n'DELETE'\n requests. For any other request \n'new'\n is used.\n\n\nField.location\n\n\nThe link \nlocation\n property determines how the parameter is used to build the outgoing request.\n\n\n\n\n'path'\n - The parameter is included in the URL, with the link\n             'url' value acting as a \nURI template\n.\n\n\n'query'\n - The parameter is included as a URL query parameter.\n\n\n'body'\n - The parameter is encoded and included as the body of the request.\n\n\n'form'\n - The parameter is treated as a single key-value item in an\n             dictionary of items. It should be encoded together with any other form\n             parameters, and included as the body of the request.\n\n\n\n\nIf left blank, then \n'query'\n is used for \n'GET'\n and \n'DELETE'\n requests. For any other request \n'form'\n is used.\n\n\nCustom transports\n\n\nThe transport interface is not yet finalized, as it may still be subject to minor\nchanges in a future release.\n\n\nExternal packages\n\n\nNo third party transport classes are currently available.", 
+            "title": "Transports"
+        }, 
+        {
+            "location": "/api-guide/transports/#transports", 
+            "text": "Transports are responsible for making the actual network requests, and handling\nthe responses.  Whenever an action is taken on a link, the scheme of the URL is inspected, and\nthe responsibility for making a request is passed to an appropriate transport class.  By default only an HTTP transport implementation is included, but this approach means\nthat other network protocols can also be supported by Core API, while remaining\ntransparent to the user of the client library.", 
+            "title": "Transports"
+        }, 
+        {
+            "location": "/api-guide/transports/#available-transports", 
+            "text": "", 
+            "title": "Available transports"
+        }, 
+        {
+            "location": "/api-guide/transports/#httptransport", 
+            "text": "The  HTTPTransport  class supports the  http  and  https  schemes.", 
+            "title": "HTTPTransport"
+        }, 
+        {
+            "location": "/api-guide/transports/#instantiation", 
+            "text": "Signature :  HTTPTransport(credentials=None, headers=None, session=None)   credentials  - A dictionary of items that maps domain name to values that should be used in the request  Authorization  header for each domain.  headers  - A dictionary of items that should be included in the outgoing request headers.  session  - A  requests session instance  to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing  transport adapters  to be attached to the underlying session.", 
+            "title": "Instantiation"
+        }, 
+        {
+            "location": "/api-guide/transports/#making-requests", 
+            "text": "The following describes how the various Link and Field properties are used when\nmaking an HTTP network request.  Link.action  The link  action  property is uppercased and then used to determine the HTTP\nmethod for the request.  If left blank then the  GET  method is used.  Link.encoding  The link  encoding  property is used to determine how any  location='form'  or location='body'  parameters should be encoded in order to form the body of\nthe request.  Supported encodings are:   'application/json'  - Suitable for primitive and composite types.  'application/x-www-form-urlencoded'  - Suitable for primitive types.  'multipart/form-data'  - Suitable for primitive types and file uploads.  'application/octet-stream'  - Suitable for raw file uploads, with a  location='body'  field.   If left blank and a request body is included, then  'application/json'  is used.  Link.transform  The link  transform  property is  only relevant when the link is contained in an\nembedded document . This allows hypermedia documents to effect partial updates.   'new'  - The response document should be returned as the result.  'inplace'  - The embedded document should be updated in-place, and the resulting\n              top-level document returned as the result.   If left blank and a link in an embedded document is acted on, then  'inplace'  is used for  'PUT' ,  'PATCH' , and  'DELETE'  requests. For any other request  'new'  is used.  Field.location  The link  location  property determines how the parameter is used to build the outgoing request.   'path'  - The parameter is included in the URL, with the link\n             'url' value acting as a  URI template .  'query'  - The parameter is included as a URL query parameter.  'body'  - The parameter is encoded and included as the body of the request.  'form'  - The parameter is treated as a single key-value item in an\n             dictionary of items. It should be encoded together with any other form\n             parameters, and included as the body of the request.   If left blank, then  'query'  is used for  'GET'  and  'DELETE'  requests. For any other request  'form'  is used.", 
+            "title": "Making requests"
+        }, 
+        {
+            "location": "/api-guide/transports/#custom-transports", 
+            "text": "The transport interface is not yet finalized, as it may still be subject to minor\nchanges in a future release.", 
+            "title": "Custom transports"
+        }, 
+        {
+            "location": "/api-guide/transports/#external-packages", 
+            "text": "No third party transport classes are currently available.", 
+            "title": "External packages"
+        }, 
+        {
+            "location": "/api-guide/exceptions/", 
+            "text": "Exceptions\n\n\nAny of the exceptions raised by the \ncoreapi\n library may be imported from the \ncoreapi.exceptions\n module:\n\n\nfrom coreapi.exceptions import CoreAPIException\n\n\n\nThe base class\n\n\nCoreAPIException\n\n\nA base class for all \ncoreapi\n exceptions.\n\n\n\n\nServer errors\n\n\nThe following exception occurs when the server returns an error response.\n\n\nErrorMessage\n\n\nThe server returned a CoreAPI \nError\n document.\n\n\n\n\nClient errors\n\n\nThe following exceptions indicate that an incorrect interaction was attempted using the client.\n\n\nLinkLookupError\n\n\nThe keys passed in a \nclient.action()\n call did not reference a link in the document.\n\n\nParameterError\n\n\nThe parameters passed in a \nclient.action()\n call did not match the set of required and optional fields made available by the link, or if the type of parameters passed could\nnot be supported by the given encoding on the link.\n\n\n\n\nRequest errors\n\n\nThe following exceptions indicate that an error occurred when handling\nsome aspect of the API request.\n\n\nParseError\n\n\nA response was returned with malformed content.\n\n\nNoCodecAvailable\n\n\nRaised when there is no available codec that can handle the given media.\n\n\nNetworkError\n\n\nAn issue occurred with the network request.", 
+            "title": "Exceptions"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#exceptions", 
+            "text": "Any of the exceptions raised by the  coreapi  library may be imported from the  coreapi.exceptions  module:  from coreapi.exceptions import CoreAPIException", 
+            "title": "Exceptions"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#the-base-class", 
+            "text": "", 
+            "title": "The base class"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#coreapiexception", 
+            "text": "A base class for all  coreapi  exceptions.", 
+            "title": "CoreAPIException"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#server-errors", 
+            "text": "The following exception occurs when the server returns an error response.", 
+            "title": "Server errors"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#errormessage", 
+            "text": "The server returned a CoreAPI  Error  document.", 
+            "title": "ErrorMessage"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#client-errors", 
+            "text": "The following exceptions indicate that an incorrect interaction was attempted using the client.", 
+            "title": "Client errors"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#linklookuperror", 
+            "text": "The keys passed in a  client.action()  call did not reference a link in the document.", 
+            "title": "LinkLookupError"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#parametererror", 
+            "text": "The parameters passed in a  client.action()  call did not match the set of required and optional fields made available by the link, or if the type of parameters passed could\nnot be supported by the given encoding on the link.", 
+            "title": "ParameterError"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#request-errors", 
+            "text": "The following exceptions indicate that an error occurred when handling\nsome aspect of the API request.", 
+            "title": "Request errors"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#parseerror", 
+            "text": "A response was returned with malformed content.", 
+            "title": "ParseError"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#nocodecavailable", 
+            "text": "Raised when there is no available codec that can handle the given media.", 
+            "title": "NoCodecAvailable"
+        }, 
+        {
+            "location": "/api-guide/exceptions/#networkerror", 
+            "text": "An issue occurred with the network request.", 
+            "title": "NetworkError"
+        }, 
+        {
+            "location": "/api-guide/utils/", 
+            "text": "Utilities\n\n\nThe \ncoreapi.utils\n module provides a number of helper functions that\nmay be useful if writing a custom client or transport class.\n\n\n\n\nFile utilities\n\n\nThe following classes are used to indicate upload and download file content.\n\n\nFile\n\n\nMay be used as a parameter with links that require a file input.\n\n\nSignature\n: \nFile(name, content, content_type=None)\n\n\n\n\nname\n - The filename.\n\n\ncontent\n - A string, bytestring, or stream object.\n\n\ncontent_type\n - An optional string representing the content type of the file.\n\n\n\n\nAn open file or other stream may also be used directly as a parameter, instead\nof a \nFile\n instance, but the \nFile\n instance makes it easier to specify the\nfilename and content in code.\n\n\nExample:\n\n\n from coreapi.utils import File\n\n upload = File('example.csv', 'a,b,c\\n1,2,3\\n4,5,6\\n')\n\n data = client.action(document, ['store', 'upload_media'], params={'upload': upload})\n\n\n\nDownloadedFile\n\n\nA temporary file instance, used to represent downloaded media.\n\n\nAvailable attributes:\n\n\n\n\nname\n - The full filename, including the path.\n\n\nbasename\n - The filename as determined at the point of download.\n\n\n\n\nExample:\n\n\n download = client.action(document, ['user', 'get_profile_image'])\n\n download.basename\n'avatar.png'\n\n download.read()\nb'...'\n\n\n\nBy default the file will be deleted when this object goes out of scope. See\n\nthe \nDownloadCodec\n documentation\n for more details.\n\n\n\n\nNegotiation utilities\n\n\nThe following functions are used to determine which of a set of transports\nor codecs should be used when performing an API interaction.\n\n\ndetermine_transport\n\n\nSignature\n: \ndetermine_transport(transports, url)\n\n\nGiven a list of transports and a URL, return the appropriate transport for\nmaking network requests to that URL.\n\n\nMay raise \nNetworkError\n.\n\n\nnegotiate_decoder\n\n\nSignature\n: \nnegotiate_decoder(codecs, content_type=None)\n\n\nGiven a list of codecs, and the value of an HTTP response \nContent-Type\n header,\nreturn the appropriate codec for decoding the response content.\n\n\nMay raise \nNoCodecAvailable\n.\n\n\nnegotiate_encoder\n\n\nSignature\n: \nnegotiate_encoder(codecs, accept=None)\n\n\nGiven a list of codecs, and the value of an incoming HTTP request \nAccept\n\nheader, return the appropriate codec for encoding the outgoing response content.\n\n\nAllows server implementations to provide for client-driven content negotiation.\n\n\nMay raise \nNoCodecAvailable\n.\n\n\n\n\nValidation utilities\n\n\nDifferent request encodings have different capabilities. For example, \napplication/json\n\nsupports a range of data primitives, but does not support file uploads. In contrast,\n\nmultipart/form-data\n only supports string primitives and file uploads.\n\n\nThe following helper functions validate that the types passed to an action are suitable\nfor use with the given encoding, and ensure that a consistent exception type is raised\nif an invalid value is passed.\n\n\nvalidate_path_param\n\n\nSignature\n: \nvalidate_path_param(value)\n\n\nReturns the value, coerced into a string primitive. Validates that the value that is suitable for use in URI-encoded path parameters. Empty strings and composite types such as dictionaries are disallowed.\n\n\nMay raise \nParameterError\n.\n\n\nvalidate_query_param\n\n\nSignature\n: \nvalidate_query_param(value)\n\n\nReturns the value, coerced into a string primitive. Validates that the value is suitable for use in URL query parameters.\n\n\nMay raise \nParameterError\n.\n\n\nvalidate_body_param\n\n\nSignature\n: \nvalidate_body_param(value, encoding)\n\n\nReturns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as the body of the outgoing request.\n\n\nValid encodings are \napplication/json\n, \nx-www-form-urlencoded\n, \nmultipart/form-data\n and \napplication/octet-stream\n.\n\n\nMay raise \nParameterError\n for an invalid value, or \nNetworkError\n for an unsupported encoding.\n\n\nvalidate_form_param\n\n\nSignature\n: \nvalidate_body_param(value, encoding)\n\n\nReturns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as a key-value item for part of the body of the outgoing request.\n\n\nValid encodings are \napplication/json\n, \nx-www-form-urlencoded\n, \nmultipart/form-data\n.\n\n\nMay raise \nParameterError\n, or \nNetworkError\n for an unsupported encoding.", 
+            "title": "Utilities"
+        }, 
+        {
+            "location": "/api-guide/utils/#utilities", 
+            "text": "The  coreapi.utils  module provides a number of helper functions that\nmay be useful if writing a custom client or transport class.", 
+            "title": "Utilities"
+        }, 
+        {
+            "location": "/api-guide/utils/#file-utilities", 
+            "text": "The following classes are used to indicate upload and download file content.", 
+            "title": "File utilities"
+        }, 
+        {
+            "location": "/api-guide/utils/#file", 
+            "text": "May be used as a parameter with links that require a file input.  Signature :  File(name, content, content_type=None)   name  - The filename.  content  - A string, bytestring, or stream object.  content_type  - An optional string representing the content type of the file.   An open file or other stream may also be used directly as a parameter, instead\nof a  File  instance, but the  File  instance makes it easier to specify the\nfilename and content in code.  Example:   from coreapi.utils import File  upload = File('example.csv', 'a,b,c\\n1,2,3\\n4,5,6\\n')  data = client.action(document, ['store', 'upload_media'], params={'upload': upload})", 
+            "title": "File"
+        }, 
+        {
+            "location": "/api-guide/utils/#downloadedfile", 
+            "text": "A temporary file instance, used to represent downloaded media.  Available attributes:   name  - The full filename, including the path.  basename  - The filename as determined at the point of download.   Example:   download = client.action(document, ['user', 'get_profile_image'])  download.basename\n'avatar.png'  download.read()\nb'...'  By default the file will be deleted when this object goes out of scope. See the  DownloadCodec  documentation  for more details.", 
+            "title": "DownloadedFile"
+        }, 
+        {
+            "location": "/api-guide/utils/#negotiation-utilities", 
+            "text": "The following functions are used to determine which of a set of transports\nor codecs should be used when performing an API interaction.", 
+            "title": "Negotiation utilities"
+        }, 
+        {
+            "location": "/api-guide/utils/#determine_transport", 
+            "text": "Signature :  determine_transport(transports, url)  Given a list of transports and a URL, return the appropriate transport for\nmaking network requests to that URL.  May raise  NetworkError .", 
+            "title": "determine_transport"
+        }, 
+        {
+            "location": "/api-guide/utils/#negotiate_decoder", 
+            "text": "Signature :  negotiate_decoder(codecs, content_type=None)  Given a list of codecs, and the value of an HTTP response  Content-Type  header,\nreturn the appropriate codec for decoding the response content.  May raise  NoCodecAvailable .", 
+            "title": "negotiate_decoder"
+        }, 
+        {
+            "location": "/api-guide/utils/#negotiate_encoder", 
+            "text": "Signature :  negotiate_encoder(codecs, accept=None)  Given a list of codecs, and the value of an incoming HTTP request  Accept \nheader, return the appropriate codec for encoding the outgoing response content.  Allows server implementations to provide for client-driven content negotiation.  May raise  NoCodecAvailable .", 
+            "title": "negotiate_encoder"
+        }, 
+        {
+            "location": "/api-guide/utils/#validation-utilities", 
+            "text": "Different request encodings have different capabilities. For example,  application/json \nsupports a range of data primitives, but does not support file uploads. In contrast, multipart/form-data  only supports string primitives and file uploads.  The following helper functions validate that the types passed to an action are suitable\nfor use with the given encoding, and ensure that a consistent exception type is raised\nif an invalid value is passed.", 
+            "title": "Validation utilities"
+        }, 
+        {
+            "location": "/api-guide/utils/#validate_path_param", 
+            "text": "Signature :  validate_path_param(value)  Returns the value, coerced into a string primitive. Validates that the value that is suitable for use in URI-encoded path parameters. Empty strings and composite types such as dictionaries are disallowed.  May raise  ParameterError .", 
+            "title": "validate_path_param"
+        }, 
+        {
+            "location": "/api-guide/utils/#validate_query_param", 
+            "text": "Signature :  validate_query_param(value)  Returns the value, coerced into a string primitive. Validates that the value is suitable for use in URL query parameters.  May raise  ParameterError .", 
+            "title": "validate_query_param"
+        }, 
+        {
+            "location": "/api-guide/utils/#validate_body_param", 
+            "text": "Signature :  validate_body_param(value, encoding)  Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as the body of the outgoing request.  Valid encodings are  application/json ,  x-www-form-urlencoded ,  multipart/form-data  and  application/octet-stream .  May raise  ParameterError  for an invalid value, or  NetworkError  for an unsupported encoding.", 
+            "title": "validate_body_param"
+        }, 
+        {
+            "location": "/api-guide/utils/#validate_form_param", 
+            "text": "Signature :  validate_body_param(value, encoding)  Returns the value, coerced into a primitive that is valid for the given encoding. Validates that the parameter types provided may be used as a key-value item for part of the body of the outgoing request.  Valid encodings are  application/json ,  x-www-form-urlencoded ,  multipart/form-data .  May raise  ParameterError , or  NetworkError  for an unsupported encoding.", 
+            "title": "validate_form_param"
+        }, 
+        {
+            "location": "/topics/release-notes/", 
+            "text": "Release Notes\n\n\n2.0\n\n\n\n\nUpload and download support.\n\n\nMedia type changes from \napplication/vnd.coreapi+json\n to \napplication/coreapi+json\n.\n  For backwards compatibility, either are currently accepted.\n\n\nCodec methods \ndump()\n/\nload()\n become \nencode()\n/\ndecode()\n. The old style\n  methods currently continue to work for backward compatibility.\n\n\nThe client instance validates that passed parameters match the available parameter names.\n  Fails if unknown parameters are included, or required parameters are not included.\n\n\n.action()\n now accepts a \nvalidate=False\n argument, to turn off parameter validation.\n\n\nParameter values are validated against the encoding used on the link to ensure\n  that they can be represented in the request.\n\n\ntype\n annotation added to \nField\n instances.\n\n\nmultipart/form-data\n is now consistently used on multipart links, even when\n  no file arguments are passed.\n\n\naction\n, \nencoding\n, and \ntransform\n parameters to \n.action()\n now replaced with a\n  single \noverrides\n argument. The old style arguments currently continue to work for\n  backward compatibility.\n\n\nThe \nsupports\n attribute is no longer used when defining codec classes. A\n  \nsupports\n property currently exists on the base class, to provide backwards\n  compatibility for \ncoreapi-cli\n.\n\n\n\n\nThe various backwards compatibility shims are planned to be removed in the 2.1 release.", 
+            "title": "Release Notes"
+        }, 
+        {
+            "location": "/topics/release-notes/#release-notes", 
+            "text": "", 
+            "title": "Release Notes"
+        }, 
+        {
+            "location": "/topics/release-notes/#20", 
+            "text": "Upload and download support.  Media type changes from  application/vnd.coreapi+json  to  application/coreapi+json .\n  For backwards compatibility, either are currently accepted.  Codec methods  dump() / load()  become  encode() / decode() . The old style\n  methods currently continue to work for backward compatibility.  The client instance validates that passed parameters match the available parameter names.\n  Fails if unknown parameters are included, or required parameters are not included.  .action()  now accepts a  validate=False  argument, to turn off parameter validation.  Parameter values are validated against the encoding used on the link to ensure\n  that they can be represented in the request.  type  annotation added to  Field  instances.  multipart/form-data  is now consistently used on multipart links, even when\n  no file arguments are passed.  action ,  encoding , and  transform  parameters to  .action()  now replaced with a\n  single  overrides  argument. The old style arguments currently continue to work for\n  backward compatibility.  The  supports  attribute is no longer used when defining codec classes. A\n   supports  property currently exists on the base class, to provide backwards\n  compatibility for  coreapi-cli .   The various backwards compatibility shims are planned to be removed in the 2.1 release.", 
+            "title": "2.0"
+        }
+    ]
+}

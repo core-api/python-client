@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        
+        
+        
+        <link rel="shortcut icon" href="../../img/favicon.ico">
+
+	<title>Documents - Core API - Python Client</title>
+
+        <link href="../../css/bootstrap-custom.min.css" rel="stylesheet">
+        <link href="../../css/font-awesome-4.5.0.css" rel="stylesheet">
+        <link href="../../css/base.css" rel="stylesheet">
+        <link rel="stylesheet" href="../../css/highlight.css">
+
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.3.0/respond.min.js"></script>
+        <![endif]-->
+
+        
+    </head>
+
+    <body>
+
+        <div class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container">
+
+        <!-- Collapsed navigation -->
+        <div class="navbar-header">
+            
+            <!-- Expander button -->
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            
+
+            <!-- Main title -->
+            <a class="navbar-brand" href="../..">Core API - Python Client</a>
+        </div>
+
+        <!-- Expanded navigation -->
+        <div class="navbar-collapse collapse">
+            
+                <!-- Main navigation -->
+                <ul class="nav navbar-nav">
+                
+                
+                    <li >
+                        <a href="../..">Home</a>
+                    </li>
+                
+                
+                
+                    <li class="dropdown active">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">API Guide <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../client/">Clients</a>
+</li>
+
+                        
+                            
+<li class="active">
+    <a href="./">Documents</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../codecs/">Codecs</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../transports/">Transports</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../exceptions/">Exceptions</a>
+</li>
+
+                        
+                            
+<li >
+    <a href="../utils/">Utilities</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Topics <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                        
+                            
+<li >
+    <a href="../../topics/release-notes/">Release Notes</a>
+</li>
+
+                        
+                        </ul>
+                    </li>
+                
+                
+                </ul>
+            
+
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <a href="#" data-toggle="modal" data-target="#mkdocs_search_modal">
+                        <i class="fa fa-search"></i> Search
+                    </a>
+                </li>
+                
+                    <li >
+                        <a rel="next" href="../client/">
+                            <i class="fa fa-arrow-left"></i> Previous
+                        </a>
+                    </li>
+                    <li >
+                        <a rel="prev" href="../codecs/">
+                            Next <i class="fa fa-arrow-right"></i>
+                        </a>
+                    </li>
+                
+                
+                    <li>
+                        <a href="https://github.com/core-api/python-client/">
+                            
+                                <i class="fa fa-github"></i>
+                            
+                            GitHub
+                        </a>
+                    </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+        <div class="container">
+            
+                <div class="col-md-3"><div class="bs-sidebar hidden-print affix well" role="complementary">
+    <ul class="nav bs-sidenav">
+    
+        <li class="main active"><a href="#documents">Documents</a></li>
+        
+            <li><a href="#usage">Usage</a></li>
+        
+            <li><a href="#document-primitives">Document primitives</a></li>
+        
+            <li><a href="#handling-errors">Handling errors</a></li>
+        
+    
+    </ul>
+</div></div>
+                <div class="col-md-9" role="main">
+
+<h1 id="documents">Documents</h1>
+<p>A CoreAPI document is a primitive that may be used to represent either schema of hypermedia responses.</p>
+<p>By including information about the available interactions that an API exposes,
+the document allows users to interact with the API at an interface level, rather
+than a network level.</p>
+<p>In the schema case a document will include only links. Interactions to the API
+endpoints will typically return plain data.</p>
+<p>In the hypermedia case a document will include both links and data. interactions
+to the API endpoints will typically return a new document.</p>
+<hr />
+<h2 id="usage">Usage</h2>
+<h3 id="retrieving-a-document">Retrieving a document</h3>
+<p>Typically a Document will first be obtained by making a request with a
+client instance.</p>
+<pre><code>&gt;&gt;&gt; document = client.get('https://api.example.com/users/')
+</code></pre>
+<p>A document can also be loaded from a raw bytestring, by using a codec instance.</p>
+<pre><code>&gt;&gt;&gt; codec = codecs.CoreJSONCodec()
+&gt;&gt;&gt; bytestring = open('document.corejson', 'rb').read()
+&gt;&gt;&gt; document = codec.decode(bytestring)
+</code></pre>
+<h3 id="inspecting-a-document">Inspecting a document</h3>
+<p>A document has some associated metadata that may be inspected.</p>
+<pre><code>&gt;&gt;&gt; document.url
+'https://api.example.com/'
+&gt;&gt;&gt; document.title
+'Example API'
+</code></pre>
+<p>A document may contain content, which may include nested dictionaries and list.
+The top level element is always a dictionary. The instance may be accessed using
+Python's standard dictionary lookup syntax.</p>
+<p>Schema type documents will contain <code>Link</code> instances as the leaf nodes in the content.</p>
+<pre><code>&gt;&gt;&gt; document['users']['create']
+Link(url='https://api.example.com/users/', action='post', fields=[...])
+</code></pre>
+<p>Hypermedia documents will also contain <code>Link</code> instances, but may also contain
+data, or nested <code>Document</code> instances.</p>
+<pre><code>&gt;&gt;&gt; document['results']['count']
+45
+&gt;&gt;&gt; document['results']['items'][0]
+Document(url='https://api.example.com/users/0/', content={...})
+&gt;&gt;&gt; document['results']['items'][0]['username']
+'tomchristie'
+</code></pre>
+<h3 id="interacting-with-a-document">Interacting with a document</h3>
+<p>In order to interact with an API, a document is passed as the first argument to
+a client instance. A list of strings indexing into a link in the document is passed
+as the second argument.</p>
+<pre><code>&gt;&gt;&gt; data = client.action(document, ['users', 'list'])
+</code></pre>
+<p>Some links may accept a set of parameters, each of which may be either required or optional.</p>
+<pre><code>&gt;&gt;&gt; data = client.action(document, ['users', 'list'], params={'is_admin': True})
+</code></pre>
+<p>A document may be reloaded, by fetching the <code>document.url</code> property.</p>
+<pre><code>&gt;&gt;&gt; document = client.get(document.url)  # Reload the current document
+</code></pre>
+<hr />
+<h2 id="document-primitives">Document primitives</h2>
+<p>When using the <code>coreapi</code> library as an API client, you won't typically be instantiating
+document instances, but rather retrieving them using the client.</p>
+<p>However, if you're using the <code>coreapi</code> library on the server-side, you can use
+the document primitives directly, in order to create schema or hypermedia representations.
+The document should then be encoded using an available codec in order to form the schema response.</p>
+<h3 id="document">Document</h3>
+<p>The following are available attributes, and may be passed when instantiating a <code>Document</code>:</p>
+<ul>
+<li><code>url</code> - A string giving the canonical URL for this document.</li>
+<li><code>title</code> - A string describing this document.</li>
+<li><code>content</code> - A dictionary containing all the data and links made available by this document.</li>
+</ul>
+<p>A document instance also supports dictionary-style lookup on it's contents.</p>
+<pre><code>&gt;&gt;&gt; document['results']['count']
+45
+</code></pre>
+<p>The following properties are available on a document instance, and on any
+nested dictionaries it contains:</p>
+<ul>
+<li><code>links</code> - A dictionary-like property including only items that are <code>Link</code> instances.</li>
+<li><code>data</code> - A dictionary-like property including only items that are not <code>Link</code> instances.</li>
+</ul>
+<h3 id="link">Link</h3>
+<p>The following are available attributes, and may be passed when instantiating a <code>Link</code>:</p>
+<ul>
+<li><code>url</code> - A string giving the URL against which the request should be made.</li>
+<li><code>action</code> - A string giving the type of outgoing request that should be made.</li>
+<li><code>encoding</code> - A string giving the encoding used for outgoing requests.</li>
+<li><code>transform</code> - A string describing how the response should</li>
+<li><code>description</code> - A string describing this link.</li>
+<li><code>fields</code> - A list of field instances.</li>
+</ul>
+<p>Note that the behaviour of link attributes is defined at the transport level,
+rather than at the document level. See <a href="../transports/#making-requests">the <code>HTTPTransport</code> documentation for more details</a>.</p>
+<h3 id="field">Field</h3>
+<p>The following are available attributes, and may be passed when instantiating a <code>Field</code>:</p>
+<ul>
+<li><code>name</code> - A string describing a short name for the parameter.</li>
+<li><code>required</code> - A boolean indicating if this is a required parameter on the link.</li>
+<li><code>location</code> - A string describing how this parameter should be included in the outgoing request.</li>
+<li><code>type</code> - A string describing the kind of <a href="https://www.w3.org/TR/html-markup/input.html">input control</a> this parameter represents.</li>
+<li><code>description</code> - A string describing this parameter on the link.</li>
+</ul>
+<p>Note that the behaviour of the <code>location</code> attribute is defined at the transport level,
+rather than at the document level. See <a href="../transports/#making-requests">the <code>HTTPTransport</code> documentation for more details</a>.</p>
+<hr />
+<h2 id="handling-errors">Handling errors</h2>
+<p>Error responses are similar to Document responses. Both contain a dictionary of
+content. However, an error does not represent a network resource, and so does
+not have an associated URL, in the same way as a <code>Document</code> does.</p>
+<p>When an error response is returned by an API, the <code>ErrorMessage</code> exception is raised.
+The <code>Error</code> instance itself is available on the exception as the <code>.error</code> attribute.</p>
+<pre><code>params = {
+    'location_code': 'berlin-4353',
+    'start_date': '2018-01-03',
+    'end_date': '2018-01-07',
+    'room_type': 'double',
+}
+try:
+    data = client.action(document, ['bookings', 'create'], params=params)
+except coreapi.exceptions.ErrorMessage as exc:
+    print("Error: %s" % exc.error)
+else:
+    print("Success: %s" % data)
+</code></pre>
+<h3 id="error">Error</h3>
+<p>The following are available attributes, and may be passed when instantiating an <code>Error</code>:</p>
+<ul>
+<li><code>title</code> - A string describing the error.</li>
+<li><code>content</code> - A dictionary containing all the data or links made available by this error.</li>
+</ul></div>
+            
+        </div>
+
+        <footer class="col-md-12">
+            <hr>
+            
+                <p>Copyright &copy; 2015, <a href="https://twitter.com/_tomchristie">Tom Christie</a>.</p>
+            
+            <p>Documentation built with <a href="http://www.mkdocs.org/">MkDocs</a>.</p>
+        </footer>
+
+        <script src="../../js/jquery-1.10.2.min.js"></script>
+        <script src="../../js/bootstrap-3.0.3.min.js"></script>
+        <script src="../../js/highlight.pack.js"></script>
+        <script>var base_url = '../..';</script>
+        <script data-main="../../mkdocs/js/search.js" src="../../mkdocs/js/require.js"></script>
+        <script src="../../js/base.js"></script>
+
+        <div class="modal" id="mkdocs_search_modal" tabindex="-1" role="dialog" aria-labelledby="Search Modal" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+                        <h4 class="modal-title" id="exampleModalLabel">Search</h4>
+                    </div>
+                    <div class="modal-body">
+                        <p>
+                            From here you can search these documents. Enter
+                            your search terms below.
+                        </p>
+                        <form role="form">
+                            <div class="form-group">
+                                <input type="text" class="form-control" placeholder="Search..." id="mkdocs-search-query">
+                            </div>
+                        </form>
+                        <div id="mkdocs-search-results"></div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>
