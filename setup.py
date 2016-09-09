@@ -73,6 +73,9 @@ setup(
             'json=coreapi.codecs:JSONCodec',
             'text=coreapi.codecs:TextCodec',
             'download=coreapi.codecs:DownloadCodec',
+        ],
+        'coreapi.transports': [
+            'http=coreapi.transports:HTTPTransport',
         ]
     },
     classifiers=[
