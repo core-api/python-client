@@ -152,6 +152,8 @@ def _document_to_primative(node, base_url=None):
             ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
+        if node.type:
+            ret['type'] = node.type
         if node.description:
             ret['description'] = node.description
         return ret
@@ -203,6 +205,7 @@ def _primative_to_document(data, base_url=None):
                 name=_get_string(item, 'name'),
                 required=_get_bool(item, 'required'),
                 location=_get_string(item, 'location'),
+                type=_get_string(item, 'type'),
                 description=_get_string(item, 'description')
             )
             for item in fields if isinstance(item, dict)
@@ -227,15 +230,19 @@ def _primative_to_document(data, base_url=None):
 
 
 class CoreJSONCodec(BaseCodec):
-    media_type = 'application/vnd.coreapi+json'
-    supports = ['encoding', 'decoding']
+    media_type = 'application/coreapi+json'
 
-    def load(self, bytes, base_url=None):
+    # The following is due to be deprecated...
+    media_types = ['application/coreapi+json', 'application/vnd.coreapi+json']
+
+    def decode(self, bytestring, **options):
         """
         Takes a bytestring and returns a document.
         """
+        base_url = options.get('base_url')
+
         try:
-            data = json.loads(bytes.decode('utf-8'))
+            data = json.loads(bytestring.decode('utf-8'))
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
@@ -248,22 +255,24 @@ class CoreJSONCodec(BaseCodec):
 
         return doc
 
-    def dump(self, document, indent=False, **kwargs):
+    def encode(self, document, **options):
         """
         Takes a document and returns a bytestring.
         """
+        indent = options.get('indent')
+
         if indent:
-            options = {
+            kwargs = {
                 'ensure_ascii': False,
                 'indent': 4,
                 'separators': VERBOSE_SEPARATORS
             }
         else:
-            options = {
+            kwargs = {
                 'ensure_ascii': False,
                 'indent': None,
                 'separators': COMPACT_SEPARATORS
             }
 
         data = _document_to_primative(document)
-        return force_bytes(json.dumps(data, **options))
+        return force_bytes(json.dumps(data, **kwargs))

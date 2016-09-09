@@ -1,21 +1,31 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi.compat import is_file, urlparse
+from coreapi import exceptions, utils
+from coreapi.compat import urlparse
 from coreapi.document import Document, Object, Link, Array, Error
-from coreapi.exceptions import ErrorMessage
 from coreapi.transports.base import BaseTransport
-from coreapi.utils import negotiate_decoder
+from coreapi.utils import guess_filename, is_file, File
 import collections
 import requests
 import itypes
 import mimetypes
-import os
 import uritemplate
 
 
-Params = collections.namedtuple('Params', ['path', 'query', 'headers', 'body', 'data', 'files'])
-empty_params = Params({}, {}, {}, None, {}, {})
+Params = collections.namedtuple('Params', ['path', 'query', 'data', 'files'])
+empty_params = Params({}, {}, {}, {})
+
+
+class ForceMultiPartDict(dict):
+    # A dictionary that always evaluates as True.
+    # Allows us to force requests to use multipart encoding, even when no
+    # file parameters are passed.
+    def __bool__(self):
+        return True
+
+    def __nonzero__(self):
+        return True
 
 
 def _get_method(action):
@@ -24,9 +34,15 @@ def _get_method(action):
     return action.upper()
 
 
-def _get_params(method, fields, params=None):
+def _get_encoding(encoding):
+    if not encoding:
+        return 'application/json'
+    return encoding
+
+
+def _get_params(method, encoding, fields, params=None):
     """
-    Separate the params into their location types.
+    Separate the params into the various types.
     """
     if params is None:
         return empty_params
@@ -35,10 +51,14 @@ def _get_params(method, fields, params=None):
 
     path = {}
     query = {}
-    headers = {}
-    body = None
     data = {}
     files = {}
+
+    errors = {}
+
+    # Ensure graceful behavior in edge-case where both location='body' and
+    # location='form' fields are present.
+    seen_body = False
 
     for key, value in params.items():
         if key not in field_map or not field_map[key].location:
@@ -47,37 +67,34 @@ def _get_params(method, fields, params=None):
         else:
             location = field_map[key].location
 
-        if location == 'path':
-            path[key] = value
-        elif location == 'query':
-            query[key] = value
-        elif location == 'header':
-            headers[key] = value
-        elif location == 'body':
-            body = value
-        elif location == 'form':
-            if is_file(value):
-                files[key] = value
-            else:
-                data[key] = value
+        if location == 'form' and encoding == 'application/octet-stream':
+            # Raw uploads should always use 'body', not 'form'.
+            location = 'body'
 
-    return Params(path, query, headers, body, data, files)
+        try:
+            if location == 'path':
+                path[key] = utils.validate_path_param(value)
+            elif location == 'query':
+                query[key] = utils.validate_query_param(value)
+            elif location == 'body':
+                data = utils.validate_body_param(value, encoding=encoding)
+                seen_body = True
+            elif location == 'form':
+                if not seen_body:
+                    data[key] = utils.validate_form_param(value, encoding=encoding)
+        except exceptions.ParameterError as exc:
+            errors[key] = exc.message
 
+    if errors:
+        raise exceptions.ParameterError(errors)
 
-def _get_encoding(encoding, params):
-    if encoding:
-        return encoding
+    # Move any files from 'data' into 'files'.
+    if isinstance(data, dict):
+        for key, value in list(data.items()):
+            if is_file(data[key]):
+                files[key] = data.pop(key)
 
-    if params.body is not None:
-        if is_file(params.body):
-            return 'application/octet-stream'
-        return 'application/json'
-    elif params.files:
-        return 'multipart/form-data'
-    elif params.data:
-        return 'application/json'
-
-    return ''
+    return Params(path, query, data, files)
 
 
 def _get_url(url, path_params):
@@ -94,7 +111,7 @@ def _get_headers(url, decoders, credentials=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
-    accept = '%s, */*' % decoders[0].media_type
+    accept = '%s, */*' % ', '.join(decoders[0].get_media_types())
 
     headers = {
         'accept': accept,
@@ -111,16 +128,29 @@ def _get_headers(url, decoders, credentials=None):
     return headers
 
 
-def _get_content_type(file_obj):
+def _get_upload_headers(file_obj):
     """
-    When a raw file upload is made, determine a content-type where possible.
+    When a raw file upload is made, determine the Content-Type and
+    Content-Disposition headers to use with the request.
     """
-    name = getattr(file_obj, 'name', None)
-    if name is not None:
+    name = guess_filename(file_obj)
+    content_type = None
+    content_disposition = None
+
+    # Determine the content type of the upload.
+    if getattr(file_obj, 'content_type', None):
+        content_type = file_obj.content_type
+    elif name:
         content_type, encoding = mimetypes.guess_type(name)
-    else:
-        content_type = None
-    return content_type
+
+    # Determine the content disposition of the upload.
+    if name:
+        content_disposition = 'attachment; filename="%s"' % name
+
+    return {
+        'Content-Type': content_type or 'application/octet-stream',
+        'Content-Disposition': content_disposition or 'attachment'
+    }
 
 
 def _build_http_request(session, url, method, headers=None, encoding=None, params=empty_params):
@@ -134,29 +164,21 @@ def _build_http_request(session, url, method, headers=None, encoding=None, param
     if params.query:
         opts['params'] = params.query
 
-    if (params.body is not None) or params.data or params.files:
+    if params.data or params.files:
         if encoding == 'application/json':
-            if params.body is not None:
-                opts['json'] = params.body
-            else:
-                opts['json'] = params.data
+            opts['json'] = params.data
         elif encoding == 'multipart/form-data':
             opts['data'] = params.data
-            opts['files'] = params.files
+            opts['files'] = ForceMultiPartDict(params.files)
         elif encoding == 'application/x-www-form-urlencoded':
             opts['data'] = params.data
         elif encoding == 'application/octet-stream':
-            opts['data'] = params.body
-            content_type = _get_content_type(params.body)
-            if content_type:
-                opts['headers']['content-type'] = content_type
-
-            if hasattr(params.body, 'name'):
-                filename = os.path.basename(params.body.name)
-                content_disposition = 'attachment; filename="%s"' % filename
+            if isinstance(params.data, File):
+                opts['data'] = params.data.content
             else:
-                content_disposition = 'attachment'
-            opts['headers']['content-disposition'] = content_disposition
+                opts['data'] = params.data
+            upload_headers = _get_upload_headers(params.data)
+            opts['headers'].update(upload_headers)
 
     request = requests.Request(method, url, **opts)
     return session.prepare_request(request)
@@ -212,8 +234,17 @@ def _decode_result(response, decoders, force_codec=False):
             codec = decoders[0]
         else:
             content_type = response.headers.get('content-type')
-            codec = negotiate_decoder(decoders, content_type)
-        result = codec.load(response.content, base_url=response.url)
+            codec = utils.negotiate_decoder(decoders, content_type)
+
+        options = {
+            'base_url': response.url
+        }
+        if 'content-type' in response.headers:
+            options['content_type'] = response.headers['content-type']
+        if 'content-disposition' in response.headers:
+            options['content_disposition'] = response.headers['content-disposition']
+
+        result = codec.decode(response.content, **options)
     else:
         # No content returned in response.
         result = None
@@ -255,8 +286,7 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, session=None,
-                 request_callback=None, response_callback=None):
+    def __init__(self, credentials=None, headers=None, session=None, request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         if session is None:
@@ -264,6 +294,9 @@ class HTTPTransport(BaseTransport):
         self._credentials = itypes.Dict(credentials or {})
         self._headers = itypes.Dict(headers or {})
         self._session = session
+
+        # Fallback for v1.x overrides.
+        # Will be removed at some point, most likely in a 2.1 release.
         self._request_callback = request_callback
         self._response_callback = response_callback
 
@@ -278,18 +311,20 @@ class HTTPTransport(BaseTransport):
     def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
-        params = _get_params(method, link.fields, params)
-        encoding = _get_encoding(link.encoding, params)
+        encoding = _get_encoding(link.encoding)
+        params = _get_params(method, encoding, link.fields, params)
         url = _get_url(link.url, params.path)
         headers = _get_headers(url, decoders, self.credentials)
         headers.update(self.headers)
 
         request = _build_http_request(session, url, method, headers, encoding, params)
-        if self._request_callback:
+
+        if self._request_callback is not None:
             self._request_callback(request)
 
         response = session.send(request)
-        if self._response_callback:
+
+        if self._response_callback is not None:
             self._response_callback(response)
 
         result = _decode_result(response, decoders, force_codec)
@@ -298,6 +333,6 @@ class HTTPTransport(BaseTransport):
             result = _handle_inplace_replacements(result, link, link_ancestors)
 
         if isinstance(result, Error):
-            raise ErrorMessage(result)
+            raise exceptions.ErrorMessage(result)
 
         return result

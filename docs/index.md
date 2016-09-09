@@ -1,17 +1,12 @@
-# Python client library
-
-[![build-status-image]][travis]
-[![pypi-version]][pypi]
+# Core API - Python Client
 
 Python client library for [Core API][core-api].
 
-**Requirements**: Python 2.7, 3.3+
-
----
+Allows you to interact with any API that exposes a supported schema or hypermedia format.
 
 ## Installation
 
-Install from PyPI, using pip:
+Install [from PyPI][coreapi-pypi], using pip:
 
     $ pip install coreapi
 
@@ -37,7 +32,7 @@ Interact with the API:
 ## Supported formats
 
 The following schema and hypermedia formats are currently supported, either
-through built-in support, or as a third-party codec:
+through [built-in support][built-in-codecs], or as a [third-party codec][third-party-codecs]:
 
 Name                | Media type                 | Notes
 --------------------|----------------------------|------------------------------------
@@ -46,7 +41,7 @@ OpenAPI ("Swagger") | `application/openapi+json` | Schema support.
 JSON Hyper-Schema   | `application/schema+json`  | Schema support.
 HAL                 | `application/hal+json`     | Hypermedia support.
 
-Additionally, the following plain data content types are supported:
+Additionally, the following plain data content types [are supported][built-in-codecs]:
 
 Name        | Media type         | Notes
 ------------|--------------------|---------------------------------
@@ -81,8 +76,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-[core-api]: https://github.com/core-api/core-api/
-[build-status-image]: https://secure.travis-ci.org/core-api/python-client.svg?branch=master
-[travis]: http://travis-ci.org/core-api/python-client?branch=master
-[pypi-version]: https://img.shields.io/pypi/v/coreapi.svg
-[pypi]: https://pypi.python.org/pypi/coreapi
+[core-api]: http://www.coreapi.org/
+[built-in-codecs]: api-guide/codecs.md#available-codecs
+[third-party-codecs]: api-guide/codecs.md#external-packages
+[coreapi-pypi]: https://pypi.python.org/pypi/coreapi

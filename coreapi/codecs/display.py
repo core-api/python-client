@@ -1,3 +1,6 @@
+# Note that `DisplayCodec` is deliberately omitted from the documentation,
+# as it is considered an implementation detail.
+# It may move into a utility function in the future.
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import console_style, string_types
@@ -115,7 +118,7 @@ class DisplayCodec(BaseCodec):
     A plaintext representation of a Document, intended for readability.
     """
     media_type = 'text/plain'
-    supports = ['encoding']
 
-    def dump(self, node, colorize=False, **kwargs):
-        return _to_plaintext(node, colorize=colorize)
+    def encode(self, document, **options):
+        colorize = options.get('colorize', False)
+        return _to_plaintext(document, colorize=colorize)

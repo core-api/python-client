@@ -2,7 +2,7 @@
 from coreapi import Document, Link, Field
 from coreapi.codecs import CoreJSONCodec
 from coreapi.compat import force_text
-from coreapi.exceptions import TransportError
+from coreapi.exceptions import NetworkError
 from coreapi.transports import HTTPTransport
 from coreapi.utils import determine_transport
 import pytest
@@ -30,17 +30,17 @@ class MockResponse(object):
 # Test transport errors.
 
 def test_unknown_scheme():
-    with pytest.raises(TransportError):
+    with pytest.raises(NetworkError):
         determine_transport(transports, 'ftp://example.org')
 
 
 def test_missing_scheme():
-    with pytest.raises(TransportError):
+    with pytest.raises(NetworkError):
         determine_transport(transports, 'example.org')
 
 
 def test_missing_hostname():
-    with pytest.raises(TransportError):
+    with pytest.raises(NetworkError):
         determine_transport(transports, 'http://')
 
 
@@ -93,7 +93,7 @@ def test_post(monkeypatch, http):
     def mockreturn(self, request):
         codec = CoreJSONCodec()
         body = force_text(request.body)
-        content = codec.dump(Document(content={'data': json.loads(body)}))
+        content = codec.encode(Document(content={'data': json.loads(body)}))
         return MockResponse(content)
 
     monkeypatch.setattr(requests.Session, 'send', mockreturn)

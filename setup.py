@@ -72,6 +72,10 @@ setup(
             'corejson=coreapi.codecs:CoreJSONCodec',
             'json=coreapi.codecs:JSONCodec',
             'text=coreapi.codecs:TextCodec',
+            'download=coreapi.codecs:DownloadCodec',
+        ],
+        'coreapi.transports': [
+            'http=coreapi.transports:HTTPTransport',
         ]
     },
     classifiers=[

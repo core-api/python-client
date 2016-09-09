@@ -18,9 +18,6 @@ try:
     COMPACT_SEPARATORS = (b',', b':')
     VERBOSE_SEPARATORS = (b',', b': ')
 
-    def is_file(obj):
-        return isinstance(obj, file)
-
     def b64encode(input_string):
         # Provide a consistently-as-unicode interface across 2.x and 3.x
         return base64.b64encode(input_string)
@@ -34,9 +31,6 @@ except ImportError:
     text_type = str
     COMPACT_SEPARATORS = (',', ':')
     VERBOSE_SEPARATORS = (',', ': ')
-
-    def is_file(obj):
-        return isinstance(obj, IOBase)
 
     def b64encode(input_string):
         # Provide a consistently-as-unicode interface across 2.x and 3.x

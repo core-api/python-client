@@ -51,19 +51,56 @@ def _lookup_link(document, keys):
     return (node, link_ancestors)
 
 
-class Client(itypes.Object):
-    DEFAULT_TRANSPORTS = [
-        transports.HTTPTransport()
-    ]
-    DEFAULT_DECODERS = [
-        codecs.CoreJSONCodec(), codecs.JSONCodec(), codecs.TextCodec()
+def _validate_parameters(link, parameters):
+    """
+    Ensure that parameters passed to the link are correct.
+    Raises a `ParameterError` if any parameters do not validate.
+    """
+    provided = set(parameters.keys())
+    required = set([
+        field.name for field in link.fields if field.required
+    ])
+    optional = set([
+        field.name for field in link.fields if not field.required
+    ])
+
+    errors = {}
+
+    # Determine if any required field names not supplied.
+    missing = required - provided
+    for item in missing:
+        errors[item] = 'This parameter is required.'
+
+    # Determine any parameter names supplied that are not valid.
+    unexpected = provided - (optional | required)
+    for item in unexpected:
+        errors[item] = 'Unknown parameter.'
+
+    if errors:
+        raise exceptions.ParameterError(errors)
+
+
+def get_default_decoders():
+    return [
+        codecs.CoreJSONCodec(),
+        codecs.JSONCodec(),
+        codecs.TextCodec(),
+        codecs.DownloadCodec()
     ]
 
+
+def get_default_transports():
+    return [
+        transports.HTTPTransport()
+    ]
+
+
+class Client(itypes.Object):
     def __init__(self, decoders=None, transports=None):
         if decoders is None:
-            decoders = self.DEFAULT_DECODERS
+            decoders = get_default_decoders()
         if transports is None:
-            transports = self.DEFAULT_TRANSPORTS
+            transports = get_default_transports()
         self._decoders = itypes.List(decoders)
         self._transports = itypes.List(transports)
 
@@ -83,26 +120,42 @@ class Client(itypes.Object):
         return transport.transition(link, self.decoders, force_codec=force_codec)
 
     def reload(self, document, force_codec=False):
-        url = document.url
-        link = Link(url, action='get')
+        # Fallback for v1.x. To be removed in favour of explict `get` style.
+        return self.get(document.url, force_codec=force_codec)
 
-        # Perform the action, and return a new document.
-        transport = determine_transport(self.transports, link.url)
-        return transport.transition(link, self.decoders, force_codec=force_codec)
+    def action(self, document, keys, params=None, validate=True, overrides=None,
+               action=None, encoding=None, transform=None):
+        if (action is not None) or (encoding is not None) or (transform is not None):
+            # Fallback for v1.x overrides.
+            # Will be removed at some point, most likely in a 2.1 release.
+            if overrides is None:
+                overrides = {}
+            if action is not None:
+                overrides['action'] = action
+            if encoding is not None:
+                overrides['encoding'] = encoding
+            if transform is not None:
+                overrides['transform'] = transform
 
-    def action(self, document, keys, params=None, action=None, encoding=None, transform=None):
         if isinstance(keys, string_types):
             keys = [keys]
 
+        if params is None:
+            params = {}
+
         # Validate the keys and link parameters.
         link, link_ancestors = _lookup_link(document, keys)
+        if validate:
+            _validate_parameters(link, params)
 
-        if (action is not None) or (encoding is not None) or (transform is not None):
+        if overrides:
             # Handle any explicit overrides.
-            action = link.action if (action is None) else action
-            encoding = link.encoding if (encoding is None) else encoding
-            transform = link.transform if (transform is None) else transform
-            link = Link(link.url, action=action, encoding=encoding, transform=transform, fields=link.fields)
+            url = overrides.get('url', link.url)
+            action = overrides.get('action', link.action)
+            encoding = overrides.get('encoding', link.encoding)
+            transform = overrides.get('transform', link.transform)
+            fields = overrides.get('fields', link.fields)
+            link = Link(url, action=action, encoding=encoding, transform=transform, fields=fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)

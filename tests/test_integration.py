@@ -13,7 +13,7 @@ encoded = (
 @pytest.fixture
 def document():
     codec = coreapi.codecs.CoreJSONCodec()
-    return codec.load(encoded)
+    return codec.decode(encoded)
 
 
 class MockResponse(object):
@@ -28,7 +28,7 @@ class MockResponse(object):
 
 def test_load():
     codec = coreapi.codecs.CoreJSONCodec()
-    assert codec.load(encoded) == {
+    assert codec.decode(encoded) == {
         "a": 123,
         "next": coreapi.Link(url='http://example.org')
     }
@@ -36,7 +36,7 @@ def test_load():
 
 def test_dump(document):
     codec = coreapi.codecs.CoreJSONCodec()
-    content = codec.dump(document)
+    content = codec.encode(document)
     assert content == encoded
 
 
