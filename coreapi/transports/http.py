@@ -88,6 +88,7 @@ def _get_params(method, encoding, fields, params=None):
     if errors:
         raise exceptions.ValidationError(errors)
 
+    # Move any files from 'data' into 'files'.
     if isinstance(data, dict):
         for key, value in list(data.items()):
             if is_file(data[key]):

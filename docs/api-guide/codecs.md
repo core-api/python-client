@@ -129,18 +129,31 @@ Example:
 
 ### DownloadCodec
 
-Supports decoding arbitrary media as a download file. Returns a temporary file
+Supports decoding arbitrary media as a download file. Returns a [temporary file][tempfile]
 that will be deleted once it goes out of scope.
 
 **.media_type**: `*/*`
 
 Example:
 
-    >>> from coreapi import codecs
     >>> codec = codecs.DownloadCodec()
-    >>> data = codec.decode(b'...')
-    >>> print(data)
+    >>> download = codec.decode(b'abc...xyz')
+    >>> print(download)
     <DownloadedFile '.../tmpYbxNXT.download', open 'rb'>
+    >>> content = download.read()
+    >>> print(content)
+    abc...xyz
+
+The download filename will be determined by either the `Content-Disposition`
+header, or based on the request URL and the `Content-Type` header. Download
+collisions are avoided by using incrementing filenames where required.
+The original name used for the download file can be inspected using `.basename`.
+
+    >>> download = codec.decode(b'abc...xyz', content_type='image/png', base_url='http://example.com/download/')
+    >>> download.name
+    '/var/folders/2k/qjf3np5s28zf2f58963pz2k40000gn/T/download.png'
+    >>> download.basename
+    'download.png'
 
 #### Instantiation
 
@@ -233,6 +246,7 @@ A codec for the [HAL][hal] hypermedia format. Installable [from PyPI][hal-pypi] 
 
 [content-disposition-filename]: https://tools.ietf.org/html/draft-ietf-httpbis-content-disp-00#section-3.3
 [click-ansi]: http://click.pocoo.org/5/utils/#ansi-colors
+[tempfile]: https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryFile
 
 [openapi]: https://openapis.org/specification
 [openapi-pypi]: https://pypi.python.org/pypi/openapi-codec
