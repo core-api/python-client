@@ -1,4 +1,5 @@
 site_name: Core API - Python Client
+
 pages:
 - Home: index.md
 - API Guide:
@@ -12,3 +13,4 @@ pages:
     - Release Notes: topics/release-notes.md
 
 repo_url: https://github.com/core-api/python-client/
+copyright: Copyright &copy; 2015, <a href="https://twitter.com/_tomchristie">Tom Christie</a>.
