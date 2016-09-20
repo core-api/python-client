@@ -116,7 +116,7 @@ def _get_headers(url, decoders, credentials=None):
         accept_media_types.append('*/*')
 
     headers = {
-        'accept': ', '.join(media_types),
+        'accept': ', '.join(accept_media_types),
         'user-agent': 'coreapi'
     }
 
