@@ -1,9 +1,8 @@
 # coding: utf-8
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import urlparse
-from coreapi.utils import DownloadedFile
+from coreapi.utils import DownloadedFile, guess_extension
 import cgi
-import mimetypes
 import os
 import posixpath
 import tempfile
@@ -70,7 +69,7 @@ def _get_filename_from_url(url, content_type=None):
     parsed = urlparse.urlparse(url)
     final_path_component = posixpath.basename(parsed.path.rstrip('/'))
     filename = _safe_filename(final_path_component)
-    suffix = mimetypes.guess_extension(content_type or '')
+    suffix = guess_extension(content_type or '')
 
     if filename:
         if '.' not in filename:
