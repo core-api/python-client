@@ -133,10 +133,13 @@ class DownloadCodec(BaseCodec):
 
         # Determine the full output path.
         output_path = os.path.join(output_dir, output_filename)
-        output_path = _unique_output_path(output_path)
 
         # Move the temporary download file to the final location.
-        os.rename(temp_path, output_path)
+        if output_path != temp_path:
+            output_path = _unique_output_path(output_path)
+            os.rename(temp_path, output_path)
+
+        # Open the file and return the file object.
         output_file = open(output_path, 'rb')
         downloaded = DownloadedFile(output_file, output_path, delete=self._delete_on_close)
         downloaded.basename = output_filename
