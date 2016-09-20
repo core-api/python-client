@@ -4,7 +4,7 @@ from coreapi.client import Client
 from coreapi.document import Array, Document, Link, Object, Error, Field
 
 
-__version__ = '2.0.0'
+__version__ = '2.0.1'
 __all__ = [
     'Array', 'Document', 'Link', 'Object', 'Error', 'Field',
     'Client',

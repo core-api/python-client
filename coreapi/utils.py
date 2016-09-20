@@ -31,8 +31,8 @@ class DownloadedFile(tempfile._TemporaryFileWrapper):
     basename = None
 
     def __repr__(self):
-        state = "closed" if self.close_called else "open"
-        mode = "" if self.close_called else " '%s'" % self.file.mode
+        state = "closed" if self.closed else "open"
+        mode = "" if self.closed else " '%s'" % self.file.mode
         return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
 
     def __str__(self):
