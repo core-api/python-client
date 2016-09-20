@@ -111,10 +111,12 @@ def _get_headers(url, decoders, credentials=None):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
-    accept = '%s, */*' % ', '.join(decoders[0].get_media_types())
+    accept_media_types = decoders[0].get_media_types()
+    if '*/*' not in accept_media_types:
+        accept_media_types.append('*/*')
 
     headers = {
-        'accept': accept,
+        'accept': ', '.join(accept_media_types),
         'user-agent': 'coreapi'
     }
 
