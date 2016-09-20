@@ -70,13 +70,16 @@ def _get_filename_from_url(url, content_type=None):
     parsed = urlparse.urlparse(url)
     final_path_component = posixpath.basename(parsed.path.rstrip('/'))
     filename = _safe_filename(final_path_component)
-    if filename and ('.' not in filename) and (content_type is not None):
-        # If no extension exists then attempt to add one,
-        # based on the content type.
-        ext = mimetypes.guess_extension(content_type)
-        if ext:
-            filename = filename + ext
-    return filename
+    suffix = mimetypes.guess_extension(content_type or '')
+
+    if filename:
+        if '.' not in filename:
+            return filename + suffix
+        return filename
+    elif suffix:
+        return 'download' + suffix
+
+    return None
 
 
 def _get_filename(base_url=None, content_type=None, content_disposition=None):
