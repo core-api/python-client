@@ -40,5 +40,5 @@ class BaseCodec(itypes.Object):
         # Fallback, while transitioning from `application/vnd.coreapi+json`
         # to simply `application/coreapi+json`.
         if hasattr(self, 'media_types'):
-            return self.media_types
+            return list(self.media_types)
         return [self.media_type]
