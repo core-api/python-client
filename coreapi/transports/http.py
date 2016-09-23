@@ -83,7 +83,7 @@ def _get_params(method, encoding, fields, params=None):
                 if not seen_body:
                     data[key] = utils.validate_form_param(value, encoding=encoding)
         except exceptions.ParameterError as exc:
-            errors[key] = exc.message
+            errors[key] = "%s" % exc
 
     if errors:
         raise exceptions.ParameterError(errors)
