@@ -44,6 +44,8 @@ def _to_repr(node):
             args += ", encoding=%s" % repr(node.encoding)
         if node.transform:
             args += ", transform=%s" % repr(node.transform)
+        if node.description:
+            args += ", description=%s" % repr(node.description)
         if node.fields:
             fields_repr = ', '.join(_to_repr(item) for item in node.fields)
             args += ", fields=[%s]" % fields_repr
@@ -57,6 +59,8 @@ def _to_repr(node):
             args += ', required=True'
         if node.location:
             args += ', location=%s' % repr(node.location)
+        if node.description:
+            args += ', description=%s' % repr(node.description)
         return 'Field(%s)' % args
 
     return repr(node)
