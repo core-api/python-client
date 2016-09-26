@@ -7,6 +7,7 @@ import json
 
 class JSONCodec(BaseCodec):
     media_type = 'application/json'
+    format = 'json'
 
     def decode(self, bytestring, **options):
         """

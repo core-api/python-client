@@ -112,16 +112,22 @@ class Client(itypes.Object):
     def transports(self):
         return self._transports
 
-    def get(self, url, force_codec=False):
+    def get(self, url, format=None, force_codec=False):
         link = Link(url, action='get')
+
+        decoders = self.decoders
+        if format:
+            decoders = [decoder for decoder in self.decoders if decoder.format==format]
+            if not decoders:
+                raise ValueError("No decoder available with format='%s'" % format)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)
-        return transport.transition(link, self.decoders, force_codec=force_codec)
+        return transport.transition(link, decoders, force_codec=force_codec)
 
-    def reload(self, document, force_codec=False):
+    def reload(self, document, format=None, force_codec=False):
         # Fallback for v1.x. To be removed in favour of explict `get` style.
-        return self.get(document.url, force_codec=force_codec)
+        return self.get(document.url, format=format, force_codec=force_codec)
 
     def action(self, document, keys, params=None, validate=True, overrides=None,
                action=None, encoding=None, transform=None):
