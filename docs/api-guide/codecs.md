@@ -64,6 +64,7 @@ The following attribute is available on codec instances:
 Supports decoding or encoding the Core JSON format.
 
 **.media_type**: `application/coreapi+json`
+**.format**: `openapi`
 
 Example of decoding a Core JSON bytestring into a `Document` instance:
 
@@ -99,6 +100,7 @@ URLs in the document.
 Supports decoding JSON data.
 
 **.media_type**: `application/json`
+**.format**: `json`
 
 Example:
 
@@ -116,6 +118,7 @@ Example:
 Supports decoding plain-text responses.
 
 **.media_type**: `text/*`
+**.format**: `text`
 
 Example:
 
@@ -133,6 +136,7 @@ Supports decoding arbitrary media as a download file. Returns a [temporary file]
 that will be deleted once it goes out of scope.
 
 **.media_type**: `*/*`
+**.format**: `download`
 
 Example:
 
@@ -183,7 +187,7 @@ indicate the download filename][content-disposition-filename].
 ## Custom codecs
 
 Custom codec classes may be created by inheriting from `BaseCodec`, setting
-the `media_type` and `supports` properties, and implementing one or both
+the `media_type` and `format` properties, and implementing one or both
 of the `decode` or `encode` methods.
 
 For example:
@@ -193,7 +197,7 @@ For example:
 
     class YAMLCodec(codecs.BaseCodec):
         media_type = 'application/yaml'
-        supports = ['data']
+        format = 'yaml'
 
         def decode(content, **options):
             return yaml.safe_load(content)

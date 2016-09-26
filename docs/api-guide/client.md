@@ -74,6 +74,7 @@ Make a network request to the given URL. If fetching an API schema or hypermedia
 resource, then this should typically return a decoded `Document`.
 
 * `url` - The URL that should be retrieved.
+* `format` - Optional. Force the given codec to be used when decoding the response.
 
 For example:
 
