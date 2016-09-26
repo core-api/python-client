@@ -117,7 +117,7 @@ class Client(itypes.Object):
 
         decoders = self.decoders
         if format:
-            decoders = [decoder for decoder in self.decoders if decoder.format==format]
+            decoders = [decoder for decoder in self.decoders if decoder.format == format]
             if not decoders:
                 raise ValueError("No decoder available with format='%s'" % format)
 
