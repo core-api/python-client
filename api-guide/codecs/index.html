@@ -217,7 +217,8 @@ output.close()
 <h2 id="available-codecs">Available codecs</h2>
 <h3 id="corejsoncodec">CoreJSONCodec</h3>
 <p>Supports decoding or encoding the Core JSON format.</p>
-<p><strong>.media_type</strong>: <code>application/coreapi+json</code></p>
+<p><strong>.media_type</strong>: <code>application/coreapi+json</code>
+<strong>.format</strong>: <code>openapi</code></p>
 <p>Example of decoding a Core JSON bytestring into a <code>Document</code> instance:</p>
 <pre><code>&gt;&gt;&gt; from coreapi import codecs
 &gt;&gt;&gt; codec = codecs.CoreJSONCodec()
@@ -242,7 +243,8 @@ URLs in the document.</p>
 <hr />
 <h3 id="jsoncodec">JSONCodec</h3>
 <p>Supports decoding JSON data.</p>
-<p><strong>.media_type</strong>: <code>application/json</code></p>
+<p><strong>.media_type</strong>: <code>application/json</code>
+<strong>.format</strong>: <code>json</code></p>
 <p>Example:</p>
 <pre><code>&gt;&gt;&gt; from coreapi import codecs
 &gt;&gt;&gt; codec = codecs.JSONCodec()
@@ -254,7 +256,8 @@ URLs in the document.</p>
 <hr />
 <h3 id="textcodec">TextCodec</h3>
 <p>Supports decoding plain-text responses.</p>
-<p><strong>.media_type</strong>: <code>text/*</code></p>
+<p><strong>.media_type</strong>: <code>text/*</code>
+<strong>.format</strong>: <code>text</code></p>
 <p>Example:</p>
 <pre><code>&gt;&gt;&gt; from coreapi import codecs
 &gt;&gt;&gt; codec = codecs.TextCodec()
@@ -266,7 +269,8 @@ hello, world!
 <h3 id="downloadcodec">DownloadCodec</h3>
 <p>Supports decoding arbitrary media as a download file. Returns a <a href="https://docs.python.org/3/library/tempfile.html#tempfile.TemporaryFile">temporary file</a>
 that will be deleted once it goes out of scope.</p>
-<p><strong>.media_type</strong>: <code>*/*</code></p>
+<p><strong>.media_type</strong>: <code>*/*</code>
+<strong>.format</strong>: <code>download</code></p>
 <p>Example:</p>
 <pre><code>&gt;&gt;&gt; codec = codecs.DownloadCodec()
 &gt;&gt;&gt; download = codec.decode(b'abc...xyz')
@@ -305,7 +309,7 @@ indicate the download filename</a>.</p>
 <hr />
 <h2 id="custom-codecs">Custom codecs</h2>
 <p>Custom codec classes may be created by inheriting from <code>BaseCodec</code>, setting
-the <code>media_type</code> and <code>supports</code> properties, and implementing one or both
+the <code>media_type</code> and <code>format</code> properties, and implementing one or both
 of the <code>decode</code> or <code>encode</code> methods.</p>
 <p>For example:</p>
 <pre><code>from coreapi import codecs
@@ -313,7 +317,7 @@ import yaml
 
 class YAMLCodec(codecs.BaseCodec):
     media_type = 'application/yaml'
-    supports = ['data']
+    format = 'yaml'
 
     def decode(content, **options):
         return yaml.safe_load(content)

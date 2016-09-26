@@ -234,6 +234,7 @@ properties on a client instance:</p>
 resource, then this should typically return a decoded <code>Document</code>.</p>
 <ul>
 <li><code>url</code> - The URL that should be retrieved.</li>
+<li><code>format</code> - Optional. Force the given codec to be used when decoding the response.</li>
 </ul>
 <p>For example:</p>
 <pre><code>document = client.get('https://api.example.org/')
