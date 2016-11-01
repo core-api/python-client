@@ -55,3 +55,9 @@ try:
 except ImportError:
     def console_style(text, **kwargs):
         return text
+
+
+try:
+    from tempfile import _TemporaryFileWrapper
+except ImportError:
+    _TemporaryFileWrapper = None
