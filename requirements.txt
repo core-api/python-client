@@ -7,3 +7,6 @@ uritemplate
 coverage
 flake8
 pytest
+
+# Packaging requirements
+wheel
