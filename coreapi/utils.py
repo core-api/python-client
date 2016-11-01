@@ -1,5 +1,5 @@
 from coreapi import exceptions
-from coreapi.compat import string_types, text_type, urlparse
+from coreapi.compat import string_types, text_type, urlparse, _TemporaryFileWrapper
 from collections import namedtuple
 import os
 import tempfile
@@ -116,16 +116,23 @@ def guess_extension(content_type):
     }.get(content_type, '')
 
 
-class DownloadedFile(tempfile._TemporaryFileWrapper):
-    basename = None
+if _TemporaryFileWrapper:
+    # Ideally we subclass this so that we can present a custom representation.
+    class DownloadedFile(_TemporaryFileWrapper):
+        basename = None
 
-    def __repr__(self):
-        state = "closed" if self.closed else "open"
-        mode = "" if self.closed else " '%s'" % self.file.mode
-        return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
+        def __repr__(self):
+            state = "closed" if self.closed else "open"
+            mode = "" if self.closed else " '%s'" % self.file.mode
+            return "<DownloadedFile '%s', %s%s>" % (self.name, state, mode)
 
-    def __str__(self):
-        return self.__repr__()
+            def __str__(self):
+                return self.__repr__()
+else:
+    # On some platforms (eg GAE) the private _TemporaryFileWrapper may not be
+    # available, just use the standard `NamedTemporaryFile` function
+    # in this case.
+    DownloadedFile = tempfile.NamedTemporaryFile
 
 
 # Negotiation utilities. USed to determine which codec or transport class
