@@ -187,7 +187,13 @@ def _primative_to_document(data, base_url=None):
         title = _get_string(meta, 'title')
         description = _get_string(meta, 'description')
         content = _get_content(data, base_url=url)
-        return Document(url=url, title=title, description=description, content=content)
+        return Document(
+            url=url,
+            title=title,
+            description=description,
+            media_type='application/coreapi+json',
+            content=content
+        )
 
     if isinstance(data, dict) and data.get('_type') == 'error':
         # Error

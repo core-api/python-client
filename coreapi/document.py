@@ -49,7 +49,7 @@ class Document(itypes.Dict):
     Expresses the data that the client may access,
     and the actions that the client may perform.
     """
-    def __init__(self, url=None, title=None, description=None, content=None):
+    def __init__(self, url=None, title=None, description=None, media_type=None, content=None):
         content = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
@@ -58,6 +58,8 @@ class Document(itypes.Dict):
             raise TypeError("'title' must be a string.")
         if description is not None and not isinstance(description, string_types):
             raise TypeError("'description' must be a string.")
+        if media_type is not None and not isinstance(media_type, string_types):
+            raise TypeError("'media_type' must be a string.")
         if not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
         if any([not isinstance(key, string_types) for key in content.keys()]):
@@ -66,6 +68,7 @@ class Document(itypes.Dict):
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
         self._description = '' if (description is None) else description
+        self._media_type = '' if (media_type is None) else media_type
         self._data = {key: _to_immutable(value) for key, value in content.items()}
 
     def clone(self, data):
@@ -101,6 +104,10 @@ class Document(itypes.Dict):
     @property
     def description(self):
         return self._description
+
+    @property
+    def media_type(self):
+        return self._media_type
 
     @property
     def data(self):
