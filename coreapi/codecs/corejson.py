@@ -218,7 +218,8 @@ def _primative_to_document(data, base_url=None):
                 required=_get_bool(item, 'required'),
                 location=_get_string(item, 'location'),
                 type=_get_string(item, 'type'),
-                description=_get_string(item, 'description')
+                description=_get_string(item, 'description'),
+                example=item.get('example')
             )
             for item in fields if isinstance(item, dict)
         ]
