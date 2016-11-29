@@ -72,7 +72,7 @@ class Document(itypes.Dict):
         self._data = {key: _to_immutable(value) for key, value in content.items()}
 
     def clone(self, data):
-        return self.__class__(self.url, self.title, data)
+        return self.__class__(self.url, self.title, self.description, self.media_type, data)
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
