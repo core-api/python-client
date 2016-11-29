@@ -102,6 +102,8 @@ def _document_to_primative(node, base_url=None):
             meta['url'] = url
         if node.title:
             meta['title'] = node.title
+        if node.description:
+            meta['description'] = node.description
         if meta:
             ret['_meta'] = meta
 
@@ -138,6 +140,8 @@ def _document_to_primative(node, base_url=None):
             ret['encoding'] = node.encoding
         if node.transform:
             ret['transform'] = node.transform
+        if node.title:
+            ret['title'] = node.title
         if node.description:
             ret['description'] = node.description
         if node.fields:
@@ -181,8 +185,15 @@ def _primative_to_document(data, base_url=None):
         url = _get_string(meta, 'url')
         url = urlparse.urljoin(base_url, url)
         title = _get_string(meta, 'title')
+        description = _get_string(meta, 'description')
         content = _get_content(data, base_url=url)
-        return Document(url=url, title=title, content=content)
+        return Document(
+            url=url,
+            title=title,
+            description=description,
+            media_type='application/coreapi+json',
+            content=content
+        )
 
     if isinstance(data, dict) and data.get('_type') == 'error':
         # Error
@@ -198,6 +209,7 @@ def _primative_to_document(data, base_url=None):
         action = _get_string(data, 'action')
         encoding = _get_string(data, 'encoding')
         transform = _get_string(data, 'transform')
+        title = _get_string(data, 'title')
         description = _get_string(data, 'description')
         fields = _get_list(data, 'fields')
         fields = [
@@ -206,13 +218,14 @@ def _primative_to_document(data, base_url=None):
                 required=_get_bool(item, 'required'),
                 location=_get_string(item, 'location'),
                 type=_get_string(item, 'type'),
-                description=_get_string(item, 'description')
+                description=_get_string(item, 'description'),
+                example=item.get('example')
             )
             for item in fields if isinstance(item, dict)
         ]
         return Link(
             url=url, action=action, encoding=encoding, transform=transform,
-            description=description, fields=fields
+            title=title, description=description, fields=fields
         )
 
     elif isinstance(data, dict):

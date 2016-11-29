@@ -36,8 +36,8 @@ def _key_sorting(item):
 
 # The field class, as used by Link objects:
 
-Field = namedtuple('Field', ['name', 'required', 'location', 'type', 'description'])
-Field.__new__.__defaults__ = (False, '', '', '')
+Field = namedtuple('Field', ['name', 'required', 'location', 'type', 'description', 'example'])
+Field.__new__.__defaults__ = (False, '', '', '', None)
 
 
 # The Core API primatives:
@@ -49,13 +49,17 @@ class Document(itypes.Dict):
     Expresses the data that the client may access,
     and the actions that the client may perform.
     """
-    def __init__(self, url=None, title=None, content=None):
+    def __init__(self, url=None, title=None, description=None, media_type=None, content=None):
         content = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
             raise TypeError("'url' must be a string.")
         if title is not None and not isinstance(title, string_types):
             raise TypeError("'title' must be a string.")
+        if description is not None and not isinstance(description, string_types):
+            raise TypeError("'description' must be a string.")
+        if media_type is not None and not isinstance(media_type, string_types):
+            raise TypeError("'media_type' must be a string.")
         if not isinstance(content, dict):
             raise TypeError("'content' must be a dict.")
         if any([not isinstance(key, string_types) for key in content.keys()]):
@@ -63,10 +67,12 @@ class Document(itypes.Dict):
 
         self._url = '' if (url is None) else url
         self._title = '' if (title is None) else title
+        self._description = '' if (description is None) else description
+        self._media_type = '' if (media_type is None) else media_type
         self._data = {key: _to_immutable(value) for key, value in content.items()}
 
     def clone(self, data):
-        return self.__class__(self.url, self.title, data)
+        return self.__class__(self.url, self.title, self.description, self.media_type, data)
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
@@ -94,6 +100,14 @@ class Document(itypes.Dict):
     @property
     def title(self):
         return self._title
+
+    @property
+    def description(self):
+        return self._description
+
+    @property
+    def media_type(self):
+        return self._media_type
 
     @property
     def data(self):
@@ -163,7 +177,7 @@ class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, encoding=None, transform=None, description=None, fields=None):
+    def __init__(self, url=None, action=None, encoding=None, transform=None, title=None, description=None, fields=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (action is not None) and (not isinstance(action, string_types)):
@@ -172,6 +186,8 @@ class Link(itypes.Object):
             raise TypeError("Argument 'encoding' must be a string.")
         if (transform is not None) and (not isinstance(transform, string_types)):
             raise TypeError("Argument 'transform' must be a string.")
+        if (title is not None) and (not isinstance(title, string_types)):
+            raise TypeError("Argument 'title' must be a string.")
         if (description is not None) and (not isinstance(description, string_types)):
             raise TypeError("Argument 'description' must be a string.")
         if (fields is not None) and (not isinstance(fields, (list, tuple))):
@@ -186,6 +202,7 @@ class Link(itypes.Object):
         self._action = '' if (action is None) else action
         self._encoding = '' if (encoding is None) else encoding
         self._transform = '' if (transform is None) else transform
+        self._title = '' if (title is None) else title
         self._description = '' if (description is None) else description
         self._fields = () if (fields is None) else tuple([
             item if isinstance(item, Field) else Field(item, required=False, location='')
@@ -207,6 +224,10 @@ class Link(itypes.Object):
     @property
     def transform(self):
         return self._transform
+
+    @property
+    def title(self):
+        return self._title
 
     @property
     def description(self):
