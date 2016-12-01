@@ -1,7 +1,7 @@
 from coreapi import codecs, exceptions, transports
 from coreapi.compat import string_types
 from coreapi.document import Document, Link
-from coreapi.utils import determine_transport
+from coreapi.utils import determine_transport, get_installed_codecs
 import collections
 import itypes
 
@@ -117,9 +117,14 @@ class Client(itypes.Object):
 
         decoders = self.decoders
         if format:
+            force_codec = True
             decoders = [decoder for decoder in self.decoders if decoder.format == format]
             if not decoders:
-                raise ValueError("No decoder available with format='%s'" % format)
+                installed_codecs = get_installed_codecs()
+                if format in installed_codecs:
+                    decoders = [installed_codecs[format]]
+                else:
+                    raise ValueError("No decoder available with format='%s'" % format)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)
