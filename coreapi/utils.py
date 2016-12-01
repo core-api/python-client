@@ -2,8 +2,21 @@ from coreapi import exceptions
 from coreapi.compat import string_types, text_type, urlparse, _TemporaryFileWrapper
 from collections import namedtuple
 import os
+import pkg_resources
 import tempfile
 
+
+def get_installed_codecs():
+    packages = [
+        (package, package.load()) for package in
+        pkg_resources.iter_entry_points(group='coreapi.codecs')
+    ]
+    return {
+        package.name: cls() for (package, cls) in packages
+    }
+
+
+# File utilities for upload and download support.
 
 File = namedtuple('File', 'name content content_type')
 File.__new__.__defaults__ = (None,)
