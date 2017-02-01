@@ -156,8 +156,8 @@ def _document_to_primative(node, base_url=None):
             ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
-        if node.schema:
-            ret['schema'] = node.schema
+        #if node.schema:
+        #    ret['schema'] = node.schema
         return ret
 
     elif isinstance(node, Object):
