@@ -253,7 +253,7 @@ class Link(itypes.Object):
             self.encoding == other.encoding and
             self.transform == other.transform and
             self.description == other.description and
-            self.fields == other.fields
+            sorted(self.fields, key=lambda f: f.name) == sorted(other.fields, key=lambda f: f.name)
         )
 
     def __repr__(self):
