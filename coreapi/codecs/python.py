@@ -59,8 +59,8 @@ def _to_repr(node):
             args += ', required=True'
         if node.location:
             args += ', location=%s' % repr(node.location)
-        if node.description:
-            args += ', description=%s' % repr(node.description)
+        if node.schema:
+            args += ', schema=%s' % repr(node.schema)
         return 'Field(%s)' % args
 
     return repr(node)

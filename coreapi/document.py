@@ -26,18 +26,26 @@ def _str(node):
 def _key_sorting(item):
     """
     Document and Object sorting.
-    Regular attributes sorted alphabetically, then links sorted alphabetically.
+    Regular attributes sorted alphabetically.
+    Links are sorted based on their URL and action.
     """
     key, value = item
     if isinstance(value, Link):
-        return (1, key)
+        action_priority = {
+            'get': 0,
+            'post': 1,
+            'put': 2,
+            'patch': 3,
+            'delete': 4
+        }.get(value.action, 5)
+        return (1, (value.url, action_priority))
     return (0, key)
 
 
 # The field class, as used by Link objects:
 
-Field = namedtuple('Field', ['name', 'required', 'location', 'type', 'description', 'example'])
-Field.__new__.__defaults__ = (False, '', '', '', None)
+Field = namedtuple('Field', ['name', 'required', 'location', 'schema'])
+Field.__new__.__defaults__ = (False, '', None)
 
 
 # The Core API primatives:

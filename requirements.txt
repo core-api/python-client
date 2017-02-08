@@ -1,4 +1,5 @@
 # Package requirements
+coreschema
 itypes
 requests
 uritemplate
