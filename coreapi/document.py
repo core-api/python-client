@@ -253,7 +253,7 @@ class Link(itypes.Object):
             self.encoding == other.encoding and
             self.transform == other.transform and
             self.description == other.description and
-            set(self.fields) == set(other.fields)
+            self.fields == other.fields
         )
 
     def __repr__(self):
