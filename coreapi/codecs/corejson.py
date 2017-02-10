@@ -5,12 +5,59 @@ from coreapi.compat import force_bytes, string_types, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Array, Object, Error, Field
 from coreapi.exceptions import ParseError
+import coreschema
 import json
+
+
+# Schema encoding and decoding.
+# Just a naive first-pass at this point.
+
+SCHEMA_CLASS_TO_TYPE_ID = {
+    coreschema.Object: 'object',
+    coreschema.Array: 'array',
+    coreschema.Number: 'number',
+    coreschema.Integer: 'integer',
+    coreschema.String: 'string',
+    coreschema.Boolean: 'boolean',
+    coreschema.Null: 'null',
+    coreschema.Enum: 'enum',
+    coreschema.Anything: 'anything'
+}
+
+TYPE_ID_TO_SCHEMA_CLASS = {
+    value: key
+    for key, value
+    in SCHEMA_CLASS_TO_TYPE_ID.items()
+}
+
+
+def encode_schema_to_corejson(schema):
+    type_id = SCHEMA_CLASS_TO_TYPE_ID.get(schema.__class__, 'anything')
+    return {
+        '_type': type_id,
+        'title': schema.title,
+        'description': schema.description
+    }
+
+
+def decode_schema_from_corejson(data):
+    type_id = _get_string(data, '_type')
+    title = _get_string(data, 'title')
+    description = _get_string(data, 'description')
+    schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, coreschema.Anything)
+    return schema_cls(title=title, description=description)
 
 
 # Robust dictionary lookups, that always return an item of the correct
 # type, using an empty default if an incorrect type exists.
 # Useful for liberal parsing of inputs.
+
+def _get_schema(item, key):
+    schema_data = _get_dict(item, key)
+    if schema_data:
+        return decode_schema_from_corejson(schema_data)
+    return None
+
 
 def _get_string(item, key):
     value = item.get(key)
@@ -156,6 +203,8 @@ def _document_to_primative(node, base_url=None):
             ret['required'] = node.required
         if node.location:
             ret['location'] = node.location
+        if node.schema:
+            ret['schema'] = encode_schema_to_corejson(node.schema)
         return ret
 
     elif isinstance(node, Object):
@@ -213,7 +262,7 @@ def _primative_to_document(data, base_url=None):
                 name=_get_string(item, 'name'),
                 required=_get_bool(item, 'required'),
                 location=_get_string(item, 'location'),
-                schema=item.get('schema', None)
+                schema=_get_schema(item, 'schema')
             )
             for item in fields if isinstance(item, dict)
         ]
