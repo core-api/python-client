@@ -299,7 +299,8 @@ def _decode_result(response, decoders, force_codec=False):
     # Coerce 4xx and 5xx codes into errors.
     is_error = response.status_code >= 400 and response.status_code <= 599
     if is_error and not isinstance(result, Error):
-        result = _coerce_to_error(result, default_title=response.reason)
+        default_title = '%d %s' % (response.status_code, response.reason)
+        result = _coerce_to_error(result, default_title=default_title)
 
     return result
 
