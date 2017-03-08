@@ -5,6 +5,7 @@ pages:
 - API Guide:
     - Clients: api-guide/client.md
     - Documents: api-guide/document.md
+    - Authentication: api-guide/auth.md
     - Codecs: api-guide/codecs.md
     - Transports: api-guide/transports.md
     - Exceptions: api-guide/exceptions.md

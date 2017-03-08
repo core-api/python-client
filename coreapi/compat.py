@@ -12,6 +12,7 @@ __all__ = [
 try:
     # Python 2
     import urlparse
+    import cookielib as cookiejar
 
     string_types = (basestring,)
     text_type = unicode
@@ -26,6 +27,7 @@ except ImportError:
     # Python 3
     import urllib.parse as urlparse
     from io import IOBase
+    from http import cookiejar
 
     string_types = (str,)
     text_type = str

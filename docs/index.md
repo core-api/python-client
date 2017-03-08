@@ -29,6 +29,11 @@ Interact with the API:
         'date': '2016-10-12'
     })
 
+Creating an authenticated client instance:
+
+    auth = coreapi.auth.TokenAuthentication(token='xxxx-xxxxxxxx-xxxx')
+    client = Client(auth=auth)
+
 ## Supported formats
 
 The following schema and hypermedia formats are currently supported, either
@@ -53,7 +58,7 @@ Other media | `*/*`              | Returns a temporary download file.
 
 ## License
 
-Copyright © 2015-2016, Tom Christie.
+Copyright © 2015-2017, Tom Christie.
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without

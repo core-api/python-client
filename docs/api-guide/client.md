@@ -30,20 +30,29 @@ A client instance holds the configuration about which transports are available
 for making network requests, and which codecs are available for decoding the
 content of network responses.
 
-This configuration is set by passing either or both of the `decoders` and
-`transports` arguments. The signature of the `Client` class is:
+The signature of the `Client` class is:
 
-    Client(decoders=None, transports=None)
+    Client(decoders=None, transports=None, auth=None, session=None)
 
-For example the following would instantiate a client that is capable of
-decoding either Core JSON schema responses, or decoding plain JSON
+Arguments:
+
+* `decoders` - A list of decoder instances for decoding the content of responses.
+* `transports` - A list of transport instances available for making network requests.
+* `auth` - A authentication instance. Used when instantiating the default HTTP transport.
+* `session` - A `requests` session instance. Used when instantiating the default HTTP transport.
+
+For example the following would instantiate a client, authenticated using HTTP basic auth,  that is capable of decoding either Core JSON schema responses, or decoding plain JSON
 data responses:
+
+    from coreapi import codecs
+    from coreapi.auth import BasicAuthentication
 
     decoders = [
         codecs.CoreJSONCodec(),
         codecs.JSONCodec()
     ]
-    client = Client(decoders=decoders)
+    auth = BasicAuthentication(domain='*', username='example', password='xxx')
+    client = Client(decoders=decoders, auth=auth)
 
 When no arguments are passed, the following defaults are used:
 
@@ -55,7 +64,7 @@ When no arguments are passed, the following defaults are used:
     ]
 
     transports = [
-        transports.HTTPTransport()  # http, https
+        transports.HTTPTransport(auth=auth, session=session)  # http, https
     ]
 
 The configured decoders and transports are made available as read-only

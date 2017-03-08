@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi import exceptions, utils
-from coreapi.compat import urlparse
+from coreapi.compat import cookiejar, urlparse
 from coreapi.document import Document, Object, Link, Array, Error
 from coreapi.transports.base import BaseTransport
 from coreapi.utils import guess_filename, is_file, File
@@ -11,6 +11,7 @@ import requests
 import itypes
 import mimetypes
 import uritemplate
+import warnings
 
 
 Params = collections.namedtuple('Params', ['path', 'query', 'data', 'files'])
@@ -18,14 +19,65 @@ empty_params = Params({}, {}, {}, {})
 
 
 class ForceMultiPartDict(dict):
-    # A dictionary that always evaluates as True.
-    # Allows us to force requests to use multipart encoding, even when no
-    # file parameters are passed.
+    """
+    A dictionary that always evaluates as True.
+    Allows us to force requests to use multipart encoding, even when no
+    file parameters are passed.
+    """
     def __bool__(self):
         return True
 
     def __nonzero__(self):
         return True
+
+
+class BlockAll(cookiejar.CookiePolicy):
+    """
+    A cookie policy that rejects all cookies.
+    Used to override the default `requests` behavior.
+    """
+    return_ok = set_ok = domain_return_ok = path_return_ok = lambda self, *args, **kwargs: False
+    netscape = True
+    rfc2965 = hide_cookie2 = False
+
+
+class DomainCredentials(requests.auth.AuthBase):
+    """
+    Custom auth class to support deprecated 'credentials' argument.
+    """
+    allow_cookies = False
+    credentials = None
+
+    def __init__(self, credentials=None):
+        self.credentials = credentials
+
+    def __call__(self, request):
+        if not self.credentials:
+            return request
+
+        # Include any authorization credentials relevant to this domain.
+        url_components = urlparse.urlparse(request.url)
+        host = url_components.hostname
+        if host in self.credentials:
+            request.headers['Authorization'] = self.credentials[host]
+        return request
+
+
+class CallbackAdapter(requests.adapters.HTTPAdapter):
+    """
+    Custom requests HTTP adapter, to support deprecated callback arguments.
+    """
+    def __init__(self, request_callback=None, response_callback=None):
+        self.request_callback = request_callback
+        self.response_callback = response_callback
+
+    def send(self, request, **kwargs):
+        if self.request_callback is not None:
+            self.request_callback(request)
+        response = super(CallbackAdapter, self).send(request, **kwargs)
+        if self.response_callback is not None:
+            self.response_callback(response)
+        return response
 
 
 def _get_method(action):
@@ -107,7 +159,7 @@ def _get_url(url, path_params):
     return url
 
 
-def _get_headers(url, decoders, credentials=None):
+def _get_headers(url, decoders):
     """
     Return a dictionary of HTTP headers to use in the outgoing request.
     """
@@ -119,13 +171,6 @@ def _get_headers(url, decoders, credentials=None):
         'accept': ', '.join(accept_media_types),
         'user-agent': 'coreapi'
     }
-
-    if credentials:
-        # Include any authorization credentials relevant to this domain.
-        url_components = urlparse.urlparse(url)
-        host = url_components.hostname
-        if host in credentials:
-            headers['authorization'] = credentials[host]
 
     return headers
 
@@ -288,23 +333,33 @@ def _handle_inplace_replacements(document, link, link_ancestors):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, session=None, request_callback=None, response_callback=None):
+    def __init__(self, credentials=None, headers=None, auth=None, session=None, request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         if session is None:
             session = requests.Session()
-        self._credentials = itypes.Dict(credentials or {})
+        if auth is not None:
+            session.auth = auth
+        if not getattr(session.auth, 'allow_cookies', False):
+            session.cookies.set_policy(BlockAll())
+
+        if credentials is not None:
+            warnings.warn(
+                "The 'credentials' argument is now deprecated in favor of 'auth'.",
+                DeprecationWarning
+            )
+            auth = DomainCredentials(credentials)
+        if request_callback is not None or response_callback is not None:
+            warnings.warn(
+                "The 'request_callback' and 'response_callback' arguments are now deprecated. "
+                "Use a custom 'session' instance instead.",
+                DeprecationWarning
+            )
+            session.mount('https://', CallbackAdapter(request_callback, response_callback))
+            session.mount('http://', CallbackAdapter(request_callback, response_callback))
+
         self._headers = itypes.Dict(headers or {})
         self._session = session
-
-        # Fallback for v1.x overrides.
-        # Will be removed at some point, most likely in a 2.1 release.
-        self._request_callback = request_callback
-        self._response_callback = response_callback
-
-    @property
-    def credentials(self):
-        return self._credentials
 
     @property
     def headers(self):
@@ -316,19 +371,11 @@ class HTTPTransport(BaseTransport):
         encoding = _get_encoding(link.encoding)
         params = _get_params(method, encoding, link.fields, params)
         url = _get_url(link.url, params.path)
-        headers = _get_headers(url, decoders, self.credentials)
+        headers = _get_headers(url, decoders)
         headers.update(self.headers)
 
         request = _build_http_request(session, url, method, headers, encoding, params)
-
-        if self._request_callback is not None:
-            self._request_callback(request)
-
         response = session.send(request)
-
-        if self._response_callback is not None:
-            self._response_callback(response)
-
         result = _decode_result(response, decoders, force_codec)
 
         if isinstance(result, Document) and link_ancestors:
