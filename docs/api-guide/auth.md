@@ -6,7 +6,7 @@ Authentication instances are responsible for handling the network authentication
 
 Typically, you'll provide authentication configuration by passing an authentication instance to the client.
 
-    import coreapi 
+    import coreapi
 
     auth = coreapi.auth.BasicAuthentication(username='...', password='...')
     coreapi.Client(auth=auth)
@@ -43,18 +43,18 @@ Uses [HTTP Basic Authentication][basic-auth].
 
 Uses [HTTP Bearer token authentication][bearer-auth], and can be used for OAuth 2, JWT, and custom token authentication schemes.
 
-Outgoing requests will include the provided token in the request`Authorization` headers, in the following format:
+Outgoing requests will include the provided token in the request `Authorization` headers, in the following format:
 
     Authorization: Bearer xxxx-xxxxxxxx-xxxx
 
-The prefix may be customized if required, in order to support HTTP authentication schemes that are not [officially registered][http-auth-schemes].
+The scheme name may be customized if required, in order to support HTTP authentication schemes that are not [officially registered][http-auth-schemes].
 
 A typical authentication flow using `TokenAuthentication` would be:
 
 * Using an unauthenticated client make a request providing the users credentials to an endpoint to that returns an API token.
 * Instantiate an authenticated client using the returned token, and use this for all future requests.
 
-**Signature**: `TokenAuthentication(token, prefix='Bearer', domain='*')`
+**Signature**: `TokenAuthentication(token, scheme='Bearer', domain='*')`
 
 ### SessionAuthentication
 
