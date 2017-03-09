@@ -89,18 +89,23 @@ def get_default_decoders():
     ]
 
 
-def get_default_transports():
+def get_default_transports(auth=None, session=None):
     return [
-        transports.HTTPTransport()
+        transports.HTTPTransport(auth=auth, session=session)
     ]
 
 
 class Client(itypes.Object):
-    def __init__(self, decoders=None, transports=None):
+    def __init__(self, decoders=None, transports=None, auth=None, session=None):
+        assert transports is None or auth is None, (
+            "Cannot specify both 'auth' and 'transports'. "
+            "When specifying transport instances explicitly you should set "
+            "the authentication directly on the transport."
+        )
         if decoders is None:
             decoders = get_default_decoders()
         if transports is None:
-            transports = get_default_transports()
+            transports = get_default_transports(auth=auth)
         self._decoders = itypes.List(decoders)
         self._transports = itypes.List(transports)
 

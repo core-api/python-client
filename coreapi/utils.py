@@ -6,6 +6,20 @@ import pkg_resources
 import tempfile
 
 
+def domain_matches(request, domain):
+    """
+    Domain string matching against an outgoing request.
+    Patterns starting with '*' indicate a wildcard domain.
+    """
+    if (domain is None) or (domain == '*'):
+        return True
+
+    host = urlparse.urlparse(request.url).hostname
+    if domain.startswith('*'):
+        return host.endswith(domain[1:])
+    return host == domain
+
+
 def get_installed_codecs():
     packages = [
         (package, package.load()) for package in
