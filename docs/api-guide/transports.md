@@ -18,9 +18,9 @@ The `HTTPTransport` class supports the `http` and `https` schemes.
 
 #### Instantiation
 
-**Signature**: `HTTPTransport(credentials=None, headers=None, session=None)`
+**Signature**: `HTTPTransport(auth=None, headers=None, session=None)`
 
-* `credentials` - A dictionary of items that maps domain name to values that should be used in the request `Authorization` header for each domain.
+* `auth` - An authentication instance, or None.
 * `headers` - A dictionary of items that should be included in the outgoing request headers.
 * `session` - A [requests session instance][sessions] to use when sending requests. This can be used to further customize how HTTP requests and responses are handled, for instance by allowing [transport adapters][transport-adapters] to be attached to the underlying session.
 
