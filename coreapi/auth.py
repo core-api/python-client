@@ -18,23 +18,23 @@ class BasicAuthentication(HTTPBasicAuth):
 
 class TokenAuthentication(AuthBase):
     allow_cookies = False
-    prefix = 'Bearer'
+    scheme = 'Bearer'
 
-    def __init__(self, token, prefix=None, domain=None):
+    def __init__(self, token, scheme=None, domain=None):
         """
         * Use an unauthenticated client, and make a request to obtain a token.
         * Create an authenticated client using eg. `TokenAuthentication(token="<token>")`
         """
         self.token = token
         self.domain = domain
-        if prefix is not None:
-            self.prefix = prefix
+        if scheme is not None:
+            self.scheme = scheme
 
     def __call__(self, request):
         if not domain_matches(request, self.domain):
             return request
 
-        request.headers['Authorization'] = '%s %s' % (self.prefix, self.token)
+        request.headers['Authorization'] = '%s %s' % (self.scheme, self.token)
         return request
 
 
