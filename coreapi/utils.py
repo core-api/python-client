@@ -314,7 +314,7 @@ def _validate_form_field(value, allow_files=False, allow_list=True):
     elif allow_files and is_file(value):
         return value
 
-    msg = 'Must be a primative type.'
+    msg = 'Must be a primitive type.'
     raise exceptions.ParameterError(msg)
 
 
@@ -332,5 +332,5 @@ def _validate_json_data(value):
             for item_key, item_val in value.items()
         }
 
-    msg = 'Must be a JSON primative.'
+    msg = 'Must be a JSON primitive.'
     raise exceptions.ParameterError(msg)

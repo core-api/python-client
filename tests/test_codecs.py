@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi.codecs import CoreJSONCodec
-from coreapi.codecs.corejson import _document_to_primative, _primative_to_document
+from coreapi.codecs.corejson import _document_to_primitive, _primitive_to_document
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, NoCodecAvailable
 from coreapi.utils import negotiate_decoder, negotiate_encoder
@@ -27,10 +27,10 @@ def doc():
         })
 
 
-# Documents have a mapping to python primatives in JSON style.
+# Documents have a mapping to python primitives in JSON style.
 
-def test_document_to_primative(doc):
-    data = _document_to_primative(doc)
+def test_document_to_primitive(doc):
+    data = _document_to_primitive(doc)
     assert data == {
         '_type': 'document',
         '_meta': {
@@ -46,7 +46,7 @@ def test_document_to_primative(doc):
     }
 
 
-def test_primative_to_document(doc):
+def test_primitive_to_document(doc):
     data = {
         '_type': 'document',
         '_meta': {
@@ -60,27 +60,27 @@ def test_primative_to_document(doc):
         'nested': {'child': {'_type': 'link', 'url': 'http://example.org/123'}},
         '__type': 'needs escaping'
     }
-    assert _primative_to_document(data) == doc
+    assert _primitive_to_document(data) == doc
 
 
-def test_error_to_primative():
+def test_error_to_primitive():
     error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
         '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
-    assert _document_to_primative(error) == data
+    assert _document_to_primitive(error) == data
 
 
-def test_primative_to_error():
+def test_primitive_to_error():
     error = Error(title='Failure', content={'messages': ['failed']})
     data = {
         '_type': 'error',
         '_meta': {'title': 'Failure'},
         'messages': ['failed']
     }
-    assert _primative_to_document(data) == error
+    assert _primitive_to_document(data) == error
 
 
 # Codecs can load a document successfully.
