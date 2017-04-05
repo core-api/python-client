@@ -4,6 +4,7 @@ from coreapi.codecs.corejson import _document_to_primitive, _primitive_to_docume
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, NoCodecAvailable
 from coreapi.utils import negotiate_decoder, negotiate_encoder
+from coreschema import Enum, String
 import pytest
 
 
@@ -21,7 +22,13 @@ def doc():
             'integer': 123,
             'dict': {'key': 'value'},
             'list': [1, 2, 3],
-            'link': Link(url='http://example.org/', fields=[Field(name='example')]),
+            'link': Link(
+                url='http://example.org/',
+                fields=[
+                    Field(name='noschema'),
+                    Field(name='string_example', schema=String()),
+                    Field(name='enum_example', schema=Enum(['a', 'b', 'c'])),
+                ]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
         })
@@ -40,7 +47,26 @@ def test_document_to_primitive(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'fields': [{'name': 'example'}]},
+        'link': {'_type': 'link', 'fields': [
+            {'name': 'noschema'},
+            {
+                'name': 'string_example',
+                'schema': {
+                    '_type': 'string',
+                    'title': '',
+                    'description': '',
+                },
+            },
+            {
+                'name': 'enum_example',
+                'schema': {
+                    '_type': 'enum',
+                    'title': '',
+                    'description': '',
+                    'extra': {'enum': ['a', 'b', 'c']},
+                },
+            },
+        ]},
         'nested': {'child': {'_type': 'link', 'url': '/123'}},
         '__type': 'needs escaping'
     }
@@ -56,7 +82,30 @@ def test_primitive_to_document(doc):
         'integer': 123,
         'dict': {'key': 'value'},
         'list': [1, 2, 3],
-        'link': {'_type': 'link', 'url': 'http://example.org/', 'fields': [{'name': 'example'}]},
+        'link': {
+            '_type': 'link',
+            'url': 'http://example.org/',
+            'fields': [
+                {'name': 'noschema'},
+                {
+                    'name': 'string_example',
+                    'schema': {
+                        '_type': 'string',
+                        'title': '',
+                        'description': '',
+                    },
+                },
+                {
+                    'name': 'enum_example',
+                    'schema': {
+                        '_type': 'enum',
+                        'title': '',
+                        'description': '',
+                        'extra': {'enum': ['a', 'b', 'c']},
+                    },
+                },
+            ],
+        },
         'nested': {'child': {'_type': 'link', 'url': 'http://example.org/123'}},
         '__type': 'needs escaping'
     }

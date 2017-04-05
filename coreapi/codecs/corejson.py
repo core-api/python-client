@@ -33,19 +33,23 @@ TYPE_ID_TO_SCHEMA_CLASS = {
 
 def encode_schema_to_corejson(schema):
     type_id = SCHEMA_CLASS_TO_TYPE_ID.get(schema.__class__, 'anything')
-    return {
+    retval = {
         '_type': type_id,
         'title': schema.title,
         'description': schema.description
     }
+    if isinstance(schema, coreschema.Enum):
+        retval['extra'] = {'enum': schema.enum}
+    return retval
 
 
 def decode_schema_from_corejson(data):
     type_id = _get_string(data, '_type')
     title = _get_string(data, 'title')
     description = _get_string(data, 'description')
+    extra = _get_dict(data, 'extra')
     schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, coreschema.Anything)
-    return schema_cls(title=title, description=description)
+    return schema_cls(title=title, description=description, **extra)
 
 
 # Robust dictionary lookups, that always return an item of the correct
