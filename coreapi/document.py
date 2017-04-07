@@ -50,7 +50,7 @@ Field = namedtuple('Field', ['name', 'required', 'location', 'schema', 'descript
 Field.__new__.__defaults__ = (False, '', None, None, None, None)
 
 
-# The Core API primatives:
+# The Core API primitives:
 
 class Document(itypes.Dict):
     """

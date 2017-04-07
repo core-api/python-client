@@ -128,15 +128,15 @@ def _get_content(item, base_url=None):
     Return a dictionary of content, for documents, objects and errors.
     """
     return {
-        _unescape_key(key): _primative_to_document(value, base_url)
+        _unescape_key(key): _primitive_to_document(value, base_url)
         for key, value in item.items()
         if key not in ('_type', '_meta')
     }
 
 
-def _document_to_primative(node, base_url=None):
+def _document_to_primitive(node, base_url=None):
     """
-    Take a Core API document and return Python primatives
+    Take a Core API document and return Python primitives
     ready to be rendered into the JSON style encoding.
     """
     if isinstance(node, Document):
@@ -156,7 +156,7 @@ def _document_to_primative(node, base_url=None):
 
         # Fill in key-value content.
         ret.update([
-            (_escape_key(key), _document_to_primative(value, base_url=url))
+            (_escape_key(key), _document_to_primitive(value, base_url=url))
             for key, value in node.items()
         ])
         return ret
@@ -170,7 +170,7 @@ def _document_to_primative(node, base_url=None):
 
         # Fill in key-value content.
         ret.update([
-            (_escape_key(key), _document_to_primative(value, base_url=base_url))
+            (_escape_key(key), _document_to_primitive(value, base_url=base_url))
             for key, value in node.items()
         ])
         return ret
@@ -193,7 +193,7 @@ def _document_to_primative(node, base_url=None):
             ret['description'] = node.description
         if node.fields:
             ret['fields'] = [
-                _document_to_primative(field) for field in node.fields
+                _document_to_primitive(field) for field in node.fields
             ]
         return ret
 
@@ -209,19 +209,19 @@ def _document_to_primative(node, base_url=None):
 
     elif isinstance(node, Object):
         return OrderedDict([
-            (_escape_key(key), _document_to_primative(value, base_url=base_url))
+            (_escape_key(key), _document_to_primitive(value, base_url=base_url))
             for key, value in node.items()
         ])
 
     elif isinstance(node, Array):
-        return [_document_to_primative(value) for value in node]
+        return [_document_to_primitive(value) for value in node]
 
     return node
 
 
-def _primative_to_document(data, base_url=None):
+def _primitive_to_document(data, base_url=None):
     """
-    Take Python primatives as returned from parsing JSON content,
+    Take Python primitives as returned from parsing JSON content,
     and return a Core API document.
     """
     if isinstance(data, dict) and data.get('_type') == 'document':
@@ -278,7 +278,7 @@ def _primative_to_document(data, base_url=None):
 
     elif isinstance(data, list):
         # Array
-        content = [_primative_to_document(item, base_url) for item in data]
+        content = [_primitive_to_document(item, base_url) for item in data]
         return Array(content)
 
     # String, Integer, Number, Boolean, null.
@@ -303,7 +303,7 @@ class CoreJSONCodec(BaseCodec):
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
-        doc = _primative_to_document(data, base_url)
+        doc = _primitive_to_document(data, base_url)
 
         if isinstance(doc, Object):
             doc = Document(content=dict(doc))
@@ -331,5 +331,5 @@ class CoreJSONCodec(BaseCodec):
                 'separators': COMPACT_SEPARATORS
             }
 
-        data = _document_to_primative(document)
+        data = _document_to_primitive(document)
         return force_bytes(json.dumps(data, **kwargs))

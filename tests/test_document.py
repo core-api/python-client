@@ -129,7 +129,7 @@ def test_error_does_not_support_property_assignment():
         error.integer = 456
 
 
-# Children in documents are immutable primatives.
+# Children in documents are immutable primitives.
 
 def test_document_dictionaries_coerced_to_objects(doc):
     assert isinstance(doc['dict'], Object)
