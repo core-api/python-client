@@ -44,7 +44,7 @@ def _key_sorting(item):
 
 # The field class, as used by Link objects:
 
-# NOTE: 'type', 'description' and 'examaple' are now deprecated,
+# NOTE: 'type', 'description' and 'example' are now deprecated,
 #       in favor of 'schema'.
 Field = namedtuple('Field', ['name', 'required', 'location', 'schema', 'description', 'type', 'example'])
 Field.__new__.__defaults__ = (False, '', None, None, None, None)

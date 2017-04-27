@@ -50,7 +50,7 @@ def error():
 
 def _dedent(string):
     """
-    Convience function for dedenting multiline strings,
+    Convenience function for dedenting multiline strings,
     for string comparison purposes.
     """
     lines = string.splitlines()
