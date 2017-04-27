@@ -35,10 +35,10 @@ def flake8_main(args):
 
 
 def report_coverage(cov, fail_if_not_100=False):
-    precent_covered = cov.report(
+    percent_covered = cov.report(
         file=NullFile(), **COVERAGE_OPTIONS
     )
-    if precent_covered == 100:
+    if percent_covered == 100:
         print('100% coverage')
         return
     if fail_if_not_100:

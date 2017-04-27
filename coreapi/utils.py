@@ -237,7 +237,7 @@ def negotiate_encoder(encoders, accept=None):
     raise exceptions.NoCodecAvailable(msg)
 
 
-# Validation utilities. Used to ensure that we get consitent validation
+# Validation utilities. Used to ensure that we get consistent validation
 # exceptions when invalid types are passed as a parameter, rather than
 # an exception occuring when the request is made.
 
