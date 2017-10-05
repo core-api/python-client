@@ -32,13 +32,16 @@ TYPE_ID_TO_SCHEMA_CLASS = {
 
 
 def encode_schema_to_corejson(schema):
-    type_id = SCHEMA_CLASS_TO_TYPE_ID.get(schema.__class__, 'anything')
+    if hasattr(schema, 'typename'):
+        type_id = schema.typename
+    else:
+        type_id = SCHEMA_CLASS_TO_TYPE_ID.get(schema.__class__, 'anything')
     retval = {
         '_type': type_id,
         'title': schema.title,
         'description': schema.description
     }
-    if isinstance(schema, coreschema.Enum):
+    if hasattr(schema, 'enum'):
         retval['enum'] = schema.enum
     return retval
 
