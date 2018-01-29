@@ -42,8 +42,6 @@ def _to_repr(node):
             args += ", action=%s" % repr(node.action)
         if node.encoding:
             args += ", encoding=%s" % repr(node.encoding)
-        if node.transform:
-            args += ", transform=%s" % repr(node.transform)
         if node.description:
             args += ", description=%s" % repr(node.description)
         if node.fields:

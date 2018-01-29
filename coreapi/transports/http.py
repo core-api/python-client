@@ -305,32 +305,6 @@ def _decode_result(response, decoders, force_codec=False):
     return result
 
 
-def _handle_inplace_replacements(document, link, link_ancestors):
-    """
-    Given a new document, and the link/ancestors it was created,
-    determine if we should:
-
-    * Make an inline replacement and then return the modified document tree.
-    * Return the new document as-is.
-    """
-    if not link.transform:
-        if link.action.lower() in ('put', 'patch', 'delete'):
-            transform = 'inplace'
-        else:
-            transform = 'new'
-    else:
-        transform = link.transform
-
-    if transform == 'inplace':
-        root = link_ancestors[0].document
-        keys_to_link_parent = link_ancestors[-1].keys
-        if document is None:
-            return root.delete_in(keys_to_link_parent)
-        return root.set_in(keys_to_link_parent, document)
-
-    return document
-
-
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
@@ -366,7 +340,7 @@ class HTTPTransport(BaseTransport):
     def headers(self):
         return self._headers
 
-    def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):
+    def transition(self, link, decoders, params=None, force_codec=False):
         session = self._session
         method = _get_method(link.action)
         encoding = _get_encoding(link.encoding)
@@ -378,9 +352,6 @@ class HTTPTransport(BaseTransport):
         request = _build_http_request(session, url, method, headers, encoding, params)
         response = session.send(request)
         result = _decode_result(response, decoders, force_codec)
-
-        if isinstance(result, Document) and link_ancestors:
-            result = _handle_inplace_replacements(result, link, link_ancestors)
 
         if isinstance(result, Error):
             raise exceptions.ErrorMessage(result)

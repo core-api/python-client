@@ -196,8 +196,6 @@ def _document_to_primitive(node, base_url=None):
             ret['action'] = node.action
         if node.encoding:
             ret['encoding'] = node.encoding
-        if node.transform:
-            ret['transform'] = node.transform
         if node.title:
             ret['title'] = node.title
         if node.description:
@@ -264,7 +262,6 @@ def _primitive_to_document(data, base_url=None):
         url = urlparse.urljoin(base_url, url)
         action = _get_string(data, 'action')
         encoding = _get_string(data, 'encoding')
-        transform = _get_string(data, 'transform')
         title = _get_string(data, 'title')
         description = _get_string(data, 'description')
         fields = _get_list(data, 'fields')
@@ -278,7 +275,7 @@ def _primitive_to_document(data, base_url=None):
             for item in fields if isinstance(item, dict)
         ]
         return Link(
-            url=url, action=action, encoding=encoding, transform=transform,
+            url=url, action=action, encoding=encoding,
             title=title, description=description, fields=fields
         )
 

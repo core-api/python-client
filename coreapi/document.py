@@ -187,15 +187,13 @@ class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, encoding=None, transform=None, title=None, description=None, fields=None):
+    def __init__(self, url=None, action=None, encoding=None, title=None, description=None, fields=None):
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
         if (action is not None) and (not isinstance(action, string_types)):
             raise TypeError("Argument 'action' must be a string.")
         if (encoding is not None) and (not isinstance(encoding, string_types)):
             raise TypeError("Argument 'encoding' must be a string.")
-        if (transform is not None) and (not isinstance(transform, string_types)):
-            raise TypeError("Argument 'transform' must be a string.")
         if (title is not None) and (not isinstance(title, string_types)):
             raise TypeError("Argument 'title' must be a string.")
         if (description is not None) and (not isinstance(description, string_types)):
@@ -211,7 +209,6 @@ class Link(itypes.Object):
         self._url = '' if (url is None) else url
         self._action = '' if (action is None) else action
         self._encoding = '' if (encoding is None) else encoding
-        self._transform = '' if (transform is None) else transform
         self._title = '' if (title is None) else title
         self._description = '' if (description is None) else description
         self._fields = () if (fields is None) else tuple([
@@ -232,10 +229,6 @@ class Link(itypes.Object):
         return self._encoding
 
     @property
-    def transform(self):
-        return self._transform
-
-    @property
     def title(self):
         return self._title
 
@@ -253,7 +246,6 @@ class Link(itypes.Object):
             self.url == other.url and
             self.action == other.action and
             self.encoding == other.encoding and
-            self.transform == other.transform and
             self.description == other.description and
             sorted(self.fields, key=lambda f: f.name) == sorted(other.fields, key=lambda f: f.name)
         )

@@ -1,19 +1,15 @@
 from coreapi import codecs, exceptions, transports
 from coreapi.compat import string_types
-from coreapi.document import Document, Link
+from coreapi.document import Link
 from coreapi.utils import determine_transport, get_installed_codecs
-import collections
 import itypes
-
-
-LinkAncestor = collections.namedtuple('LinkAncestor', ['document', 'keys'])
 
 
 def _lookup_link(document, keys):
     """
     Validates that keys looking up a link are correct.
 
-    Returns a two-tuple of (link, link_ancestors).
+    Returns the Link.
     """
     if not isinstance(keys, (list, tuple)):
         msg = "'keys' must be a list of strings or ints."
@@ -28,7 +24,6 @@ def _lookup_link(document, keys):
     # 'node' is the link we're calling the action for.
     # 'document_keys' is the list of keys to the link's parent document.
     node = document
-    link_ancestors = [LinkAncestor(document=document, keys=[])]
     for idx, key in enumerate(keys):
         try:
             node = node[key]
@@ -36,9 +31,6 @@ def _lookup_link(document, keys):
             index_string = ''.join('[%s]' % repr(key).strip('u') for key in keys)
             msg = 'Index %s did not reference a link. Key %s was not found.'
             raise exceptions.LinkLookupError(msg % (index_string, repr(key).strip('u')))
-        if isinstance(node, Document):
-            ancestor = LinkAncestor(document=node, keys=keys[:idx + 1])
-            link_ancestors.append(ancestor)
 
     # Ensure that we've correctly indexed into a link.
     if not isinstance(node, Link):
@@ -48,7 +40,7 @@ def _lookup_link(document, keys):
             msg % (index_string, type(node).__name__)
         )
 
-    return (node, link_ancestors)
+    return node
 
 
 def _validate_parameters(link, parameters):
@@ -140,8 +132,8 @@ class Client(itypes.Object):
         return self.get(document.url, format=format, force_codec=force_codec)
 
     def action(self, document, keys, params=None, validate=True, overrides=None,
-               action=None, encoding=None, transform=None):
-        if (action is not None) or (encoding is not None) or (transform is not None):
+               action=None, encoding=None):
+        if (action is not None) or (encoding is not None):
             # Fallback for v1.x overrides.
             # Will be removed at some point, most likely in a 2.1 release.
             if overrides is None:
@@ -150,8 +142,6 @@ class Client(itypes.Object):
                 overrides['action'] = action
             if encoding is not None:
                 overrides['encoding'] = encoding
-            if transform is not None:
-                overrides['transform'] = transform
 
         if isinstance(keys, string_types):
             keys = [keys]
@@ -160,7 +150,7 @@ class Client(itypes.Object):
             params = {}
 
         # Validate the keys and link parameters.
-        link, link_ancestors = _lookup_link(document, keys)
+        link = _lookup_link(document, keys)
         if validate:
             _validate_parameters(link, params)
 
@@ -169,10 +159,9 @@ class Client(itypes.Object):
             url = overrides.get('url', link.url)
             action = overrides.get('action', link.action)
             encoding = overrides.get('encoding', link.encoding)
-            transform = overrides.get('transform', link.transform)
             fields = overrides.get('fields', link.fields)
-            link = Link(url, action=action, encoding=encoding, transform=transform, fields=fields)
+            link = Link(url, action=action, encoding=encoding, fields=fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)
-        return transport.transition(link, self.decoders, params=params, link_ancestors=link_ancestors)
+        return transport.transition(link, self.decoders, params=params)
