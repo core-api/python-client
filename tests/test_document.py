@@ -1,6 +1,6 @@
 # coding: utf-8
 from coreapi import Client
-from coreapi import Array, Document, Object, Link, Error, Field
+from coreapi import Document, Object, Link, Error, Field
 from coreapi.exceptions import LinkLookupError
 import pytest
 
@@ -13,7 +13,6 @@ def doc():
         content={
             'integer': 123,
             'dict': {'key': 'value'},
-            'list': [1, 2, 3],
             'link': Link(
                 url='/',
                 action='post',
@@ -26,11 +25,6 @@ def doc():
 @pytest.fixture
 def obj():
     return Object({'key': 'value', 'nested': {'abc': 123}})
-
-
-@pytest.fixture
-def array():
-    return Array([{'a': 1}, {'b': 2}, {'c': 3}])
 
 
 @pytest.fixture
@@ -95,23 +89,6 @@ def test_object_does_not_support_key_deletion(obj):
         del obj['key']
 
 
-# Arrays are immutable.
-
-def test_array_does_not_support_item_assignment(array):
-    with pytest.raises(TypeError):
-        array[1] = 456
-
-
-def test_array_does_not_support_property_assignment(array):
-    with pytest.raises(TypeError):
-        array.integer = 456
-
-
-def test_array_does_not_support_item_deletion(array):
-    with pytest.raises(TypeError):
-        del array[1]
-
-
 # Links are immutable.
 
 def test_link_does_not_support_property_assignment():
@@ -132,10 +109,6 @@ def test_error_does_not_support_property_assignment():
 
 def test_document_dictionaries_coerced_to_objects(doc):
     assert isinstance(doc['dict'], Object)
-
-
-def test_document_lists_coerced_to_arrays(doc):
-    assert isinstance(doc['list'], Array)
 
 
 # The `delete` and `set` methods return new instances.
@@ -172,48 +145,6 @@ def test_object_set(obj):
         assert obj[key] is new[key]
 
 
-def test_array_delete(array):
-    new = array.delete(1)
-    assert array is not new
-    assert len(new) == len(array) - 1
-    assert new[0] is array[0]
-    assert new[1] is array[2]
-
-
-def test_array_set(array):
-    new = array.set(1, 456)
-    assert array is not new
-    assert len(new) == len(array)
-    assert new[0] is array[0]
-    assert new[1] == 456
-    assert new[2] is array[2]
-
-
-# The `delete_in` and `set_in` functions return new instances.
-
-def test_delete_in():
-    nested = Object({'key': [{'abc': 123}, {'def': 456}], 'other': 0})
-
-    assert nested.delete_in(['key', 0]) == {'key': [{'def': 456}], 'other': 0}
-    assert nested.delete_in(['key']) == {'other': 0}
-    assert nested.delete_in([]) is None
-
-
-def test_set_in():
-    nested = Object({'key': [{'abc': 123}, {'def': 456}], 'other': 0})
-    insert = Object({'xyz': 789})
-
-    assert (
-        nested.set_in(['key', 0], insert) ==
-        {'key': [{'xyz': 789}, {'def': 456}], 'other': 0}
-    )
-    assert (
-        nested.set_in(['key'], insert) ==
-        {'key': {'xyz': 789}, 'other': 0}
-    )
-    assert nested.set_in([], insert) == {'xyz': 789}
-
-
 # Container types have a uniquely identifying representation.
 
 def test_document_repr(doc):
@@ -221,7 +152,6 @@ def test_document_repr(doc):
         "Document(url='http://example.org', title='Example', content={"
         "'dict': {'key': 'value'}, "
         "'integer': 123, "
-        "'list': [1, 2, 3], "
         "'nested': {'child': Link(url='/123')}, "
         "'link': Link(url='/', action='post', "
         "fields=['optional', Field('required', required=True, location='path')])"
@@ -233,11 +163,6 @@ def test_document_repr(doc):
 def test_object_repr(obj):
     assert repr(obj) == "Object({'key': 'value', 'nested': {'abc': 123}})"
     assert eval(repr(obj)) == obj
-
-
-def test_array_repr(array):
-    assert repr(array) == "Array([{'a': 1}, {'b': 2}, {'c': 3}])"
-    assert eval(repr(array)) == array
 
 
 def test_link_repr(link):
@@ -259,11 +184,6 @@ def test_document_str(doc):
                 key: "value"
             }
             integer: 123
-            list: [
-                1,
-                2,
-                3
-            ]
             nested: {
                 child()
             }
@@ -291,22 +211,6 @@ def test_object_str(obj):
     """)
 
 
-def test_array_str(array):
-    assert str(array) == _dedent("""
-        [
-            {
-                a: 1
-            },
-            {
-                b: 2
-            },
-            {
-                c: 3
-            }
-        ]
-    """)
-
-
 def test_link_str(link):
     assert str(link) == "link(required, [optional])"
 
@@ -314,9 +218,7 @@ def test_link_str(link):
 def test_error_str(error):
     assert str(error) == _dedent("""
         <Error>
-            messages: [
-                "failed"
-            ]
+            messages: ["failed"]
     """)
 
 
@@ -340,7 +242,6 @@ def test_document_equality(doc):
     assert doc == {
         'integer': 123,
         'dict': {'key': 'value'},
-        'list': [1, 2, 3],
         'link': Link(
             url='/',
             action='post',
@@ -354,14 +255,10 @@ def test_object_equality(obj):
     assert obj == {'key': 'value', 'nested': {'abc': 123}}
 
 
-def test_array_equality(array):
-    assert array == [{'a': 1}, {'b': 2}, {'c': 3}]
-
-
 # Container types support len.
 
 def test_document_len(doc):
-    assert len(doc) == 5
+    assert len(doc) == 4
 
 
 def test_object_len(obj):

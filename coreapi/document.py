@@ -8,8 +8,6 @@ import itypes
 def _to_immutable(value):
     if isinstance(value, dict):
         return Object(value)
-    elif isinstance(value, list):
-        return Array(value)
     return value
 
 
@@ -169,20 +167,6 @@ class Object(itypes.Dict):
         ])
 
 
-class Array(itypes.List):
-    """
-    An immutable list type container.
-    """
-    def __init__(self, *args):
-        self._data = [_to_immutable(value) for value in list(*args)]
-
-    def __repr__(self):
-        return _repr(self)
-
-    def __str__(self):
-        return _str(self)
-
-
 class Link(itypes.Object):
     """
     Links represent the actions that a client may perform.
@@ -295,8 +279,10 @@ class Error(itypes.Dict):
     def get_messages(self):
         messages = []
         for value in self.values():
-            if isinstance(value, Array):
+            if isinstance(value, list):
                 messages += [
                     item for item in value if isinstance(item, string_types)
                 ]
+            elif isinstance(value, string_types):
+                messages += [value]
         return messages

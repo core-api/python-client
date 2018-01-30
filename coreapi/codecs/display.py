@@ -4,7 +4,7 @@
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import console_style, string_types
-from coreapi.document import Document, Link, Array, Object, Error
+from coreapi.document import Document, Link, Object, Error
 import json
 
 
@@ -75,17 +75,6 @@ def _to_plaintext(node, indent=0, base_url=None, colorize=False, extra_offset=No
         head = colorize_error('<Error: %s>' % node.title.strip() if node.title else '<Error>')
 
         return head if (not body) else head + '\n' + body
-
-    elif isinstance(node, Array):
-        head_indent = '    ' * indent
-        body_indent = '    ' * (indent + 1)
-
-        body = ',\n'.join([
-            body_indent + _to_plaintext(value, indent + 1, base_url=base_url, colorize=colorize)
-            for value in node
-        ])
-
-        return '[]' if (not body) else '[\n' + body + '\n' + head_indent + ']'
 
     elif isinstance(node, Link):
         return (

@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi import exceptions, utils
 from coreapi.compat import cookiejar, urlparse
-from coreapi.document import Document, Object, Link, Array, Error
+from coreapi.document import Document, Object, Error
 from coreapi.transports.base import BaseTransport
 from coreapi.utils import guess_filename, is_file, File
 import collections
@@ -242,13 +242,6 @@ def _coerce_to_error_content(node):
             (key, _coerce_to_error_content(value))
             for key, value in node.data.items()
         ])
-    elif isinstance(node, Array):
-        # Strip Links from Arrays.
-        return [
-            _coerce_to_error_content(item)
-            for item in node
-            if not isinstance(item, Link)
-        ]
     return node
 
 

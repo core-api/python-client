@@ -3,7 +3,7 @@
 # It may move into a utility function in the future.
 from __future__ import unicode_literals
 from coreapi.codecs.base import BaseCodec
-from coreapi.document import Document, Link, Array, Object, Error, Field
+from coreapi.document import Document, Link, Object, Error, Field
 
 
 def _to_repr(node):
@@ -29,11 +29,6 @@ def _to_repr(node):
         return '{%s}' % ', '.join([
             '%s: %s' % (repr(key), _to_repr(value))
             for key, value in node.items()
-        ])
-
-    elif isinstance(node, Array):
-        return '[%s]' % ', '.join([
-            _to_repr(value) for value in node
         ])
 
     elif isinstance(node, Link):
@@ -71,10 +66,7 @@ class PythonCodec(BaseCodec):
     media_type = 'text/python'
 
     def encode(self, document, **options):
-        # Object and Array only have the class name wrapper if they
-        # are the outermost element.
+        # Object only has the class name wrapper if it is the outermost element.
         if isinstance(document, Object):
             return 'Object(%s)' % _to_repr(document)
-        elif isinstance(document, Array):
-            return 'Array(%s)' % _to_repr(document)
         return _to_repr(document)

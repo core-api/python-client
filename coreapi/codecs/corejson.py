@@ -3,7 +3,7 @@ from collections import OrderedDict
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import force_bytes, string_types, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
-from coreapi.document import Document, Link, Array, Object, Error, Field
+from coreapi.document import Document, Link, Object, Error, Field
 from coreapi.exceptions import ParseError
 import coreschema
 import json
@@ -222,9 +222,6 @@ def _document_to_primitive(node, base_url=None):
             for key, value in node.items()
         ])
 
-    elif isinstance(node, Array):
-        return [_document_to_primitive(value) for value in node]
-
     return node
 
 
@@ -283,11 +280,6 @@ def _primitive_to_document(data, base_url=None):
         # Map
         content = _get_content(data, base_url=base_url)
         return Object(content)
-
-    elif isinstance(data, list):
-        # Array
-        content = [_primitive_to_document(item, base_url) for item in data]
-        return Array(content)
 
     # String, Integer, Number, Boolean, null.
     return data
