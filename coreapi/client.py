@@ -131,18 +131,7 @@ class Client(itypes.Object):
         # Fallback for v1.x. To be removed in favour of explict `get` style.
         return self.get(document.url, format=format, force_codec=force_codec)
 
-    def action(self, document, keys, params=None, validate=True, overrides=None,
-               action=None, encoding=None):
-        if (action is not None) or (encoding is not None):
-            # Fallback for v1.x overrides.
-            # Will be removed at some point, most likely in a 2.1 release.
-            if overrides is None:
-                overrides = {}
-            if action is not None:
-                overrides['action'] = action
-            if encoding is not None:
-                overrides['encoding'] = encoding
-
+    def action(self, document, keys, params=None, validate=True, overrides=None):
         if isinstance(keys, string_types):
             keys = [keys]
 
