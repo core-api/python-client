@@ -11,7 +11,6 @@ import requests
 import itypes
 import mimetypes
 import uritemplate
-import warnings
 
 
 Params = collections.namedtuple('Params', ['path', 'query', 'data', 'files'])
