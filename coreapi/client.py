@@ -105,7 +105,7 @@ class Client(itypes.Object):
         if decoders is None:
             decoders = get_default_decoders()
         if transports is None:
-            transports = get_default_transports(auth=auth)
+            transports = get_default_transports(auth=auth, session=session)
         self._decoders = itypes.List(decoders)
         self._transports = itypes.List(transports)
 
