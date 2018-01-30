@@ -308,7 +308,7 @@ def _decode_result(response, decoders, force_codec=False):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, headers=None, auth=None, session=None, request_callback=None, response_callback=None):
+    def __init__(self, headers=None, auth=None, session=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         if session is None:
@@ -317,15 +317,6 @@ class HTTPTransport(BaseTransport):
             session.auth = auth
         if not getattr(session.auth, 'allow_cookies', False):
             session.cookies.set_policy(BlockAll())
-
-        if request_callback is not None or response_callback is not None:
-            warnings.warn(
-                "The 'request_callback' and 'response_callback' arguments are now deprecated. "
-                "Use a custom 'session' instance instead.",
-                DeprecationWarning
-            )
-            session.mount('https://', CallbackAdapter(request_callback, response_callback))
-            session.mount('http://', CallbackAdapter(request_callback, response_callback))
 
         self._headers = itypes.Dict(headers or {})
         self._session = session
