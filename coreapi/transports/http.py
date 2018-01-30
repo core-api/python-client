@@ -350,7 +350,8 @@ class HTTPTransport(BaseTransport):
         headers.update(self.headers)
 
         request = _build_http_request(session, url, method, headers, encoding, params)
-        response = session.send(request)
+        settings = session.merge_environment_settings(request.url, None, None, None, None)
+        response = session.send(request, **settings)
         result = _decode_result(response, decoders, force_codec)
 
         if isinstance(result, Error):
