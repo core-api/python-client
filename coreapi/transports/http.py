@@ -308,7 +308,7 @@ def _decode_result(response, decoders, force_codec=False):
 class HTTPTransport(BaseTransport):
     schemes = ['http', 'https']
 
-    def __init__(self, credentials=None, headers=None, auth=None, session=None, request_callback=None, response_callback=None):
+    def __init__(self, headers=None, auth=None, session=None, request_callback=None, response_callback=None):
         if headers:
             headers = {key.lower(): value for key, value in headers.items()}
         if session is None:
@@ -318,12 +318,6 @@ class HTTPTransport(BaseTransport):
         if not getattr(session.auth, 'allow_cookies', False):
             session.cookies.set_policy(BlockAll())
 
-        if credentials is not None:
-            warnings.warn(
-                "The 'credentials' argument is now deprecated in favor of 'auth'.",
-                DeprecationWarning
-            )
-            auth = DomainCredentials(credentials)
         if request_callback is not None or response_callback is not None:
             warnings.warn(
                 "The 'request_callback' and 'response_callback' arguments are now deprecated. "
