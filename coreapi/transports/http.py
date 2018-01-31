@@ -62,23 +62,6 @@ class DomainCredentials(requests.auth.AuthBase):
         return request
 
 
-class CallbackAdapter(requests.adapters.HTTPAdapter):
-    """
-    Custom requests HTTP adapter, to support deprecated callback arguments.
-    """
-    def __init__(self, request_callback=None, response_callback=None):
-        self.request_callback = request_callback
-        self.response_callback = response_callback
-
-    def send(self, request, **kwargs):
-        if self.request_callback is not None:
-            self.request_callback(request)
-        response = super(CallbackAdapter, self).send(request, **kwargs)
-        if self.response_callback is not None:
-            self.response_callback(response)
-        return response
-
-
 def _get_method(action):
     if not action:
         return 'GET'
