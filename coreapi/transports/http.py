@@ -2,7 +2,7 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
 from coreapi import exceptions, utils
-from coreapi.compat import cookiejar, urlparse
+from coreapi.compat import cookiejar
 from coreapi.document import Document, Object, Error
 from coreapi.transports.base import BaseTransport
 from coreapi.utils import guess_filename, is_file, File
@@ -38,28 +38,6 @@ class BlockAll(cookiejar.CookiePolicy):
     return_ok = set_ok = domain_return_ok = path_return_ok = lambda self, *args, **kwargs: False
     netscape = True
     rfc2965 = hide_cookie2 = False
-
-
-class DomainCredentials(requests.auth.AuthBase):
-    """
-    Custom auth class to support deprecated 'credentials' argument.
-    """
-    allow_cookies = False
-    credentials = None
-
-    def __init__(self, credentials=None):
-        self.credentials = credentials
-
-    def __call__(self, request):
-        if not self.credentials:
-            return request
-
-        # Include any authorization credentials relevant to this domain.
-        url_components = urlparse.urlparse(request.url)
-        host = url_components.hostname
-        if host in self.credentials:
-            request.headers['Authorization'] = self.credentials[host]
-        return request
 
 
 def _get_method(action):
