@@ -160,7 +160,7 @@ def _get_upload_headers(file_obj):
     }
 
 
-def _get_request_options(headers=None, encoding=None, params=empty_params):
+def _get_request_options(headers, encoding, params):
     """
     Returns a dictionary of keyword parameters to include when making
     the outgoing request.
