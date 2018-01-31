@@ -160,35 +160,35 @@ def _get_upload_headers(file_obj):
     }
 
 
-def _build_http_request(session, url, method, headers=None, encoding=None, params=empty_params):
+def _get_request_options(headers=None, encoding=None, params=empty_params):
     """
-    Make an HTTP request and return an HTTP response.
+    Returns a dictionary of keyword parameters to include when making
+    the outgoing request.
     """
-    opts = {
+    options = {
         "headers": headers or {}
     }
 
     if params.query:
-        opts['params'] = params.query
+        options['params'] = params.query
 
     if params.data or params.files:
         if encoding == 'application/json':
-            opts['json'] = params.data
+            options['json'] = params.data
         elif encoding == 'multipart/form-data':
-            opts['data'] = params.data
-            opts['files'] = ForceMultiPartDict(params.files)
+            options['data'] = params.data
+            options['files'] = ForceMultiPartDict(params.files)
         elif encoding == 'application/x-www-form-urlencoded':
-            opts['data'] = params.data
+            options['data'] = params.data
         elif encoding == 'application/octet-stream':
             if isinstance(params.data, File):
-                opts['data'] = params.data.content
+                options['data'] = params.data.content
             else:
-                opts['data'] = params.data
+                options['data'] = params.data
             upload_headers = _get_upload_headers(params.data)
-            opts['headers'].update(upload_headers)
+            headers.update(upload_headers)
 
-    request = requests.Request(method, url, **opts)
-    return session.prepare_request(request)
+    return options
 
 
 def _coerce_to_error_content(node):
@@ -287,9 +287,8 @@ class HTTPTransport(BaseTransport):
         headers = _get_headers(url, decoders)
         headers.update(self.headers)
 
-        request = _build_http_request(session, url, method, headers, encoding, params)
-        settings = session.merge_environment_settings(request.url, None, None, None, None)
-        response = session.send(request, **settings)
+        options = _get_request_options(headers, encoding, params)
+        response = session.request(method, url, **options)
         result = _decode_result(response, decoders, force_codec)
 
         if isinstance(result, Error):
