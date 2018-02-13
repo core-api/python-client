@@ -111,40 +111,6 @@ def test_document_dictionaries_coerced_to_objects(doc):
     assert isinstance(doc['dict'], Object)
 
 
-# The `delete` and `set` methods return new instances.
-
-def test_document_delete(doc):
-    new = doc.delete('integer')
-    assert doc is not new
-    assert set(new.keys()) == set(doc.keys()) - set(['integer'])
-    for key in new.keys():
-        assert doc[key] is new[key]
-
-
-def test_document_set(doc):
-    new = doc.set('integer', 456)
-    assert doc is not new
-    assert set(new.keys()) == set(doc.keys())
-    for key in set(new.keys()) - set(['integer']):
-        assert doc[key] is new[key]
-
-
-def test_object_delete(obj):
-    new = obj.delete('key')
-    assert obj is not new
-    assert set(new.keys()) == set(obj.keys()) - set(['key'])
-    for key in new.keys():
-        assert obj[key] is new[key]
-
-
-def test_object_set(obj):
-    new = obj.set('key', 456)
-    assert obj is not new
-    assert set(new.keys()) == set(obj.keys())
-    for key in set(new.keys()) - set(['key']):
-        assert obj[key] is new[key]
-
-
 # Container types have a uniquely identifying representation.
 
 def test_document_repr(doc):

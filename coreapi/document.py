@@ -79,9 +79,6 @@ class Document(itypes.Dict):
         self._media_type = '' if (media_type is None) else media_type
         self._data = {key: _to_immutable(value) for key, value in content.items()}
 
-    def clone(self, data):
-        return self.__class__(self.url, self.title, self.description, self.media_type, data)
-
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
