@@ -2,6 +2,7 @@
 itypes
 requests
 uritemplate
+pyyaml
 
 # Testing requirements
 coverage
