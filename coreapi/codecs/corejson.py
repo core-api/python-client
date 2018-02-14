@@ -1,5 +1,6 @@
 from __future__ import unicode_literals
 from collections import OrderedDict
+from coreapi import typesys
 from coreapi.codecs.base import BaseCodec
 from coreapi.compat import force_bytes, string_types, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
@@ -13,15 +14,14 @@ import json
 # Just a naive first-pass at this point.
 
 SCHEMA_CLASS_TO_TYPE_ID = {
-    coreschema.Object: 'object',
-    coreschema.Array: 'array',
-    coreschema.Number: 'number',
-    coreschema.Integer: 'integer',
-    coreschema.String: 'string',
-    coreschema.Boolean: 'boolean',
-    coreschema.Null: 'null',
-    coreschema.Enum: 'enum',
-    coreschema.Anything: 'anything'
+    typesys.Object: 'object',
+    typesys.Array: 'array',
+    typesys.Number: 'number',
+    typesys.Integer: 'integer',
+    typesys.String: 'string',
+    typesys.Boolean: 'boolean',
+    typesys.Enum: 'enum',
+    typesys.Any: 'anything'
 }
 
 TYPE_ID_TO_SCHEMA_CLASS = {
@@ -32,14 +32,16 @@ TYPE_ID_TO_SCHEMA_CLASS = {
 
 
 def encode_schema_to_corejson(schema):
-    if hasattr(schema, 'typename'):
-        type_id = schema.typename
+    for cls, type_id in SCHEMA_CLASS_TO_TYPE_ID.items():
+        if issubclass(schema, cls):
+            break
     else:
-        type_id = SCHEMA_CLASS_TO_TYPE_ID.get(schema.__class__, 'anything')
+        type_id = 'anything'
+
     retval = {
         '_type': type_id,
-        'title': schema.title,
-        'description': schema.description
+        'title': schema.title or '',
+        'description': schema.description or ''
     }
     if hasattr(schema, 'enum'):
         retval['enum'] = schema.enum
@@ -51,12 +53,12 @@ def decode_schema_from_corejson(data):
     title = _get_string(data, 'title')
     description = _get_string(data, 'description')
 
-    kwargs = {}
+    kwargs = {'title': title, 'description': description}
     if type_id == 'enum':
         kwargs['enum'] = _get_list(data, 'enum')
 
     schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, coreschema.Anything)
-    return schema_cls(title=title, description=description, **kwargs)
+    return type(schema_cls.__name__, (schema_cls,), kwargs)
 
 
 # Robust dictionary lookups, that always return an item of the correct

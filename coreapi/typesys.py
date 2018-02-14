@@ -29,6 +29,8 @@ class String(str):
         'pattern': 'Must match the pattern /{pattern}/.',
         'format': 'Must be a valid {format}.',
     }
+    title = None  # type: str
+    description = None  # type: str
     max_length = None  # type: int
     min_length = None  # type: int
     pattern = None  # type: str
@@ -77,6 +79,8 @@ class NumericType(object):
         'exclusive_maximum': 'Must be less than {maximum}.',
         'multiple_of': 'Must be a multiple of {multiple_of}.',
     }
+    title = None  # type: str
+    description = None  # type: str
     minimum = None  # type: Union[float, int]
     maximum = None  # type: Union[float, int]
     exclusive_minimum = False
@@ -134,6 +138,8 @@ class Boolean(object):
     errors = {
         'type': 'Must be a valid boolean.'
     }
+    title = None  # type: str
+    description = None  # type: str
 
     def __new__(cls, value):
         if isinstance(value, str):
@@ -159,6 +165,8 @@ class Enum(str):
         'enum': 'Must be a valid choice.',
         'exact': 'Must be {exact}.'
     }
+    title = None  # type: str
+    description = None  # type: str
     enum = []  # type: List[str]
 
     def __new__(cls, value):
@@ -180,6 +188,8 @@ class Object(dict):
         'invalid_key': 'Object keys must be strings.',
         'required': 'This field is required.',
     }
+    title = None  # type: str
+    description = None  # type: str
     properties = {}  # type: Dict[str, type]
     pattern_properties = None  # type: Dict[str, type]
     additional_properties = None  # type: type
@@ -264,6 +274,8 @@ class Array(list):
         'max_items': 'Too many items.',
         'unique_items': 'This item is not unique.',
     }
+    title = None  # type: str
+    description = None  # type: str
     items = None  # type: Union[type, List[type]]
     additional_items = False  # type: bool
     min_items = None  # type: Optional[int]
@@ -330,6 +342,9 @@ class Array(list):
 
 
 class Any(object):
+    title = None  # type: str
+    description = None  # type: str
+
     def __new__(self, value):
         return value
 

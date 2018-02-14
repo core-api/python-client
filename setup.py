@@ -63,7 +63,6 @@ setup(
     packages=get_packages('coreapi'),
     package_data=get_package_data('coreapi'),
     install_requires=[
-        'coreschema',
         'requests',
         'itypes',
         'uritemplate'

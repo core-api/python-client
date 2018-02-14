@@ -1,10 +1,10 @@
 # coding: utf-8
+from coreapi import typesys
 from coreapi.codecs import CoreJSONCodec
 from coreapi.codecs.corejson import _document_to_primitive, _primitive_to_document
 from coreapi.document import Document, Link, Error, Field
 from coreapi.exceptions import ParseError, NoCodecAvailable
 from coreapi.utils import negotiate_decoder, negotiate_encoder
-from coreschema import Enum, String
 import pytest
 
 
@@ -26,8 +26,8 @@ def doc():
                 url='http://example.org/',
                 fields=[
                     Field(name='noschema'),
-                    Field(name='string_example', schema=String()),
-                    Field(name='enum_example', schema=Enum(['a', 'b', 'c'])),
+                    Field(name='string_example', schema=typesys.string()),
+                    Field(name='enum_example', schema=typesys.enum(enum=['a', 'b', 'c'])),
                 ]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
