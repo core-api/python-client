@@ -11,8 +11,7 @@ def openapi_codec():
 
 @pytest.fixture
 def petstore_schema():
-    return '''
-openapi: "3.0.0"
+    return '''openapi: "3.0.0"
 info:
   version: 1.0.0
   title: Swagger Petstore
@@ -120,11 +119,54 @@ components:
           type: integer
           format: int32
         message:
-          type: string
+          type: string'''
+
+
+@pytest.fixture
+def minimal_petstore_schema():
+    return '''openapi: 3.0.0
+info:
+  title: Swagger Petstore
+  description: ''
+  version: ''
+servers:
+  - url: http://petstore.swagger.io/v1
+paths:
+  /pets:
+    get:
+      tags:
+        - pets
+      summary: List all pets
+      operationId: listPets
+      parameters:
+        - name: limit
+          in: query
+          description: How many items to return at one time (max 100)
+          schema:
+            type: integer
+            format: int32
+    post:
+      tags:
+        - pets
+      summary: Create a pet
+      operationId: createPets
+  /pets/{petId}:
+    get:
+      tags:
+        - pets
+      summary: Info for a specific pet
+      operationId: showPetById
+      parameters:
+        - name: petId
+          in: path
+          description: The id of the pet to retrieve
+          required: true
+          schema:
+            type: string
 '''
 
 
-def test_openapi(openapi_codec, petstore_schema):
+def test_decode_openapi(openapi_codec, petstore_schema):
     doc = openapi_codec.decode(petstore_schema)
     expected = Document(
         title='Swagger Petstore',
@@ -168,3 +210,49 @@ def test_openapi(openapi_codec, petstore_schema):
         }
     )
     assert doc == expected
+
+
+def test_encode_openapi(openapi_codec, minimal_petstore_schema):
+    doc = Document(
+        title='Swagger Petstore',
+        url='http://petstore.swagger.io/v1',
+        content={
+            'pets': {
+                'listPets': Link(
+                    action='get',
+                    url='http://petstore.swagger.io/pets',
+                    title='List all pets',
+                    fields=[
+                        Field(
+                            name='limit',
+                            location='query',
+                            description='How many items to return at one time (max 100)',
+                            required=False,
+                            schema=typesys.integer(format='int32')
+                        )
+                    ]
+                ),
+                'createPets': Link(
+                    action='post',
+                    url='http://petstore.swagger.io/pets',
+                    title='Create a pet'
+                ),
+                'showPetById': Link(
+                    action='get',
+                    url='http://petstore.swagger.io/pets/{petId}',
+                    title='Info for a specific pet',
+                    fields=[
+                        Field(
+                            name='petId',
+                            location='path',
+                            description='The id of the pet to retrieve',
+                            required=True,
+                            schema=typesys.string()
+                        )
+                    ]
+                )
+            }
+        }
+    )
+    schema = openapi_codec.encode(doc)
+    assert schema == minimal_petstore_schema

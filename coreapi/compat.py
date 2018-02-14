@@ -1,6 +1,8 @@
 # coding: utf-8
 
 import base64
+import collections
+import sys
 
 
 __all__ = [
@@ -49,6 +51,12 @@ def force_text(string):
     if not isinstance(string, string_types):
         return string.decode('utf-8')
     return string
+
+
+if sys.version_info < (3, 5):
+    dict_type = collections.OrderedDict
+else:
+    dict_type = dict
 
 
 try:

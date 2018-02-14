@@ -52,6 +52,8 @@ class JSONSchemaCodec(BaseCodec):
                 attrs['exclusiveMaximum'] = struct['exclusiveMaximum']
             if 'multipleOf' in struct:
                 attrs['multipleOf'] = struct['multipleOf']
+            if 'format' in struct:
+                attrs['format'] = struct['format']
             if struct['type'] == 'integer':
                 return typesys.integer(**attrs)
             return typesys.number(**attrs)
@@ -128,6 +130,8 @@ class JSONSchemaCodec(BaseCodec):
                 value['exclusiveMaximum'] = cls.exclusive_maximum
             if cls.multiple_of is not None:
                 value['multipleOf'] = cls.multiple_of
+            if cls.format is not None:
+                value['format'] = cls.format
             return value
 
         if issubclass(cls, typesys.Boolean):

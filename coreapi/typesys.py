@@ -1,3 +1,4 @@
+from coreapi.compat import dict_type
 import re
 # from typing import Any, Dict, List, Optional, Tuple, Union, overload  # noqa
 
@@ -86,6 +87,7 @@ class NumericType(object):
     exclusive_minimum = False
     exclusive_maximum = False
     multiple_of = None  # type: Union[float, int]
+    format = None
 
     def __new__(cls, value):
         try:
@@ -182,7 +184,7 @@ class Enum(str):
         raise ValidationError(message)  # from None
 
 
-class Object(dict):
+class Object(dict_type):
     errors = {
         'type': 'Must be an object.',
         'invalid_key': 'Object keys must be strings.',
@@ -196,6 +198,8 @@ class Object(dict):
     required = []
 
     def __init__(self, value):
+        super(Object, self).__init__()
+
         try:
             value = dict(value)
         except TypeError:
