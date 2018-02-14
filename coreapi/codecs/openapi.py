@@ -193,7 +193,7 @@ class OpenAPICodec(BaseCodec):
         return yaml.dump(openapi, Dumper=CustomSafeDumper, default_flow_style=False)
 
     def get_paths(self, document):
-        paths = {}
+        paths = dict_type()
 
         for operation_id, link in document.links.items():
             url = urlparse.urlparse(link.url)
