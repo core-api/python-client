@@ -133,7 +133,7 @@ def test_openapi(openapi_codec, petstore_schema):
             'pets': {
                 'listPets': Link(
                     action='get',
-                    url='/pets',
+                    url='http://petstore.swagger.io/pets',
                     title='List all pets',
                     fields=[
                         Field(
@@ -147,12 +147,12 @@ def test_openapi(openapi_codec, petstore_schema):
                 ),
                 'createPets': Link(
                     action='post',
-                    url='/pets',
+                    url='http://petstore.swagger.io/pets',
                     title='Create a pet'
                 ),
                 'showPetById': Link(
                     action='get',
-                    url='/pets/{petId}',
+                    url='http://petstore.swagger.io/pets/{petId}',
                     title='Info for a specific pet',
                     fields=[
                         Field(

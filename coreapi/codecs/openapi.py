@@ -1,4 +1,5 @@
 from coreapi.codecs import BaseCodec, JSONSchemaCodec
+from coreapi.compat import urlparse
 from coreapi.document import Document, Link, Field
 from coreapi.schemas import OpenAPI
 import yaml
@@ -18,11 +19,11 @@ class OpenAPICodec(BaseCodec):
         openapi = OpenAPI(data)
         title = openapi.lookup(['info', 'title'])
         description = openapi.lookup(['info', 'description'])
-        url = openapi.lookup(['servers', 0, 'url'])
-        content = self.get_links(openapi)
-        return Document(title=title, description=description, url=url, content=content)
+        base_url = openapi.lookup(['servers', 0, 'url'])
+        content = self.get_links(openapi, base_url)
+        return Document(title=title, description=description, url=base_url, content=content)
 
-    def get_links(self, openapi):
+    def get_links(self, openapi, base_url):
         """
         Return all the links in the document, layed out by tag and operationId.
         """
@@ -39,7 +40,7 @@ class OpenAPICodec(BaseCodec):
                 if not operationId:
                     continue
 
-                link = self.get_link(path, path_info, operation, operation_info)
+                link = self.get_link(base_url, path, path_info, operation, operation_info)
                 if tag is None:
                     content[operationId] = link
                 else:
@@ -50,12 +51,18 @@ class OpenAPICodec(BaseCodec):
 
         return content
 
-    def get_link(self, path, path_info, operation, operation_info):
+    def get_link(self, base_url, path, path_info, operation, operation_info):
         """
         Return a single link in the document.
         """
         title = operation_info.get('summary')
         description = operation_info.get('description')
+
+        # Allow path info and operation info to override the base url.
+        base_url = path_info.lookup(['servers', 0, 'url'], default=base_url)
+        base_url = operation_info.lookup(['servers', 0, 'url'], default=base_url)
+
+        # Parameters are taken both from the path info, and from the operation.
         parameters = path_info.get('parameters', [])
         parameters += operation_info.get('parameters', [])
 
@@ -65,7 +72,7 @@ class OpenAPICodec(BaseCodec):
         ]
 
         return Link(
-            url=path,
+            url=urlparse.urljoin(base_url, path),
             action=operation,
             title=title,
             description=description,
@@ -81,6 +88,7 @@ class OpenAPICodec(BaseCodec):
         description = parameter.get('description')
         required = parameter.get('required', False)
         schema = parameter.get('schema')
+        example = parameter.get('example')
 
         if schema is not None:
             schema = JSONSchemaCodec().decode_from_data_structure(schema)
@@ -90,5 +98,6 @@ class OpenAPICodec(BaseCodec):
             location=location,
             description=description,
             required=required,
-            schema=schema
+            schema=schema,
+            example=example
         )

@@ -69,6 +69,7 @@ class Parameter(typesys.Object):
         'deprecated': typesys.boolean(),
         'allowEmptyValue': typesys.boolean(),
         'schema': JSONSchema,
+        'example': typesys.Any
         # TODO: Other fields
     }
     required = ['name', 'in']
