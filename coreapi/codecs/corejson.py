@@ -6,7 +6,6 @@ from coreapi.compat import force_bytes, string_types, urlparse
 from coreapi.compat import COMPACT_SEPARATORS, VERBOSE_SEPARATORS
 from coreapi.document import Document, Link, Object, Error, Field
 from coreapi.exceptions import ParseError
-import coreschema
 import json
 
 
@@ -57,7 +56,7 @@ def decode_schema_from_corejson(data):
     if type_id == 'enum':
         kwargs['enum'] = _get_list(data, 'enum')
 
-    schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, coreschema.Anything)
+    schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, typesys.Any)
     return type(schema_cls.__name__, (schema_cls,), kwargs)
 
 
