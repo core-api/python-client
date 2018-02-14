@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from collections import OrderedDict, namedtuple
+from collections import OrderedDict
 from coreapi.compat import string_types
 import itypes
 
@@ -38,14 +38,6 @@ def _key_sorting(item):
         }.get(value.action, 5)
         return (1, (value.url, action_priority))
     return (0, key)
-
-
-# The field class, as used by Link objects:
-
-# NOTE: 'type', 'description' and 'example' are now deprecated,
-#       in favor of 'schema'.
-Field = namedtuple('Field', ['name', 'required', 'location', 'schema', 'description', 'type', 'example'])
-Field.__new__.__defaults__ = (False, '', None, None, None, None)
 
 
 # The Core API primitives:
@@ -236,6 +228,27 @@ class Link(itypes.Object):
 
     def __str__(self):
         return _str(self)
+
+
+class Field(object):
+    def __init__(self, name, required=False, location='', schema=None, description=None, example=None):
+        self.name = name
+        self.required = required
+        self.location = location
+        self.schema = schema
+        self.description = description
+        self.example = example
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, Field) and
+            self.name == other.name and
+            self.required == other.required and
+            self.location == other.location and
+            self.description == other.description and
+            self.schema.__class__ == other.schema.__class__ and
+            self.example == other.example
+        )
 
 
 class Error(itypes.Dict):
