@@ -247,12 +247,14 @@ class Object(dict):
             return item
         return item.lookup(keys[1:], default)
 
-    def error(self, code):
-        message = self.errors[code].format(**self.__dict__)
+    @classmethod
+    def error(cls, code):
+        message = cls.errors[code].format(**cls.__dict__)
         raise ValidationError(message)  # from None
 
-    def error_message(self, code):
-        return self.errors[code].format(**self.__dict__)
+    @classmethod
+    def error_message(cls, code):
+        return cls.errors[code].format(**cls.__dict__)
 
 
 class Array(list):
@@ -321,9 +323,15 @@ class Array(list):
             return item
         return item.lookup(keys[1:], default)
 
-    def error(self, code):
-        message = self.errors[code].format(**self.__dict__)
+    @classmethod
+    def error(cls, code):
+        message = cls.errors[code].format(**cls.__dict__)
         raise ValidationError(message)  # from None
+
+
+class Any(object):
+    def __new__(self, value):
+        return value
 
 
 def string(**kwargs):
