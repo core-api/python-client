@@ -1,5 +1,5 @@
 from coreapi.codecs import BaseCodec, JSONSchemaCodec
-from coreapi.compat import VERBOSE_SEPARATORS, dict_type, urlparse
+from coreapi.compat import VERBOSE_SEPARATORS, dict_type, force_bytes, urlparse
 from coreapi.document import Document, Link, Field
 from coreapi.exceptions import ParseError
 from coreapi.schemas import OpenAPI
@@ -203,8 +203,7 @@ class OpenAPICodec(BaseCodec):
             'indent': 4,
             'separators': VERBOSE_SEPARATORS
         }
-
-        return json.dumps(openapi, **kwargs)
+        return force_bytes(json.dumps(openapi, **kwargs))
 
     def get_paths(self, document):
         paths = dict_type()
