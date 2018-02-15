@@ -84,7 +84,7 @@ def force_text(string):
     return string
 
 
-if sys.version_info < (3, 5):
+if sys.version_info < (3, 6):
     dict_type = collections.OrderedDict
 else:
     dict_type = dict
