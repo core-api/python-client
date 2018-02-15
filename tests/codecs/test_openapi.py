@@ -1,5 +1,6 @@
 from coreapi import typesys
 from coreapi.codecs import OpenAPICodec
+from coreapi.compat import dict_type
 from coreapi.document import Document, Link, Field
 import pytest
 
@@ -260,8 +261,8 @@ def test_decode_openapi(openapi_codec, petstore_schema):
         title='Swagger Petstore',
         url='http://petstore.swagger.io/v1',
         content={
-            'pets': {
-                'listPets': Link(
+            'pets': dict_type([
+                ('listPets', Link(
                     action='get',
                     url='http://petstore.swagger.io/pets',
                     title='List all pets',
@@ -274,13 +275,13 @@ def test_decode_openapi(openapi_codec, petstore_schema):
                             schema=typesys.integer(format='int32')
                         )
                     ]
-                ),
-                'createPets': Link(
+                )),
+                ('createPets', Link(
                     action='post',
                     url='http://petstore.swagger.io/pets',
                     title='Create a pet'
-                ),
-                'showPetById': Link(
+                )),
+                ('showPetById', Link(
                     action='get',
                     url='http://petstore.swagger.io/pets/{petId}',
                     title='Info for a specific pet',
@@ -293,8 +294,8 @@ def test_decode_openapi(openapi_codec, petstore_schema):
                             schema=typesys.string()
                         )
                     ]
-                )
-            }
+                ))
+            ])
         }
     )
     assert doc == expected
