@@ -1,7 +1,7 @@
 # coding: utf-8
 from __future__ import unicode_literals
 from collections import OrderedDict
-from coreapi.compat import string_types
+from coreapi.compat import coreschema_to_typesys, string_types
 import itypes
 
 
@@ -235,7 +235,7 @@ class Field(object):
         self.name = name
         self.required = required
         self.location = location
-        self.schema = schema
+        self.schema = coreschema_to_typesys(schema)
         self.description = description
         self.example = example
 
@@ -296,3 +296,8 @@ class Error(itypes.Dict):
             elif isinstance(value, string_types):
                 messages += [value]
         return messages
+
+
+class Array(object):
+    def __init__(self):
+        assert False, 'Array is deprecated'

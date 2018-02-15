@@ -1,4 +1,4 @@
-from coreapi.compat import dict_type
+from coreapi.compat import dict_type, string_types
 import re
 # from typing import Any, Dict, List, Optional, Tuple, Union, overload  # noqa
 
@@ -207,7 +207,7 @@ class Object(dict_type):
 
         # Ensure all property keys are strings.
         errors = {}
-        if any(not isinstance(key, str) for key in value.keys()):
+        if any(not isinstance(key, string_types) for key in value.keys()):
             self.error('invalid_key')
 
         # Properties

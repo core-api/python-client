@@ -11,159 +11,247 @@ def openapi_codec():
 
 @pytest.fixture
 def petstore_schema():
-    return '''openapi: "3.0.0"
-info:
-  version: 1.0.0
-  title: Swagger Petstore
-  license:
-    name: MIT
-servers:
-  - url: http://petstore.swagger.io/v1
-paths:
-  /pets:
-    get:
-      summary: List all pets
-      operationId: listPets
-      tags:
-        - pets
-      parameters:
-        - name: limit
-          in: query
-          description: How many items to return at one time (max 100)
-          required: false
-          schema:
-            type: integer
-            format: int32
-      responses:
-        '200':
-          description: An paged array of pets
-          headers:
-            x-next:
-              description: A link to the next page of responses
-              schema:
-                type: string
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-    post:
-      summary: Create a pet
-      operationId: createPets
-      tags:
-        - pets
-      responses:
-        '201':
-          description: Null response
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-  /pets/{petId}:
-    get:
-      summary: Info for a specific pet
-      operationId: showPetById
-      tags:
-        - pets
-      parameters:
-        - name: petId
-          in: path
-          required: true
-          description: The id of the pet to retrieve
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Expected response to a valid request
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Pets"
-        default:
-          description: unexpected error
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Error"
-components:
-  schemas:
-    Pet:
-      required:
-        - id
-        - name
-      properties:
-        id:
-          type: integer
-          format: int64
-        name:
-          type: string
-        tag:
-          type: string
-    Pets:
-      type: array
-      items:
-        $ref: "#/components/schemas/Pet"
-    Error:
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string'''
+    return '''{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Swagger Petstore",
+        "version": "1.0.0",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "http://petstore.swagger.io/v1"
+        }
+    ],
+    "paths": {
+        "/pets": {
+            "get": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "List all pets",
+                "operationId": "listPets",
+                "parameters": [
+                    {
+                        "in": "query",
+                        "description": "How many items to return at one time (max 100)",
+                        "name": "limit",
+                        "schema": {
+                            "format": "int32",
+                            "type": "integer"
+                        },
+                        "required": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pets"
+                                }
+                            }
+                        },
+                        "description": "An paged array of pets",
+                        "headers": {
+                            "x-next": {
+                                "description": "A link to the next page of responses",
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": "unexpected error"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Create a pet",
+                "operationId": "createPets",
+                "responses": {
+                    "201": {
+                        "description": "Null response"
+                    },
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": "unexpected error"
+                    }
+                }
+            }
+        },
+        "/pets/{petId}": {
+            "get": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Info for a specific pet",
+                "operationId": "showPetById",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "description": "The id of the pet to retrieve",
+                        "name": "petId",
+                        "schema": {
+                            "type": "string"
+                        },
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Pets"
+                                }
+                            }
+                        },
+                        "description": "Expected response to a valid request"
+                    },
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        },
+                        "description": "unexpected error"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Error": {
+                "properties": {
+                    "code": {
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "code",
+                    "message"
+                ]
+            },
+            "Pets": {
+                "items": {
+                    "$ref": "#/components/schemas/Pet"
+                },
+                "type": "array"
+            },
+            "Pet": {
+                "properties": {
+                    "tag": {
+                        "type": "string"
+                    },
+                    "id": {
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ]
+            }
+        }
+    }
+}'''
 
 
 @pytest.fixture
 def minimal_petstore_schema():
-    return '''openapi: 3.0.0
-info:
-  title: Swagger Petstore
-  description: ''
-  version: ''
-servers:
-  - url: http://petstore.swagger.io/v1
-paths:
-  /pets:
-    get:
-      tags:
-        - pets
-      summary: List all pets
-      operationId: listPets
-      parameters:
-        - name: limit
-          in: query
-          description: How many items to return at one time (max 100)
-          schema:
-            type: integer
-            format: int32
-    post:
-      tags:
-        - pets
-      summary: Create a pet
-      operationId: createPets
-  /pets/{petId}:
-    get:
-      tags:
-        - pets
-      summary: Info for a specific pet
-      operationId: showPetById
-      parameters:
-        - name: petId
-          in: path
-          description: The id of the pet to retrieve
-          required: true
-          schema:
-            type: string
-'''
+    return '''{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "Swagger Petstore",
+        "description": "",
+        "version": ""
+    },
+    "servers": [
+        {
+            "url": "http://petstore.swagger.io/v1"
+        }
+    ],
+    "paths": {
+        "/pets": {
+            "get": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "List all pets",
+                "operationId": "listPets",
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "How many items to return at one time (max 100)",
+                        "schema": {
+                            "type": "integer",
+                            "format": "int32"
+                        }
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Create a pet",
+                "operationId": "createPets"
+            }
+        },
+        "/pets/{petId}": {
+            "get": {
+                "tags": [
+                    "pets"
+                ],
+                "summary": "Info for a specific pet",
+                "operationId": "showPetById",
+                "parameters": [
+                    {
+                        "name": "petId",
+                        "in": "path",
+                        "description": "The id of the pet to retrieve",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ]
+            }
+        }
+    }
+}'''
 
 
 def test_decode_openapi(openapi_codec, petstore_schema):
