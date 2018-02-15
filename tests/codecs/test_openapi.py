@@ -11,7 +11,7 @@ def openapi_codec():
 
 @pytest.fixture
 def petstore_schema():
-    return '''{
+    return b'''{
     "openapi": "3.0.0",
     "info": {
         "title": "Swagger Petstore",
@@ -190,7 +190,7 @@ def petstore_schema():
 
 @pytest.fixture
 def minimal_petstore_schema():
-    return '''{
+    return b'''{
     "openapi": "3.0.0",
     "info": {
         "title": "Swagger Petstore",
