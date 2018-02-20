@@ -1,6 +1,6 @@
 # coding: utf-8
 from __future__ import unicode_literals
-from collections import OrderedDict
+from collections import Mapping, OrderedDict
 from coreapi.compat import coreschema_to_typesys, string_types
 import itypes
 
@@ -258,7 +258,7 @@ class Field(object):
         )
 
 
-class Error(itypes.Dict):
+class Error(Mapping):
     def __init__(self, title=None, content=None):
         data = {} if (content is None) else content
 
@@ -275,6 +275,12 @@ class Error(itypes.Dict):
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
+
+    def __len__(self):
+        return len(self._data)
+
+    def __getitem__(self, key):
+        return self._data[key]
 
     def __repr__(self):
         return _repr(self)

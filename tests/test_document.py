@@ -97,14 +97,6 @@ def test_link_does_not_support_property_assignment():
         link.integer = 456
 
 
-# Errors are immutable.
-
-def test_error_does_not_support_property_assignment():
-    error = Error(content={'messages': ['failed']})
-    with pytest.raises(TypeError):
-        error.integer = 456
-
-
 # Children in documents are immutable primitives.
 
 def test_document_dictionaries_coerced_to_objects(doc):
