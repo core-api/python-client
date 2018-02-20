@@ -69,6 +69,7 @@ setup(
     entry_points={
         'coreapi.codecs': [
             'corejson=coreapi.codecs:CoreJSONCodec',
+            'openapi=coreapi.codecs:OpenAPICodec',
             'json=coreapi.codecs:JSONCodec',
             'text=coreapi.codecs:TextCodec',
             'download=coreapi.codecs:DownloadCodec',
