@@ -201,7 +201,7 @@ class Object(dict_type):
         super(Object, self).__init__()
 
         try:
-            value = dict(value)
+            value = dict_type(value)
         except TypeError:
             self.error('type')
 
