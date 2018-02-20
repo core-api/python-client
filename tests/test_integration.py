@@ -70,7 +70,7 @@ def test_reload(monkeypatch):
 
     client = coreapi.Client()
     doc = coreapi.Document(url='http://example.org')
-    doc = client.reload(doc)
+    doc = client.get(doc.url)
     assert doc == {'example': 123}
 
 
