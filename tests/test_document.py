@@ -62,11 +62,6 @@ def test_document_does_not_support_key_assignment(doc):
         doc['integer'] = 456
 
 
-def test_document_does_not_support_property_assignment(doc):
-    with pytest.raises(TypeError):
-        doc.integer = 456
-
-
 def test_document_does_not_support_key_deletion(doc):
     with pytest.raises(TypeError):
         del doc['integer']
@@ -77,11 +72,6 @@ def test_document_does_not_support_key_deletion(doc):
 def test_object_does_not_support_key_assignment(obj):
     with pytest.raises(TypeError):
         obj['key'] = 456
-
-
-def test_object_does_not_support_property_assignment(obj):
-    with pytest.raises(TypeError):
-        obj.integer = 456
 
 
 def test_object_does_not_support_key_deletion(obj):

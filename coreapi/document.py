@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 from collections import Mapping, OrderedDict
 from coreapi.compat import coreschema_to_typesys, string_types
-import itypes
 
 
 def _to_immutable(value):
@@ -42,7 +41,7 @@ def _key_sorting(item):
 
 # The Core API primitives:
 
-class Document(itypes.Dict):
+class Document(Mapping):
     """
     The Core API document type.
 
@@ -77,6 +76,12 @@ class Document(itypes.Dict):
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
+
+    def __len__(self):
+        return len(self._data)
+
+    def __getitem__(self, key):
+        return self._data[key]
 
     def __repr__(self):
         return _repr(self)
@@ -128,7 +133,7 @@ class Document(itypes.Dict):
         ])
 
 
-class Object(itypes.Dict):
+class Object(Mapping):
     """
     An immutable mapping of strings to values.
     """
@@ -141,6 +146,12 @@ class Object(itypes.Dict):
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
         return iter([key for key, value in items])
+
+    def __len__(self):
+        return len(self._data)
+
+    def __getitem__(self, key):
+        return self._data[key]
 
     def __repr__(self):
         return _repr(self)

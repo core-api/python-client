@@ -1,5 +1,4 @@
 # Package requirements
-itypes
 requests
 uritemplate
 

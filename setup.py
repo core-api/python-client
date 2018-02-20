@@ -64,7 +64,6 @@ setup(
     package_data=get_package_data('coreapi'),
     install_requires=[
         'requests',
-        'itypes',
         'uritemplate'
     ],
     entry_points={
