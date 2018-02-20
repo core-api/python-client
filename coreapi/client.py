@@ -126,10 +126,6 @@ class Client(object):
         transport = determine_transport(self.transports, link.url)
         return transport.transition(link, decoders, force_codec=force_codec)
 
-    def reload(self, document, format=None, force_codec=False):
-        # Fallback for v1.x. To be removed in favour of explict `get` style.
-        return self.get(document.url, format=format, force_codec=force_codec)
-
     def action(self, document, keys, params=None, validate=True, overrides=None):
         if isinstance(keys, string_types):
             keys = [keys]
