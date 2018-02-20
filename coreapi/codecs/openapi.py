@@ -11,68 +11,6 @@ METHODS = [
 ]
 
 
-# def represent_odict(dump, tag, mapping, flow_style=None):
-#     """Like BaseRepresenter.represent_mapping, but does not issue the sort().
-#     """
-#     value = []
-#     node = yaml.MappingNode(tag, value, flow_style=flow_style)
-#     if dump.alias_key is not None:
-#         dump.represented_objects[dump.alias_key] = node
-#     best_style = True
-#     if hasattr(mapping, 'items'):
-#         mapping = mapping.items()
-#     for item_key, item_value in mapping:
-#         node_key = dump.represent_data(item_key)
-#         node_value = dump.represent_data(item_value)
-#         if not (isinstance(node_key, yaml.ScalarNode) and not node_key.style):
-#             best_style = False
-#         if not (isinstance(node_value, yaml.ScalarNode) and not node_value.style):
-#             best_style = False
-#         value.append((node_key, node_value))
-#     if flow_style is None:
-#         if dump.default_flow_style is not None:
-#             node.flow_style = dump.default_flow_style
-#         else:
-#             node.flow_style = best_style
-#     return node
-#
-#
-# def represent_list(dump, tag, sequence, flow_style=None):
-#     value = []
-#     node = yaml.SequenceNode(tag, value, flow_style=flow_style)
-#     if dump.alias_key is not None:
-#         dump.represented_objects[dump.alias_key] = node
-#     best_style = True
-#     for item in sequence:
-#         node_item = dump.represent_data(item)
-#         if not (isinstance(node_item, yaml.ScalarNode) and not node_item.style):
-#             best_style = False
-#         value.append(node_item)
-#     if flow_style is None:
-#         if dump.default_flow_style is not None:
-#             node.flow_style = dump.default_flow_style
-#         else:
-#             node.flow_style = best_style
-#     return node
-#
-#
-# class CustomSafeDumper(yaml.SafeDumper):
-#     def increase_indent(self, flow=False, indentless=False):
-#         return super(CustomSafeDumper, self).increase_indent(flow, False)
-#
-#
-# CustomSafeDumper.add_multi_representer(
-#     dict_type,
-#     lambda dumper, value: represent_odict(dumper, u'tag:yaml.org,2002:map', value)
-# )
-# CustomSafeDumper.add_multi_representer(
-#     list,
-#     lambda dumper, value: represent_list(dumper, u'tag:yaml.org,2002:seq', value)
-# )
-#
-# return yaml.dump(openapi, Dumper=CustomSafeDumper, default_flow_style=False)
-
-
 def _relative_url(base_url, url):
     """
     Return a graceful link for a URL relative to a base URL.
