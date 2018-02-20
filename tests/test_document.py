@@ -89,14 +89,6 @@ def test_object_does_not_support_key_deletion(obj):
         del obj['key']
 
 
-# Links are immutable.
-
-def test_link_does_not_support_property_assignment():
-    link = Link()
-    with pytest.raises(TypeError):
-        link.integer = 456
-
-
 # Children in documents are immutable primitives.
 
 def test_document_dictionaries_coerced_to_objects(doc):

@@ -163,7 +163,7 @@ class Object(itypes.Dict):
         ])
 
 
-class Link(itypes.Object):
+class Link(object):
     """
     Links represent the actions that a client may perform.
     """
