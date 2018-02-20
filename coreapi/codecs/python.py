@@ -33,8 +33,8 @@ def _to_repr(node):
 
     elif isinstance(node, Link):
         args = "url=%s" % repr(node.url)
-        if node.action:
-            args += ", action=%s" % repr(node.action)
+        if node.method:
+            args += ", method=%s" % repr(node.method)
         if node.encoding:
             args += ", encoding=%s" % repr(node.encoding)
         if node.description:

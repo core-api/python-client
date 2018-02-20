@@ -93,7 +93,7 @@ class OpenAPICodec(BaseCodec):
 
         return Link(
             url=urlparse.urljoin(base_url, path),
-            action=operation,
+            method=operation,
             title=title,
             description=description,
             fields=fields

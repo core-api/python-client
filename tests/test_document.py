@@ -15,7 +15,7 @@ def doc():
             'dict': {'key': 'value'},
             'link': Link(
                 url='/',
-                action='post',
+                method='post',
                 fields=['optional', Field('required', required=True, location='path')]
             ),
             'nested': {'child': Link(url='/123')}
@@ -31,7 +31,7 @@ def obj():
 def link():
     return Link(
         url='/',
-        action='post',
+        method='post',
         fields=[Field('required', required=True), 'optional']
     )
 
@@ -93,7 +93,7 @@ def test_document_repr(doc):
         "'dict': {'key': 'value'}, "
         "'integer': 123, "
         "'nested': {'child': Link(url='/123')}, "
-        "'link': Link(url='/', action='post', "
+        "'link': Link(url='/', method='post', "
         "fields=['optional', Field('required', required=True, location='path')])"
         "})"
     )
@@ -106,7 +106,7 @@ def test_object_repr(obj):
 
 
 def test_link_repr(link):
-    assert repr(link) == "Link(url='/', action='post', fields=[Field('required', required=True), 'optional'])"
+    assert repr(link) == "Link(url='/', method='post', fields=[Field('required', required=True), 'optional'])"
     assert eval(repr(link)) == link
 
 
@@ -184,7 +184,7 @@ def test_document_equality(doc):
         'dict': {'key': 'value'},
         'link': Link(
             url='/',
-            action='post',
+            method='post',
             fields=['optional', Field('required', required=True, location='path')]
         ),
         'nested': {'child': Link(url='/123')}
@@ -254,9 +254,9 @@ def test_link_url_must_be_string():
         Link(url=123)
 
 
-def test_link_action_must_be_string():
+def test_link_mthod_must_be_string():
     with pytest.raises(TypeError):
-        Link(action=123)
+        Link(method=123)
 
 
 def test_link_fields_must_be_list():

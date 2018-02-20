@@ -109,7 +109,7 @@ class Client(object):
         return self._transports
 
     def get(self, url, format=None, force_codec=False):
-        link = Link(url, action='get')
+        link = Link(url, method='get')
 
         decoders = self.decoders
         if format:
@@ -141,10 +141,11 @@ class Client(object):
         if overrides:
             # Handle any explicit overrides.
             url = overrides.get('url', link.url)
-            action = overrides.get('action', link.action)
+            method = overrides.get('method', link.method)
+            method = overrides.get('action', method)  # TODO: Deprecate
             encoding = overrides.get('encoding', link.encoding)
             fields = overrides.get('fields', link.fields)
-            link = Link(url, action=action, encoding=encoding, fields=fields)
+            link = Link(url, method=method, encoding=encoding, fields=fields)
 
         # Perform the action, and return a new document.
         transport = determine_transport(self.transports, link.url)

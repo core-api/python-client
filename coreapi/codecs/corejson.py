@@ -275,7 +275,7 @@ def _primitive_to_document(data, base_url=None):
             for item in fields if isinstance(item, dict)
         ]
         return Link(
-            url=url, action=action, encoding=encoding,
+            url=url, method=action, encoding=encoding,
             title=title, description=description, fields=fields
         )
 

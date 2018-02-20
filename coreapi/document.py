@@ -24,18 +24,18 @@ def _key_sorting(item):
     """
     Document and Object sorting.
     Regular attributes sorted alphabetically.
-    Links are sorted based on their URL and action.
+    Links are sorted based on their URL and method.
     """
     key, value = item
     if isinstance(value, Link):
-        action_priority = {
+        method_priority = {
             'get': 0,
             'post': 1,
             'put': 2,
             'patch': 3,
             'delete': 4
-        }.get(value.action, 5)
-        return (1, (value.url, action_priority))
+        }.get(value.method, 5)
+        return (1, (value.url, method_priority))
     return (0, key)
 
 
@@ -178,11 +178,14 @@ class Link(object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, action=None, encoding=None, title=None, description=None, fields=None):
+    def __init__(self, url=None, method=None, encoding=None, title=None, description=None, fields=None, action=None):
+        if action is not None:
+            method = action  # Deprecated
+
         if (url is not None) and (not isinstance(url, string_types)):
             raise TypeError("Argument 'url' must be a string.")
-        if (action is not None) and (not isinstance(action, string_types)):
-            raise TypeError("Argument 'action' must be a string.")
+        if (method is not None) and (not isinstance(method, string_types)):
+            raise TypeError("Argument 'method' must be a string.")
         if (encoding is not None) and (not isinstance(encoding, string_types)):
             raise TypeError("Argument 'encoding' must be a string.")
         if (title is not None) and (not isinstance(title, string_types)):
@@ -198,7 +201,7 @@ class Link(object):
             raise TypeError("Argument 'fields' must be a list of strings or fields.")
 
         self._url = '' if (url is None) else url
-        self._action = '' if (action is None) else action
+        self._method = '' if (method is None) else method
         self._encoding = '' if (encoding is None) else encoding
         self._title = '' if (title is None) else title
         self._description = '' if (description is None) else description
@@ -212,8 +215,8 @@ class Link(object):
         return self._url
 
     @property
-    def action(self):
-        return self._action
+    def method(self):
+        return self._method
 
     @property
     def encoding(self):
@@ -231,11 +234,16 @@ class Link(object):
     def fields(self):
         return self._fields
 
+    @property
+    def action(self):
+        # Deprecated
+        return self._method
+
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
             self.url == other.url and
-            self.action == other.action and
+            self.method == other.method and
             self.encoding == other.encoding and
             self.description == other.description and
             sorted(self.fields, key=lambda f: f.name) == sorted(other.fields, key=lambda f: f.name)

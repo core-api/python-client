@@ -39,10 +39,10 @@ class BlockAll(cookiejar.CookiePolicy):
     rfc2965 = hide_cookie2 = False
 
 
-def _get_method(action):
-    if not action:
+def _get_method(method):
+    if not method:
         return 'GET'
-    return action.upper()
+    return method.upper()
 
 
 def _get_encoding(encoding):
@@ -279,7 +279,7 @@ class HTTPTransport(BaseTransport):
 
     def transition(self, link, decoders, params=None, force_codec=False):
         session = self._session
-        method = _get_method(link.action)
+        method = _get_method(link.method)
         encoding = _get_encoding(link.encoding)
         params = _get_params(method, encoding, link.fields, params)
         url = _get_url(link.url, params.path)
