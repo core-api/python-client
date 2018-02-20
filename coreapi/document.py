@@ -4,7 +4,7 @@ from collections import Mapping, OrderedDict
 from coreapi.compat import coreschema_to_typesys, string_types
 
 
-def _to_immutable(value):
+def _to_objects(value):
     if isinstance(value, dict):
         return Object(value)
     return value
@@ -71,7 +71,7 @@ class Document(Mapping):
         self._description = '' if (description is None) else description
         self._version = '' if (version is None) else version
         self._media_type = '' if (media_type is None) else media_type
-        self._data = {key: _to_immutable(value) for key, value in content.items()}
+        self._data = {key: _to_objects(value) for key, value in content.items()}
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
@@ -141,7 +141,7 @@ class Object(Mapping):
         data = dict(*args, **kwargs)
         if any([not isinstance(key, string_types) for key in data.keys()]):
             raise TypeError('Object keys must be strings.')
-        self._data = {key: _to_immutable(value) for key, value in data.items()}
+        self._data = {key: _to_objects(value) for key, value in data.items()}
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
@@ -281,7 +281,7 @@ class Error(Mapping):
             raise TypeError('content keys must be strings.')
 
         self._title = '' if (title is None) else title
-        self._data = {key: _to_immutable(value) for key, value in data.items()}
+        self._data = {key: _to_objects(value) for key, value in data.items()}
 
     def __iter__(self):
         items = sorted(self._data.items(), key=_key_sorting)
