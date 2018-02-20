@@ -38,9 +38,10 @@ class OpenAPICodec(BaseCodec):
         openapi = OpenAPI(data)
         title = openapi.lookup(['info', 'title'])
         description = openapi.lookup(['info', 'description'])
+        version = openapi.lookup(['info', 'version'])
         base_url = openapi.lookup(['servers', 0, 'url'])
         content = self.get_links(openapi, base_url)
-        return Document(title=title, description=description, url=base_url, content=content)
+        return Document(title=title, description=description, version=version, url=base_url, content=content)
 
     def get_links(self, openapi, base_url):
         """
@@ -126,7 +127,7 @@ class OpenAPICodec(BaseCodec):
         openapi = OpenAPI({
             'openapi': '3.0.0',
             'info': {
-                'version': '',
+                'version': document.version,
                 'title': document.title,
                 'description': document.description
             },
