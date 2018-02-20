@@ -8,7 +8,6 @@ from coreapi.transports.base import BaseTransport
 from coreapi.utils import guess_filename, is_file, File
 import collections
 import requests
-import itypes
 import mimetypes
 import uritemplate
 
@@ -271,7 +270,7 @@ class HTTPTransport(BaseTransport):
         if not getattr(session.auth, 'allow_cookies', False):
             session.cookies.set_policy(BlockAll())
 
-        self._headers = itypes.Dict(headers or {})
+        self._headers = {} if (headers is None) else dict(headers)
         self._session = session
 
     @property

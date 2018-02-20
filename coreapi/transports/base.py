@@ -1,8 +1,7 @@
 # coding: utf-8
-import itypes
 
 
-class BaseTransport(itypes.Object):
+class BaseTransport(object):
     schemes = None
 
     def transition(self, link, decoders, params=None, link_ancestors=None, force_codec=False):

@@ -1,7 +1,4 @@
-import itypes
-
-
-class BaseCodec(itypes.Object):
+class BaseCodec(object):
     media_type = None
 
     # We don't implement stubs, to ensure that we can check which of these

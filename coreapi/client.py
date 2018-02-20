@@ -2,7 +2,6 @@ from coreapi import codecs, exceptions, transports
 from coreapi.compat import string_types
 from coreapi.document import Link
 from coreapi.utils import determine_transport, get_installed_codecs
-import itypes
 
 
 def _lookup_link(document, keys):
@@ -87,7 +86,7 @@ def get_default_transports(auth=None, session=None):
     ]
 
 
-class Client(itypes.Object):
+class Client(object):
     def __init__(self, decoders=None, transports=None, auth=None, session=None):
         assert transports is None or auth is None, (
             "Cannot specify both 'auth' and 'transports'. "
@@ -98,8 +97,8 @@ class Client(itypes.Object):
             decoders = get_default_decoders()
         if transports is None:
             transports = get_default_transports(auth=auth, session=session)
-        self._decoders = itypes.List(decoders)
-        self._transports = itypes.List(transports)
+        self._decoders = list(decoders)
+        self._transports = list(transports)
 
     @property
     def decoders(self):
