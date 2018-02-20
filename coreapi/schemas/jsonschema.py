@@ -6,6 +6,7 @@ class JSONSchema(typesys.Object):
     properties = dict_type([
         ('$ref', typesys.string()),
         ('type', typesys.string()),
+        ('enum', typesys.Any),
 
         # String
         ('minLength', typesys.integer(minimum=0, default=0)),

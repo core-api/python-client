@@ -64,7 +64,7 @@ class SecurityRequirement(typesys.Object):
 class Parameter(typesys.Object):
     properties = dict_type([
         ('name', typesys.string()),
-        ('in', typesys.enum(enum=['query', 'header', 'path', 'cookie'])),
+        ('in', typesys.string(enum=['query', 'header', 'path', 'cookie'])),
         ('description', typesys.string(format='textarea')),
         ('required', typesys.boolean()),
         ('deprecated', typesys.boolean()),
@@ -83,7 +83,7 @@ class Operation(typesys.Object):
         ('description', typesys.string(format='textarea')),
         ('externalDocs', ExternalDocs),
         ('operationId', typesys.string()),
-        ('parameters', typesys.array(items=Parameter)),  # Parameter | ReferenceObject
+        ('parameters', typesys.array(items=Parameter)),  # TODO: Parameter | ReferenceObject
         # TODO: 'requestBody'
         # TODO: 'responses'
         # TODO: 'callbacks'

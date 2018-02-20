@@ -29,6 +29,8 @@ class String(str):
         'min_length': 'Must have at least {min_length} characters.',
         'pattern': 'Must match the pattern /{pattern}/.',
         'format': 'Must be a valid {format}.',
+        'enum': 'Must be a valid choice.',
+        'exact': 'Must be {exact}.'
     }
     title = None  # type: str
     description = None  # type: str
@@ -36,6 +38,7 @@ class String(str):
     min_length = None  # type: int
     pattern = None  # type: str
     format = None  # type: Any
+    enum = None  # type: List[str]
     trim_whitespace = True
 
     def __new__(cls, value):
@@ -43,6 +46,12 @@ class String(str):
 
         if cls.trim_whitespace:
             value = value.strip()
+
+        if cls.enum is not None:
+            if value not in cls.enum:
+                if len(cls.enum) == 1:
+                    cls.error('exact')
+                cls.error('enum')
 
         if cls.min_length is not None:
             if len(value) < cls.min_length:
@@ -82,6 +91,7 @@ class NumericType(object):
     }
     title = None  # type: str
     description = None  # type: str
+    enum = None  # type: List[Union[float, int]]
     minimum = None  # type: Union[float, int]
     maximum = None  # type: Union[float, int]
     exclusive_minimum = False
@@ -94,6 +104,12 @@ class NumericType(object):
             value = cls.numeric_type.__new__(cls, value)
         except (TypeError, ValueError):
             cls.error('type')
+
+        if cls.enum is not None:
+            if value not in cls.enum:
+                if len(cls.enum) == 1:
+                    cls.error('exact')
+                cls.error('enum')
 
         if cls.minimum is not None:
             if cls.exclusive_minimum:
@@ -155,28 +171,6 @@ class Boolean(object):
             except KeyError:
                 cls.error('type')
         return bool(value)
-
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
-
-
-class Enum(str):
-    errors = {
-        'enum': 'Must be a valid choice.',
-        'exact': 'Must be {exact}.'
-    }
-    title = None  # type: str
-    description = None  # type: str
-    enum = []  # type: List[str]
-
-    def __new__(cls, value):
-        if value not in cls.enum:
-            if len(cls.enum) == 1:
-                cls.error('exact')
-            cls.error('enum')
-        return value
 
     @classmethod
     def error(cls, code):
@@ -367,10 +361,6 @@ def number(**kwargs):
 
 def boolean(**kwargs):
     return type('Boolean', (Boolean,), kwargs)
-
-
-def enum(**kwargs):
-    return type('Enum', (Enum,), kwargs)
 
 
 def array(**kwargs):

@@ -27,7 +27,7 @@ def doc():
                 fields=[
                     Field(name='noschema'),
                     Field(name='string_example', schema=typesys.string()),
-                    Field(name='enum_example', schema=typesys.enum(enum=['a', 'b', 'c'])),
+                    Field(name='enum_example', schema=typesys.string(enum=['a', 'b', 'c'])),
                 ]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'
@@ -60,7 +60,7 @@ def test_document_to_primitive(doc):
             {
                 'name': 'enum_example',
                 'schema': {
-                    '_type': 'enum',
+                    '_type': 'string',
                     'title': '',
                     'description': '',
                     'enum': ['a', 'b', 'c'],
@@ -98,7 +98,7 @@ def test_primitive_to_document(doc):
                 {
                     'name': 'enum_example',
                     'schema': {
-                        '_type': 'enum',
+                        '_type': 'string',
                         'title': '',
                         'description': '',
                         'enum': ['a', 'b', 'c'],

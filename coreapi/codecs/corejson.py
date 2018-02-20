@@ -19,7 +19,6 @@ SCHEMA_CLASS_TO_TYPE_ID = {
     typesys.Integer: 'integer',
     typesys.String: 'string',
     typesys.Boolean: 'boolean',
-    typesys.Enum: 'enum',
     typesys.Any: 'anything'
 }
 
@@ -42,7 +41,7 @@ def encode_schema_to_corejson(schema):
         'title': schema.title or '',
         'description': schema.description or ''
     }
-    if hasattr(schema, 'enum'):
+    if getattr(schema, 'enum', None) is not None:
         retval['enum'] = schema.enum
     return retval
 
@@ -54,7 +53,10 @@ def decode_schema_from_corejson(data):
 
     kwargs = {'title': title, 'description': description}
     if type_id == 'enum':
+        type_id = 'string'
         kwargs['enum'] = _get_list(data, 'enum')
+    elif 'enum' in data:
+        kwargs['enum'] = data['enum']
 
     schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, typesys.Any)
     return type(schema_cls.__name__, (schema_cls,), kwargs)
