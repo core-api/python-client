@@ -249,12 +249,13 @@ class Link(object):
 
 
 class Field(object):
-    def __init__(self, name, required=False, location='', schema=None, description=None, example=None):
+    def __init__(self, name, title='', description='', required=False, location='', schema=None, example=None):
         self.name = name
-        self.required = required
-        self.location = location
-        self.schema = coreschema_to_typesys(schema)
+        self.title = title
         self.description = description
+        self.location = location
+        self.required = required
+        self.schema = coreschema_to_typesys(schema)
         self.example = example
 
     def __eq__(self, other):
