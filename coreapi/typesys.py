@@ -30,7 +30,7 @@ class Validator(object):
         self.default = default
         self.definitions = {} if (definitions is None) else definitions
 
-    def validate(value):
+    def validate(value, definitions=None):
         raise NotImplementedError()
 
     def error(self, code):
@@ -61,7 +61,7 @@ class String(Validator):
         self.enum = enum
         self.format = format
 
-    def validate(self, value):
+    def validate(self, value, definitions=None):
         value = str(value)
 
         if self.enum is not None:
@@ -112,7 +112,7 @@ class NumericType(Validator):
         self.enum = enum
         self.format = format
 
-    def validate(self, value):
+    def validate(self, value, definitions=None):
         try:
             value = self.numeric_type(value)
         except (TypeError, ValueError):
@@ -164,7 +164,7 @@ class Boolean(Validator):
         'type': 'Must be a valid boolean.'
     }
 
-    def validate(self, value):
+    def validate(self, value, definitions=None):
         if isinstance(value, (int, float, bool)):
             return bool(value)
         elif isinstance(value, str):
@@ -194,7 +194,11 @@ class Object(Validator):
         self.additional_properties = additional_properties
         self.required = [] if (required is None) else required
 
-    def validate(self, value):
+    def validate(self, value, definitions=None):
+        if definitions is None:
+            definitions = dict(self.definitions)
+            definitions[''] = self
+
         validated = dict_type()
         try:
             value = dict_type(value)
@@ -215,7 +219,7 @@ class Object(Validator):
                     errors[key] = self.error_message('required')
             else:
                 try:
-                    validated[key] = child_schema.validate(item)
+                    validated[key] = child_schema.validate(item, definitions=definitions)
                 except ValidationError as exc:
                     errors[key] = exc.detail
 
@@ -226,7 +230,7 @@ class Object(Validator):
                     if re.search(pattern, key):
                         item = value.pop(key)
                         try:
-                            validated[key] = child_schema.validate(item)
+                            validated[key] = child_schema.validate(item, definitions=definitions)
                         except ValidationError as exc:
                             errors[key] = exc.detail
 
@@ -236,7 +240,7 @@ class Object(Validator):
             for key in list(value.keys()):
                 item = value.pop(key)
                 try:
-                    validated[key] = child_schema.validate(item)
+                    validated[key] = child_schema.validate(item, definitions=definitions)
                 except ValidationError as exc:
                     errors[key] = exc.detail
 
@@ -262,7 +266,11 @@ class Array(Validator):
         self.max_items = max_items
         self.unique_items = unique_items
 
-    def validate(self, value):
+    def validate(self, value, definitions=None):
+        if definitions is None:
+            definitions = dict(self.definitions)
+            definitions[''] = self
+
         validated = []
         try:
             value = list(value)
@@ -289,9 +297,9 @@ class Array(Validator):
             try:
                 if isinstance(self.items, list):
                     if pos < len(self.items):
-                        item = self.items[pos].validate(item)
+                        item = self.items[pos].validate(item, definitions=definitions)
                 elif self.items is not None:
-                    item = self.items.validate(item)
+                    item = self.items.validate(item, definitions=definitions)
 
                 if self.unique_items:
                     if item in seen_items:
@@ -310,5 +318,19 @@ class Array(Validator):
 
 
 class Any(Validator):
-    def validate(self, value):
+    def validate(self, value, definitions=None):
+        # TODO: Validate value matches primitive types
         return value
+
+
+class Ref(Validator):
+    def __init__(self, ref='', **kwargs):
+        super(Ref, self).__init__(**kwargs)
+        self.ref = ref
+
+    def validate(self, value, definitions=None):
+        assert definitions is not None, 'Ref.validate() requires definitions'
+        assert self.ref in definitions, 'Ref "%s" not in definitions' % self.ref
+
+        child_schema = definitions[self.ref]
+        return child_schema.validate(value, definitions=definitions)

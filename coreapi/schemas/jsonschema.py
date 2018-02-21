@@ -21,11 +21,11 @@ JSONSchema = typesys.Object(
         ('multipleOf', typesys.Number(minimum=0.0, exclusive_minimum=True)),
 
         # Object
-        ('properties', typesys.Object()),  # TODO: typesys.ref('JSONSchema'),
+        ('properties', typesys.Ref()),
         ('required', typesys.Array(items=typesys.String(), min_items=1, unique_items=True)),
 
         # Array
-        ('items', typesys.Object()),  # TODO: typesys.ref('JSONSchema'),
+        ('items', typesys.Ref()),
         ('additionalItems', typesys.Boolean()),
         ('minItems', typesys.Integer(minimum=0)),
         ('maxItems', typesys.Integer(minimum=0)),
