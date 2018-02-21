@@ -83,7 +83,8 @@ class String(Validator):
         self.format = format
 
     def validate(self, value, definitions=None):
-        value = str(value)
+        if not isinstance(value, string_types):
+            self.error('type')
 
         if self.enum is not None:
             if value not in self.enum:
@@ -115,7 +116,7 @@ class NumericType(Validator):
     """
     numeric_type = None  # type: type
     errors = {
-        'type': 'Must be a valid number.',
+        'type': 'Must be a number.',
         'minimum': 'Must be greater than or equal to {minimum}.',
         'exclusive_minimum': 'Must be greater than {minimum}.',
         'maximum': 'Must be less than or equal to {maximum}.',
@@ -143,10 +144,10 @@ class NumericType(Validator):
         self.format = format
 
     def validate(self, value, definitions=None):
-        try:
-            value = self.numeric_type(value)
-        except (TypeError, ValueError):
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
             self.error('type')
+
+        value = self.numeric_type(value)
 
         if self.enum is not None:
             if value not in self.enum:
@@ -195,19 +196,9 @@ class Boolean(Validator):
     }
 
     def validate(self, value, definitions=None):
-        if isinstance(value, (int, float, bool)):
-            return bool(value)
-        elif isinstance(value, str):
-            try:
-                return {
-                    'true': True,
-                    'false': False,
-                    '1': True,
-                    '0': False
-                }[value.lower()]
-            except KeyError:
-                pass
-        self.error('type')
+        if not isinstance(value, bool):
+            self.error('type')
+        return value
 
 
 class Object(Validator):
@@ -215,9 +206,13 @@ class Object(Validator):
         'type': 'Must be an object.',
         'invalid_key': 'Object keys must be strings.',
         'required': 'This field is required.',
+        'no_additional_properties': 'Unknown properties are not allowed.',
+        'empty': 'Must not be empty.',
+        'max_properties': 'Must have no more than {max_properties} properties.',
+        'min_properties': 'Must have at least {min_properties} properties.',
     }
 
-    def __init__(self, properties=None, pattern_properties=None, additional_properties=None, required=None, **kwargs):
+    def __init__(self, properties=None, pattern_properties=None, additional_properties=True, min_properties=None, max_properties=None, required=None, **kwargs):
         super(Object, self).__init__(**kwargs)
 
         properties = {} if (properties is None) else dict_type(properties)
@@ -229,10 +224,16 @@ class Object(Validator):
         assert all(isinstance(v, Validator) for v in properties.values())
         assert all(isinstance(k, string_types) for k in pattern_properties.keys())
         assert all(isinstance(v, Validator) for v in pattern_properties.values())
+        assert additional_properties is None or isinstance(additional_properties, (bool, Validator))
+        assert min_properties is None or isinstance(min_properties, int)
+        assert max_properties is None or isinstance(max_properties, int)
+        assert all(isinstance(i, string_types) for i in required)
 
         self.properties = properties
         self.pattern_properties = pattern_properties
         self.additional_properties = additional_properties
+        self.min_properties = min_properties
+        self.max_properties = max_properties
         self.required = required
 
     def validate(self, value, definitions=None):
@@ -240,24 +241,39 @@ class Object(Validator):
             definitions = dict(self.definitions)
             definitions[''] = self
 
-        validated = dict_type()
-        try:
-            value = dict_type(value)
-        except TypeError:
+        if not isinstance(value, dict):
             self.error('type')
+
+        validated = dict_type()
+        value = dict_type(value)
 
         # Ensure all property keys are strings.
         errors = {}
         if any(not isinstance(key, string_types) for key in value.keys()):
             self.error('invalid_key')
 
+        # Min/Max properties
+        if self.min_properties is not None:
+            if len(value) < self.min_properties:
+                if self.min_properties == 1:
+                    self.error('empty')
+                else:
+                    self.error('min_properties')
+        if self.max_properties is not None:
+            if len(value) > self.max_properties:
+                self.error('max_properties')
+
+        # Requried properties
+        for key in self.required:
+            if key not in value:
+                errors[key] = self.error_message('required')
+
         # Properties
         for key, child_schema in self.properties.items():
             try:
                 item = value.pop(key)
             except KeyError:
-                if key in self.required:
-                    errors[key] = self.error_message('required')
+                pass
             else:
                 try:
                     validated[key] = child_schema.validate(item, definitions=definitions)
@@ -276,7 +292,12 @@ class Object(Validator):
                             errors[key] = exc.detail
 
         # Additional properties
-        if self.additional_properties is not None:
+        if self.additional_properties is True:
+            validated.update(value)
+        elif self.additional_properties is False:
+            for key in value.keys():
+                errors[key] = self.error_message('no_additional_properties')
+        elif self.additional_properties is not None:
             child_schema = self.additional_properties
             for key in list(value.keys()):
                 item = value.pop(key)
@@ -293,9 +314,12 @@ class Object(Validator):
 
 class Array(Validator):
     errors = {
-        'type': 'Must be a list.',
-        'min_items': 'Not enough items.',
-        'max_items': 'Too many items.',
+        'type': 'Must be an array.',
+        'empty': 'Must not be empty.',
+        'exact_items': 'Must have {min_items} items.',
+        'min_items': 'Must have at least {min_items} items.',
+        'max_items': 'Must have no more than {max_items} items.',
+        'additional_items': 'May not contain additional items.',
         'unique_items': 'This item is not unique.',
     }
 
@@ -321,22 +345,19 @@ class Array(Validator):
             definitions = dict(self.definitions)
             definitions[''] = self
 
-        validated = []
-        try:
-            value = list(value)
-        except TypeError:
+        if not isinstance(value, list):
             self.error('type')
 
-        if isinstance(self.items, list) and len(self.items) > 1:
-            if len(value) < len(self.items):
-                self.error('min_items')
-            elif len(value) > len(self.items) and (self.additional_items is False):
-                self.error('max_items')
+        validated = []
 
         if self.min_items is not None and len(value) < self.min_items:
+            if self.min_items == 1:
+                self.error('empty')
             self.error('min_items')
         elif self.max_items is not None and len(value) > self.max_items:
             self.error('max_items')
+        elif isinstance(self.items, list) and (self.additional_items is False) and len(value) > len(self.items):
+            self.error('additional_items')
 
         # Ensure all items are of the right type.
         errors = {}
