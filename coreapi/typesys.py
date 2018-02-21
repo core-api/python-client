@@ -1,6 +1,5 @@
 from coreapi.compat import dict_type, string_types
 import re
-# from typing import Any, Dict, List, Optional, Tuple, Union, overload  # noqa
 
 
 # TODO: Error on unknown attributes
@@ -17,18 +16,30 @@ import re
 
 class ValidationError(Exception):
     def __init__(self, detail):
+        assert isinstance(detail, (string_types, dict))
         self.detail = detail
         super(ValidationError, self).__init__(detail)
+
+
+class NoDefault(object):
+    pass
 
 
 class Validator(object):
     errors = {}
 
-    def __init__(self, title='', description='', default=None, definitions=None):
+    def __init__(self, title='', description='', default=NoDefault, definitions=None):
+        definitions = {} if (definitions is None) else dict_type(definitions)
+
+        assert isinstance(title, string_types)
+        assert isinstance(description, string_types)
+        assert all(isinstance(k, string_types) for k in definitions.keys())
+        assert all(isinstance(v, Validator) for v in definitions.values())
+
         self.title = title
         self.description = description
         self.default = default
-        self.definitions = {} if (definitions is None) else definitions
+        self.definitions = definitions
 
     def validate(value, definitions=None):
         raise NotImplementedError()
@@ -39,6 +50,9 @@ class Validator(object):
 
     def error_message(self, code):
         return self.errors[code].format(**self.__dict__)
+
+    def has_default(self):
+        return self.default is not NoDefault
 
 
 class String(Validator):
@@ -55,6 +69,13 @@ class String(Validator):
 
     def __init__(self, max_length=None, min_length=None, pattern=None, enum=None, format=None, **kwargs):
         super(String, self).__init__(**kwargs)
+
+        assert max_length is None or isinstance(max_length, int)
+        assert min_length is None or isinstance(min_length, int)
+        assert pattern is None or isinstance(pattern, string_types)
+        assert enum is None or isinstance(enum, list) and all([isinstance(i, string_types) for i in enum])
+        assert format is None or isinstance(format, string_types)
+
         self.max_length = max_length
         self.min_length = min_length
         self.pattern = pattern
@@ -104,6 +125,15 @@ class NumericType(Validator):
 
     def __init__(self, minimum=None, maximum=None, exclusive_minimum=False, exclusive_maximum=False, multiple_of=None, enum=None, format=None, **kwargs):
         super(NumericType, self).__init__(**kwargs)
+
+        assert minimum is None or isinstance(minimum, self.numeric_type)
+        assert maximum is None or isinstance(maximum, self.numeric_type)
+        assert isinstance(exclusive_minimum, bool)
+        assert isinstance(exclusive_maximum, bool)
+        assert multiple_of is None or isinstance(multiple_of, self.numeric_type)
+        assert enum is None or isinstance(enum, list) and all([isinstance(i, string_types) for i in enum])
+        assert format is None or isinstance(format, string_types)
+
         self.minimum = minimum
         self.maximum = maximum
         self.exclusive_minimum = exclusive_minimum
@@ -189,10 +219,21 @@ class Object(Validator):
 
     def __init__(self, properties=None, pattern_properties=None, additional_properties=None, required=None, **kwargs):
         super(Object, self).__init__(**kwargs)
-        self.properties = {} if (properties is None) else dict_type(properties)
-        self.pattern_properties = {} if (pattern_properties is None) else dict_type(pattern_properties)
+
+        properties = {} if (properties is None) else dict_type(properties)
+        pattern_properties = {} if (pattern_properties is None) else dict_type(pattern_properties)
+        required = list(required) if isinstance(required, (list, tuple)) else required
+        required = [] if (required is None) else required
+
+        assert all(isinstance(k, string_types) for k in properties.keys())
+        assert all(isinstance(v, Validator) for v in properties.values())
+        assert all(isinstance(k, string_types) for k in pattern_properties.keys())
+        assert all(isinstance(v, Validator) for v in pattern_properties.values())
+
+        self.properties = properties
+        self.pattern_properties = pattern_properties
         self.additional_properties = additional_properties
-        self.required = [] if (required is None) else required
+        self.required = required
 
     def validate(self, value, definitions=None):
         if definitions is None:
@@ -260,6 +301,15 @@ class Array(Validator):
 
     def __init__(self, items=None, additional_items=None, min_items=None, max_items=None, unique_items=False, **kwargs):
         super(Array, self).__init__(**kwargs)
+
+        items = list(items) if isinstance(items, (list, tuple)) else items
+
+        assert items is None or isinstance(items, Validator) or isinstance(items, list) and all(isinstance(i, Validator) for i in items)
+        assert additional_items is None or isinstance(additional_items, (bool, Validator))
+        assert min_items is None or isinstance(min_items, int)
+        assert max_items is None or isinstance(max_items, int)
+        assert isinstance(unique_items, bool)
+
         self.items = items
         self.additional_items = additional_items
         self.min_items = min_items
@@ -280,7 +330,7 @@ class Array(Validator):
         if isinstance(self.items, list) and len(self.items) > 1:
             if len(value) < len(self.items):
                 self.error('min_items')
-            elif len(value) > len(self.items) and not self.additional_items:
+            elif len(value) > len(self.items) and (self.additional_items is False):
                 self.error('max_items')
 
         if self.min_items is not None and len(value) < self.min_items:
@@ -298,6 +348,8 @@ class Array(Validator):
                 if isinstance(self.items, list):
                     if pos < len(self.items):
                         item = self.items[pos].validate(item, definitions=definitions)
+                    elif isinstance(self.additional_items, Validator):
+                        item = self.additional_items.validate(item, definitions=definitions)
                 elif self.items is not None:
                     item = self.items.validate(item, definitions=definitions)
 
@@ -326,6 +378,7 @@ class Any(Validator):
 class Ref(Validator):
     def __init__(self, ref='', **kwargs):
         super(Ref, self).__init__(**kwargs)
+        assert isinstance(ref, string_types)
         self.ref = ref
 
     def validate(self, value, definitions=None):
