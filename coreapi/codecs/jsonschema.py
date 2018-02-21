@@ -18,17 +18,17 @@ class JSONSchemaCodec(BaseCodec):
             )
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
-        jsonschema = JSONSchema(data)
+        jsonschema = JSONSchema.validate(data)
         return self.decode_from_data_structure(jsonschema)
 
     def decode_from_data_structure(self, struct):
         attrs = {}
 
-        if '$ref' in struct:
-            if struct['$ref'] == '#':
-                return typesys.ref()
-            name = struct['$ref'].split('/')[-1]
-            return typesys.ref(name)
+        # if '$ref' in struct:
+        #     if struct['$ref'] == '#':
+        #         return typesys.ref()
+        #     name = struct['$ref'].split('/')[-1]
+        #     return typesys.ref(name)
 
         if struct['type'] == 'string':
             if 'minLength' in struct:
@@ -39,7 +39,7 @@ class JSONSchemaCodec(BaseCodec):
                 attrs['pattern'] = struct['pattern']
             if 'format' in struct:
                 attrs['format'] = struct['format']
-            return typesys.string(**attrs)
+            return typesys.String(**attrs)
 
         if struct['type'] in ['number', 'integer']:
             if 'minimum' in struct:
@@ -55,11 +55,11 @@ class JSONSchemaCodec(BaseCodec):
             if 'format' in struct:
                 attrs['format'] = struct['format']
             if struct['type'] == 'integer':
-                return typesys.integer(**attrs)
-            return typesys.number(**attrs)
+                return typesys.Integer(**attrs)
+            return typesys.Number(**attrs)
 
         if struct['type'] == 'boolean':
-            return typesys.boolean()
+            return typesys.Boolean()
 
         if struct['type'] == 'object':
             if 'properties' in struct:
@@ -69,7 +69,7 @@ class JSONSchemaCodec(BaseCodec):
                 }
             if 'required' in struct:
                 attrs['required'] = struct['required']
-            return typesys.obj(**attrs)
+            return typesys.Object(**attrs)
 
         if struct['type'] == 'array':
             if 'items' in struct:
@@ -82,10 +82,10 @@ class JSONSchemaCodec(BaseCodec):
                 attrs['max_items'] = struct['maxItems']
             if 'uniqueItems' in struct:
                 attrs['unique_items'] = struct['uniqueItems']
-            return typesys.array(**attrs)
+            return typesys.Array(**attrs)
 
-    def encode(self, cls, **options):
-        struct = self.encode_to_data_structure(cls)
+    def encode(self, item, **options):
+        struct = self.encode_to_data_structure(item)
         indent = options.get('indent')
         if indent:
             kwargs = {
@@ -101,70 +101,65 @@ class JSONSchemaCodec(BaseCodec):
             }
         return force_bytes(json.dumps(struct, **kwargs))
 
-    def encode_to_data_structure(self, cls):
-        if issubclass(cls, typesys.String):
+    def encode_to_data_structure(self, item):
+        if isinstance(item, typesys.String):
             value = {'type': 'string'}
-            if cls.max_length is not None:
-                value['maxLength'] = cls.max_length
-            if cls.min_length is not None:
-                value['minLength'] = cls.min_length
-            if cls.pattern is not None:
-                value['pattern'] = cls.pattern
-            if cls.format is not None:
-                value['format'] = cls.format
+            if item.max_length is not None:
+                value['maxLength'] = item.max_length
+            if item.min_length is not None:
+                value['minLength'] = item.min_length
+            if item.pattern is not None:
+                value['pattern'] = item.pattern
+            if item.format is not None:
+                value['format'] = item.format
             return value
 
-        if issubclass(cls, typesys.NumericType):
-            if issubclass(cls, typesys.Integer):
+        if isinstance(item, typesys.NumericType):
+            if isinstance(item, typesys.Integer):
                 value = {'type': 'integer'}
             else:
                 value = {'type': 'number'}
 
-            if cls.minimum is not None:
-                value['minimum'] = cls.minimum
-            if cls.maximum is not None:
-                value['maximum'] = cls.maximum
-            if cls.exclusive_minimum:
-                value['exclusiveMinimum'] = cls.exclusive_minimum
-            if cls.exclusive_maximum:
-                value['exclusiveMaximum'] = cls.exclusive_maximum
-            if cls.multiple_of is not None:
-                value['multipleOf'] = cls.multiple_of
-            if cls.format is not None:
-                value['format'] = cls.format
+            if item.minimum is not None:
+                value['minimum'] = item.minimum
+            if item.maximum is not None:
+                value['maximum'] = item.maximum
+            if item.exclusive_minimum:
+                value['exclusiveMinimum'] = item.exclusive_minimum
+            if item.exclusive_maximum:
+                value['exclusiveMaximum'] = item.exclusive_maximum
+            if item.multiple_of is not None:
+                value['multipleOf'] = item.multiple_of
+            if item.format is not None:
+                value['format'] = item.format
             return value
 
-        if issubclass(cls, typesys.Boolean):
+        if isinstance(item, typesys.Boolean):
             return {'type': 'boolean'}
 
-        if issubclass(cls, typesys.Object):
+        if isinstance(item, typesys.Object):
             value = {'type': 'object'}
-            if cls.properties:
+            if item.properties:
                 value['properties'] = {
                     key: self.encode_to_data_structure(value)
-                    for key, value in cls.properties.items()
+                    for key, value in item.properties.items()
                 }
-            if cls.required:
-                value['required'] = cls.required
+            if item.required:
+                value['required'] = item.required
             return value
 
-        if issubclass(cls, typesys.Array):
+        if isinstance(item, typesys.Array):
             value = {'type': 'array'}
-            if cls.items is not None:
-                value['items'] = self.encode_to_data_structure(cls.items)
-            if cls.additional_items:
-                value['additionalItems'] = cls.additional_items
-            if cls.min_items is not None:
-                value['minItems'] = cls.min_items
-            if cls.max_items is not None:
-                value['maxItems'] = cls.max_items
-            if cls.unique_items is not None:
-                value['uniqueItems'] = cls.unique_items
+            if item.items is not None:
+                value['items'] = self.encode_to_data_structure(item.items)
+            if item.additional_items:
+                value['additionalItems'] = item.additional_items
+            if item.min_items is not None:
+                value['minItems'] = item.min_items
+            if item.max_items is not None:
+                value['maxItems'] = item.max_items
+            if item.unique_items is not None:
+                value['uniqueItems'] = item.unique_items
             return value
 
-        if issubclass(cls, typesys.Ref):
-            if not cls.to:
-                return {'$ref': '#'}
-            return {'$ref': '#/definitions/%s' % cls.to}
-
-        raise Exception('Cannot encode class %s' % cls)
+        raise Exception('Cannot encode item %s' % item)

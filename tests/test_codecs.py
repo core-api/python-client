@@ -26,8 +26,8 @@ def doc():
                 url='http://example.org/',
                 fields=[
                     Field(name='noschema'),
-                    Field(name='string_example', schema=typesys.string()),
-                    Field(name='enum_example', schema=typesys.string(enum=['a', 'b', 'c'])),
+                    Field(name='string_example', schema=typesys.String()),
+                    Field(name='enum_example', schema=typesys.String(enum=['a', 'b', 'c'])),
                 ]),
             'nested': {'child': Link(url='http://example.org/123')},
             '_type': 'needs escaping'

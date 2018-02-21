@@ -11,6 +11,15 @@ METHODS = [
 ]
 
 
+def lookup(value, keys, default=None):
+    for key in keys:
+        try:
+            value = value[key]
+        except (KeyError, IndexError, TypeError):
+            return default
+    return value
+
+
 def _relative_url(base_url, url):
     """
     Return a graceful link for a URL relative to a base URL.
@@ -35,11 +44,11 @@ class OpenAPICodec(BaseCodec):
         except ValueError as exc:
             raise ParseError('Malformed JSON. %s' % exc)
 
-        openapi = OpenAPI(data)
-        title = openapi.lookup(['info', 'title'])
-        description = openapi.lookup(['info', 'description'])
-        version = openapi.lookup(['info', 'version'])
-        base_url = openapi.lookup(['servers', 0, 'url'])
+        openapi = OpenAPI.validate(data)
+        title = lookup(openapi, ['info', 'title'])
+        description = lookup(openapi, ['info', 'description'])
+        version = lookup(openapi, ['info', 'version'])
+        base_url = lookup(openapi, ['servers', 0, 'url'])
         content = self.get_links(openapi, base_url)
         return Document(title=title, description=description, version=version, url=base_url, content=content)
 
@@ -56,7 +65,7 @@ class OpenAPICodec(BaseCodec):
             }
             for operation, operation_info in operations.items():
                 operationId = operation_info.get('operationId')
-                tag = operation_info.lookup(['tags', 0])
+                tag = lookup(operation_info, ['tags', 0])
                 if not operationId:
                     continue
 
@@ -79,8 +88,8 @@ class OpenAPICodec(BaseCodec):
         description = operation_info.get('description')
 
         # Allow path info and operation info to override the base url.
-        base_url = path_info.lookup(['servers', 0, 'url'], default=base_url)
-        base_url = operation_info.lookup(['servers', 0, 'url'], default=base_url)
+        base_url = lookup(path_info, ['servers', 0, 'url'], default=base_url)
+        base_url = lookup(operation_info, ['servers', 0, 'url'], default=base_url)
 
         # Parameters are taken both from the path info, and from the operation.
         parameters = path_info.get('parameters', [])
@@ -124,7 +133,7 @@ class OpenAPICodec(BaseCodec):
 
     def encode(self, document, **options):
         paths = self.get_paths(document)
-        openapi = OpenAPI({
+        openapi = OpenAPI.validate({
             'openapi': '3.0.0',
             'info': {
                 'version': document.version,

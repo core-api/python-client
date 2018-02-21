@@ -272,7 +272,7 @@ def test_decode_openapi(openapi_codec, petstore_schema):
                             location='query',
                             description='How many items to return at one time (max 100)',
                             required=False,
-                            schema=typesys.integer(format='int32')
+                            schema=typesys.Integer(format='int32')
                         )
                     ]
                 )),
@@ -291,7 +291,7 @@ def test_decode_openapi(openapi_codec, petstore_schema):
                             location='path',
                             description='The id of the pet to retrieve',
                             required=True,
-                            schema=typesys.string()
+                            schema=typesys.String()
                         )
                     ]
                 ))
@@ -317,7 +317,7 @@ def test_encode_openapi(openapi_codec, minimal_petstore_schema):
                             location='query',
                             description='How many items to return at one time (max 100)',
                             required=False,
-                            schema=typesys.integer(format='int32')
+                            schema=typesys.Integer(format='int32')
                         )
                     ]
                 ),
@@ -336,7 +336,7 @@ def test_encode_openapi(openapi_codec, minimal_petstore_schema):
                             location='path',
                             description='The id of the pet to retrieve',
                             required=True,
-                            schema=typesys.string()
+                            schema=typesys.String()
                         )
                     ]
                 )

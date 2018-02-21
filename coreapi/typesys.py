@@ -21,7 +21,27 @@ class ValidationError(Exception):
         super(ValidationError, self).__init__(detail)
 
 
-class String(str):
+class Validator(object):
+    errors = {}
+
+    def __init__(self, title='', description='', default=None, definitions=None):
+        self.title = title
+        self.description = description
+        self.default = default
+        self.definitions = {} if (definitions is None) else definitions
+
+    def validate(value):
+        raise NotImplementedError()
+
+    def error(self, code):
+        message = self.error_message(code)
+        raise ValidationError(message)
+
+    def error_message(self, code):
+        return self.errors[code].format(**self.__dict__)
+
+
+class String(Validator):
     errors = {
         'type': 'Must be a string.',
         'blank': 'Must not be blank.',
@@ -32,51 +52,43 @@ class String(str):
         'enum': 'Must be a valid choice.',
         'exact': 'Must be {exact}.'
     }
-    title = None  # type: str
-    description = None  # type: str
-    max_length = None  # type: int
-    min_length = None  # type: int
-    pattern = None  # type: str
-    format = None  # type: Any
-    enum = None  # type: List[str]
-    trim_whitespace = True
 
-    def __new__(cls, value):
-        value = str.__new__(cls, value)
+    def __init__(self, max_length=None, min_length=None, pattern=None, enum=None, format=None, **kwargs):
+        super(String, self).__init__(**kwargs)
+        self.max_length = max_length
+        self.min_length = min_length
+        self.pattern = pattern
+        self.enum = enum
+        self.format = format
 
-        if cls.trim_whitespace:
-            value = value.strip()
+    def validate(self, value):
+        value = str(value)
 
-        if cls.enum is not None:
-            if value not in cls.enum:
-                if len(cls.enum) == 1:
-                    cls.error('exact')
-                cls.error('enum')
+        if self.enum is not None:
+            if value not in self.enum:
+                if len(self.enum) == 1:
+                    self.error('exact')
+                self.error('enum')
 
-        if cls.min_length is not None:
-            if len(value) < cls.min_length:
-                if cls.min_length == 1:
-                    cls.error('blank')
+        if self.min_length is not None:
+            if len(value) < self.min_length:
+                if self.min_length == 1:
+                    self.error('blank')
                 else:
-                    cls.error('min_length')
+                    self.error('min_length')
 
-        if cls.max_length is not None:
-            if len(value) > cls.max_length:
-                cls.error('max_length')
+        if self.max_length is not None:
+            if len(value) > self.max_length:
+                self.error('max_length')
 
-        if cls.pattern is not None:
-            if not re.search(cls.pattern, value):
-                cls.error('pattern')
+        if self.pattern is not None:
+            if not re.search(self.pattern, value):
+                self.error('pattern')
 
         return value
 
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
 
-
-class NumericType(object):
+class NumericType(Validator):
     """
     Base class for both `Number` and `Integer`.
     """
@@ -89,78 +101,73 @@ class NumericType(object):
         'exclusive_maximum': 'Must be less than {maximum}.',
         'multiple_of': 'Must be a multiple of {multiple_of}.',
     }
-    title = None  # type: str
-    description = None  # type: str
-    enum = None  # type: List[Union[float, int]]
-    minimum = None  # type: Union[float, int]
-    maximum = None  # type: Union[float, int]
-    exclusive_minimum = False
-    exclusive_maximum = False
-    multiple_of = None  # type: Union[float, int]
-    format = None
 
-    def __new__(cls, value):
+    def __init__(self, minimum=None, maximum=None, exclusive_minimum=False, exclusive_maximum=False, multiple_of=None, enum=None, format=None, **kwargs):
+        super(NumericType, self).__init__(**kwargs)
+        self.minimum = minimum
+        self.maximum = maximum
+        self.exclusive_minimum = exclusive_minimum
+        self.exclusive_maximum = exclusive_maximum
+        self.multiple_of = multiple_of
+        self.enum = enum
+        self.format = format
+
+    def validate(self, value):
         try:
-            value = cls.numeric_type.__new__(cls, value)
+            value = self.numeric_type(value)
         except (TypeError, ValueError):
-            cls.error('type')
+            self.error('type')
 
-        if cls.enum is not None:
-            if value not in cls.enum:
-                if len(cls.enum) == 1:
-                    cls.error('exact')
-                cls.error('enum')
+        if self.enum is not None:
+            if value not in self.enum:
+                if len(self.enum) == 1:
+                    self.error('exact')
+                self.error('enum')
 
-        if cls.minimum is not None:
-            if cls.exclusive_minimum:
-                if value <= cls.minimum:
-                    cls.error('exclusive_minimum')
+        if self.minimum is not None:
+            if self.exclusive_minimum:
+                if value <= self.minimum:
+                    self.error('exclusive_minimum')
             else:
-                if value < cls.minimum:
-                    cls.error('minimum')
+                if value < self.minimum:
+                    self.error('minimum')
 
-        if cls.maximum is not None:
-            if cls.exclusive_maximum:
-                if value >= cls.maximum:
-                    cls.error('exclusive_maximum')
+        if self.maximum is not None:
+            if self.exclusive_maximum:
+                if value >= self.maximum:
+                    self.error('exclusive_maximum')
             else:
-                if value > cls.maximum:
-                    cls.error('maximum')
+                if value > self.maximum:
+                    self.error('maximum')
 
-        if cls.multiple_of is not None:
-            if isinstance(cls.multiple_of, float):
-                failed = not (value * (1 / cls.multiple_of)).is_integer()
+        if self.multiple_of is not None:
+            if isinstance(self.multiple_of, float):
+                if not (value * (1 / self.multiple_of)).is_integer():
+                    self.error('multiple_of')
             else:
-                failed = value % cls.multiple_of
-            if failed:
-                cls.error('multiple_of')
+                if value % self.multiple_of:
+                    self.error('multiple_of')
 
         return value
 
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
 
-
-class Number(NumericType, float):
+class Number(NumericType):
     numeric_type = float
 
 
-class Integer(NumericType, int):
+class Integer(NumericType):
     numeric_type = int
 
 
-class Boolean(object):
-    native_type = bool
+class Boolean(Validator):
     errors = {
         'type': 'Must be a valid boolean.'
     }
-    title = None  # type: str
-    description = None  # type: str
 
-    def __new__(cls, value):
-        if isinstance(value, str):
+    def validate(self, value):
+        if isinstance(value, (int, float, bool)):
+            return bool(value)
+        elif isinstance(value, str):
             try:
                 return {
                     'true': True,
@@ -169,31 +176,26 @@ class Boolean(object):
                     '0': False
                 }[value.lower()]
             except KeyError:
-                cls.error('type')
-        return bool(value)
-
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
+                pass
+        self.error('type')
 
 
-class Object(dict_type):
+class Object(Validator):
     errors = {
         'type': 'Must be an object.',
         'invalid_key': 'Object keys must be strings.',
         'required': 'This field is required.',
     }
-    title = None  # type: str
-    description = None  # type: str
-    properties = {}  # type: Dict[str, type]
-    pattern_properties = None  # type: Dict[str, type]
-    additional_properties = None  # type: type
-    required = []
 
-    def __init__(self, value):
-        super(Object, self).__init__()
+    def __init__(self, properties=None, pattern_properties=None, additional_properties=None, required=None, **kwargs):
+        super(Object, self).__init__(**kwargs)
+        self.properties = {} if (properties is None) else dict_type(properties)
+        self.pattern_properties = {} if (pattern_properties is None) else dict_type(pattern_properties)
+        self.additional_properties = additional_properties
+        self.required = [] if (required is None) else required
 
+    def validate(self, value):
+        validated = dict_type()
         try:
             value = dict_type(value)
         except TypeError:
@@ -212,23 +214,19 @@ class Object(dict_type):
                 if key in self.required:
                     errors[key] = self.error_message('required')
             else:
-                # Coerce value into the given schema type if needed.
-                if isinstance(item, child_schema):
-                    self[key] = item
-                else:
-                    try:
-                        self[key] = child_schema(item)
-                    except ValidationError as exc:
-                        errors[key] = exc.detail
+                try:
+                    validated[key] = child_schema.validate(item)
+                except ValidationError as exc:
+                    errors[key] = exc.detail
 
         # Pattern properties
-        if self.pattern_properties is not None:
+        if self.pattern_properties:
             for key in list(value.keys()):
                 for pattern, child_schema in self.pattern_properties.items():
                     if re.search(pattern, key):
                         item = value.pop(key)
                         try:
-                            self[key] = child_schema(item)
+                            validated[key] = child_schema.validate(item)
                         except ValidationError as exc:
                             errors[key] = exc.detail
 
@@ -238,49 +236,34 @@ class Object(dict_type):
             for key in list(value.keys()):
                 item = value.pop(key)
                 try:
-                    self[key] = child_schema(item)
+                    validated[key] = child_schema.validate(item)
                 except ValidationError as exc:
                     errors[key] = exc.detail
 
         if errors:
             raise ValidationError(errors)
 
-    def lookup(self, keys, default=None):
-        try:
-            item = self[keys[0]]
-        except KeyError:
-            return default
-
-        if len(keys) == 1:
-            return item
-        return item.lookup(keys[1:], default)
-
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
-
-    @classmethod
-    def error_message(cls, code):
-        return cls.errors[code].format(**cls.__dict__)
+        return validated
 
 
-class Array(list):
+class Array(Validator):
     errors = {
         'type': 'Must be a list.',
         'min_items': 'Not enough items.',
         'max_items': 'Too many items.',
         'unique_items': 'This item is not unique.',
     }
-    title = None  # type: str
-    description = None  # type: str
-    items = None  # type: Union[type, List[type]]
-    additional_items = False  # type: bool
-    min_items = None  # type: Optional[int]
-    max_items = None  # type: Optional[int]
-    unique_items = False  # type: bool
 
-    def __init__(self, value):
+    def __init__(self, items=None, additional_items=None, min_items=None, max_items=None, unique_items=False, **kwargs):
+        super(Array, self).__init__(**kwargs)
+        self.items = items
+        self.additional_items = additional_items
+        self.min_items = min_items
+        self.max_items = max_items
+        self.unique_items = unique_items
+
+    def validate(self, value):
+        validated = []
         try:
             value = list(value)
         except TypeError:
@@ -306,9 +289,9 @@ class Array(list):
             try:
                 if isinstance(self.items, list):
                     if pos < len(self.items):
-                        item = self.items[pos](item)
+                        item = self.items[pos].validate(item)
                 elif self.items is not None:
-                    item = self.items(item)
+                    item = self.items.validate(item)
 
                 if self.unique_items:
                     if item in seen_items:
@@ -316,60 +299,16 @@ class Array(list):
                     else:
                         seen_items.add(item)
 
-                self.append(item)
+                validated.append(item)
             except ValidationError as exc:
                 errors[pos] = exc.detail
 
         if errors:
             raise ValidationError(errors)
 
-    def lookup(self, keys, default=None):
-        try:
-            item = self[keys[0]]
-        except (TypeError, IndexError):
-            return default
-
-        if len(keys) == 1:
-            return item
-        return item.lookup(keys[1:], default)
-
-    @classmethod
-    def error(cls, code):
-        message = cls.errors[code].format(**cls.__dict__)
-        raise ValidationError(message)  # from None
+        return validated
 
 
-class Any(object):
-    title = None  # type: str
-    description = None  # type: str
-
-    def __new__(self, value):
+class Any(Validator):
+    def validate(self, value):
         return value
-
-
-def string(**kwargs):
-    return type('String', (String,), kwargs)
-
-
-def integer(**kwargs):
-    return type('Integer', (Integer,), kwargs)
-
-
-def number(**kwargs):
-    return type('Number', (Number,), kwargs)
-
-
-def boolean(**kwargs):
-    return type('Boolean', (Boolean,), kwargs)
-
-
-def array(**kwargs):
-    return type('Array', (Array,), kwargs)
-
-
-def obj(**kwargs):
-    return type('Object', (Object,), kwargs)
-
-
-# def ref(to=''):
-#     return type('Ref', (Ref,), {'to': to})

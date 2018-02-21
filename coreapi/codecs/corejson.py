@@ -31,7 +31,7 @@ TYPE_ID_TO_SCHEMA_CLASS = {
 
 def encode_schema_to_corejson(schema):
     for cls, type_id in SCHEMA_CLASS_TO_TYPE_ID.items():
-        if issubclass(schema, cls):
+        if isinstance(schema, cls):
             break
     else:
         type_id = 'anything'
@@ -59,7 +59,7 @@ def decode_schema_from_corejson(data):
         kwargs['enum'] = data['enum']
 
     schema_cls = TYPE_ID_TO_SCHEMA_CLASS.get(type_id, typesys.Any)
-    return type(schema_cls.__name__, (schema_cls,), kwargs)
+    return schema_cls(**kwargs)
 
 
 # Robust dictionary lookups, that always return an item of the correct
