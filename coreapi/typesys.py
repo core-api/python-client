@@ -350,6 +350,8 @@ class Array(Validator):
 
         validated = []
 
+        if self.min_items is not None and self.min_items == self.max_items and len(value) != self.min_items:
+            self.error('exact_items')
         if self.min_items is not None and len(value) < self.min_items:
             if self.min_items == 1:
                 self.error('empty')
