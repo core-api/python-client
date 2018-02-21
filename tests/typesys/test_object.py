@@ -57,6 +57,16 @@ def test_object_empty():
     assert exc.value.detail == 'Must not be empty.'
 
 
+def test_object_null():
+    schema = Object(allow_null=True)
+    assert schema.validate(None) is None
+
+    schema = Object()
+    with pytest.raises(ValidationError) as exc:
+        schema.validate(None)
+    assert exc.value.detail == 'May not be null.'
+
+
 def test_object_pattern_properties():
     schema = Object(pattern_properties={'^x-': Integer()})
     assert schema.validate({'x-foo': 123}) == {'x-foo': 123}

@@ -58,6 +58,7 @@ class Validator(object):
 class String(Validator):
     errors = {
         'type': 'Must be a string.',
+        'null': 'May not be null.',
         'blank': 'Must not be blank.',
         'max_length': 'Must have no more than {max_length} characters.',
         'min_length': 'Must have at least {min_length} characters.',
@@ -67,7 +68,7 @@ class String(Validator):
         'exact': 'Must be {exact}.'
     }
 
-    def __init__(self, max_length=None, min_length=None, pattern=None, enum=None, format=None, **kwargs):
+    def __init__(self, max_length=None, min_length=None, pattern=None, enum=None, format=None, allow_null=False, **kwargs):
         super(String, self).__init__(**kwargs)
 
         assert max_length is None or isinstance(max_length, int)
@@ -81,9 +82,14 @@ class String(Validator):
         self.pattern = pattern
         self.enum = enum
         self.format = format
+        self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
-        if not isinstance(value, string_types):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+        elif not isinstance(value, string_types):
             self.error('type')
 
         if self.enum is not None:
@@ -117,6 +123,7 @@ class NumericType(Validator):
     numeric_type = None  # type: type
     errors = {
         'type': 'Must be a number.',
+        'null': 'May not be null.',
         'minimum': 'Must be greater than or equal to {minimum}.',
         'exclusive_minimum': 'Must be greater than {minimum}.',
         'maximum': 'Must be less than or equal to {maximum}.',
@@ -124,7 +131,7 @@ class NumericType(Validator):
         'multiple_of': 'Must be a multiple of {multiple_of}.',
     }
 
-    def __init__(self, minimum=None, maximum=None, exclusive_minimum=False, exclusive_maximum=False, multiple_of=None, enum=None, format=None, **kwargs):
+    def __init__(self, minimum=None, maximum=None, exclusive_minimum=False, exclusive_maximum=False, multiple_of=None, enum=None, format=None, allow_null=False, **kwargs):
         super(NumericType, self).__init__(**kwargs)
 
         assert minimum is None or isinstance(minimum, self.numeric_type)
@@ -142,9 +149,14 @@ class NumericType(Validator):
         self.multiple_of = multiple_of
         self.enum = enum
         self.format = format
+        self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
-        if not isinstance(value, (int, float)) or isinstance(value, bool):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+        elif not isinstance(value, (int, float)) or isinstance(value, bool):
             self.error('type')
 
         value = self.numeric_type(value)
@@ -192,11 +204,21 @@ class Integer(NumericType):
 
 class Boolean(Validator):
     errors = {
-        'type': 'Must be a valid boolean.'
+        'type': 'Must be a valid boolean.',
+        'null': 'May not be null.',
     }
 
+    def __init__(self, allow_null=False, **kwargs):
+        super(Boolean, self).__init__(**kwargs)
+
+        self.allow_null = allow_null
+
     def validate(self, value, definitions=None):
-        if not isinstance(value, bool):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+        elif not isinstance(value, bool):
             self.error('type')
         return value
 
@@ -204,6 +226,7 @@ class Boolean(Validator):
 class Object(Validator):
     errors = {
         'type': 'Must be an object.',
+        'null': 'May not be null.',
         'invalid_key': 'Object keys must be strings.',
         'required': 'This field is required.',
         'no_additional_properties': 'Unknown properties are not allowed.',
@@ -212,7 +235,7 @@ class Object(Validator):
         'min_properties': 'Must have at least {min_properties} properties.',
     }
 
-    def __init__(self, properties=None, pattern_properties=None, additional_properties=True, min_properties=None, max_properties=None, required=None, **kwargs):
+    def __init__(self, properties=None, pattern_properties=None, additional_properties=True, min_properties=None, max_properties=None, required=None, allow_null=False, **kwargs):
         super(Object, self).__init__(**kwargs)
 
         properties = {} if (properties is None) else dict_type(properties)
@@ -235,13 +258,18 @@ class Object(Validator):
         self.min_properties = min_properties
         self.max_properties = max_properties
         self.required = required
+        self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
         if definitions is None:
             definitions = dict(self.definitions)
             definitions[''] = self
 
-        if not isinstance(value, dict):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+        elif not isinstance(value, dict):
             self.error('type')
 
         validated = dict_type()
@@ -315,6 +343,7 @@ class Object(Validator):
 class Array(Validator):
     errors = {
         'type': 'Must be an array.',
+        'null': 'May not be null.',
         'empty': 'Must not be empty.',
         'exact_items': 'Must have {min_items} items.',
         'min_items': 'Must have at least {min_items} items.',
@@ -323,7 +352,7 @@ class Array(Validator):
         'unique_items': 'This item is not unique.',
     }
 
-    def __init__(self, items=None, additional_items=None, min_items=None, max_items=None, unique_items=False, **kwargs):
+    def __init__(self, items=None, additional_items=None, min_items=None, max_items=None, unique_items=False, allow_null=False, **kwargs):
         super(Array, self).__init__(**kwargs)
 
         items = list(items) if isinstance(items, (list, tuple)) else items
@@ -339,13 +368,18 @@ class Array(Validator):
         self.min_items = min_items
         self.max_items = max_items
         self.unique_items = unique_items
+        self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
         if definitions is None:
             definitions = dict(self.definitions)
             definitions[''] = self
 
-        if not isinstance(value, list):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+        elif not isinstance(value, list):
             self.error('type')
 
         validated = []

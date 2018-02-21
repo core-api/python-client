@@ -53,6 +53,16 @@ def test_array_empty():
     assert exc.value.detail == 'Must not be empty.'
 
 
+def test_array_null():
+    schema = Array(allow_null=True)
+    assert schema.validate(None) is None
+
+    schema = Array()
+    with pytest.raises(ValidationError) as exc:
+        schema.validate(None)
+    assert exc.value.detail == 'May not be null.'
+
+
 def test_array_exact_count():
     schema = Array(min_items=3, max_items=3)
     assert schema.validate([1, 2, 3]) == [1, 2, 3]
