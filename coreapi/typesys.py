@@ -25,6 +25,18 @@ class NoDefault(object):
     pass
 
 
+def unbool(element, true=object(), false=object()):
+    # https://github.com/Julian/jsonschema/blob/master/jsonschema/_utils.py
+    """
+    A hack to treat True and False as distinct from 1 and 0 for uniqueness checks.
+    """
+    if element is True:
+        return true
+    elif element is False:
+        return false
+    return element
+
+
 class Validator(object):
     errors = {}
 
@@ -41,8 +53,15 @@ class Validator(object):
         self.default = default
         self.definitions = definitions
 
-    def validate(value, definitions=None):
+    def validate(self, value, definitions=None):
         raise NotImplementedError()
+
+    def is_valid(self, value):
+        try:
+            self.validate(value)
+        except ValidationError:
+            return False
+        return True
 
     def error(self, code):
         message = self.error_message(code)
@@ -123,6 +142,7 @@ class NumericType(Validator):
     numeric_type = None  # type: type
     errors = {
         'type': 'Must be a number.',
+        'integer': 'Must be an integer.',
         'null': 'May not be null.',
         'minimum': 'Must be greater than or equal to {minimum}.',
         'exclusive_minimum': 'Must be greater than {minimum}.',
@@ -134,11 +154,11 @@ class NumericType(Validator):
     def __init__(self, minimum=None, maximum=None, exclusive_minimum=False, exclusive_maximum=False, multiple_of=None, enum=None, format=None, allow_null=False, **kwargs):
         super(NumericType, self).__init__(**kwargs)
 
-        assert minimum is None or isinstance(minimum, self.numeric_type)
-        assert maximum is None or isinstance(maximum, self.numeric_type)
+        assert minimum is None or isinstance(minimum, (int, float))
+        assert maximum is None or isinstance(maximum, (int, float))
         assert isinstance(exclusive_minimum, bool)
         assert isinstance(exclusive_maximum, bool)
-        assert multiple_of is None or isinstance(multiple_of, self.numeric_type)
+        assert multiple_of is None or isinstance(multiple_of, (int, float))
         assert enum is None or isinstance(enum, list) and all([isinstance(i, string_types) for i in enum])
         assert format is None or isinstance(format, string_types)
 
@@ -158,6 +178,8 @@ class NumericType(Validator):
             self.error('null')
         elif not isinstance(value, (int, float)) or isinstance(value, bool):
             self.error('type')
+        elif self.numeric_type is int and isinstance(value, float) and not value.is_integer():
+            self.error('integer')
 
         value = self.numeric_type(value)
 
@@ -398,7 +420,7 @@ class Array(Validator):
         # Ensure all items are of the right type.
         errors = {}
         if self.unique_items:
-            seen_items = set()
+            seen_items = []
 
         for pos, item in enumerate(value):
             try:
@@ -411,10 +433,10 @@ class Array(Validator):
                     item = self.items.validate(item, definitions=definitions)
 
                 if self.unique_items:
-                    if item in seen_items:
+                    if unbool(item) in seen_items:
                         self.error('unique_items')
                     else:
-                        seen_items.add(item)
+                        seen_items.append(unbool(item))
 
                 validated.append(item)
             except ValidationError as exc:
@@ -430,6 +452,31 @@ class Any(Validator):
     def validate(self, value, definitions=None):
         # TODO: Validate value matches primitive types
         return value
+
+
+class Union(Validator):
+    errors = {
+        'null': 'Must not be null.',
+        'union': 'Must match one of the union types.'
+    }
+
+    def __init__(self, items, allow_null=False):
+        assert isinstance(items, list) and all(isinstance(i, Validator) for i in items)
+        self.items = list(items)
+        self.allow_null = allow_null
+
+    def validate(self, value, definitions=None):
+        if value is None and self.allow_null:
+            return None
+        elif value is None:
+            self.error('null')
+
+        for item in self.items:
+            try:
+                return item.validate(value)
+            except ValidationError:
+                pass
+        self.error('union')
 
 
 class Ref(Validator):
