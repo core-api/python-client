@@ -2,16 +2,16 @@ from coreapi.compat import dict_type, isfinite, string_types
 import re
 
 
-# TODO: Error on unknown attributes
-# TODO: allow_blank?
-# TODO: format (check type at start and allow, coerce, .native)
-# TODO: default=empty
-# TODO: check 'required' exists in 'properties'
-# TODO: smarter ordering
-# TODO: extra_properties=False by default
-# TODO: inf, -inf, nan
-# TODO: Overriding errors
-# TODO: Blank booleans as False?
+def unbool(element, true=object(), false=object()):
+    # https://github.com/Julian/jsonschema/blob/master/jsonschema/_utils.py
+    """
+    A hack to treat True and False as distinct from 1 and 0 for uniqueness checks.
+    """
+    if element is True:
+        return true
+    elif element is False:
+        return false
+    return element
 
 
 class ValidationError(Exception):
@@ -23,18 +23,6 @@ class ValidationError(Exception):
 
 class NoDefault(object):
     pass
-
-
-def unbool(element, true=object(), false=object()):
-    # https://github.com/Julian/jsonschema/blob/master/jsonschema/_utils.py
-    """
-    A hack to treat True and False as distinct from 1 and 0 for uniqueness checks.
-    """
-    if element is True:
-        return true
-    elif element is False:
-        return false
-    return element
 
 
 class Validator(object):

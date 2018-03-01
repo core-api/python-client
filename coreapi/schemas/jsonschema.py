@@ -22,7 +22,7 @@ JSONSchema = typesys.Object(
         ('multipleOf', typesys.Number(minimum=0.0, exclusive_minimum=True)),
 
         # Object
-        ('properties', typesys.Ref()),
+        ('properties', typesys.Object(additional_properties=typesys.Ref())),
         ('minProperties', typesys.Integer(minimum=0, default=0)),
         ('maxProperties', typesys.Integer(minimum=0)),
         ('patternProperties', typesys.Object(additional_properties=typesys.Ref())),
