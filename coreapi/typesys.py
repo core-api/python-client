@@ -1,4 +1,4 @@
-from coreapi.compat import dict_type, string_types
+from coreapi.compat import dict_type, isfinite, string_types
 import re
 
 
@@ -73,6 +73,19 @@ class Validator(object):
     def has_default(self):
         return self.default is not NoDefault
 
+    def __or__(self, other):
+        if isinstance(self, Union):
+            items = self.items
+        else:
+            items = [self]
+
+        if isinstance(other, Union):
+            items += other.items
+        else:
+            items += [other]
+
+        return Union(items)
+
 
 class String(Validator):
     errors = {
@@ -142,8 +155,9 @@ class NumericType(Validator):
     numeric_type = None  # type: type
     errors = {
         'type': 'Must be a number.',
-        'integer': 'Must be an integer.',
         'null': 'May not be null.',
+        'integer': 'Must be an integer.',
+        'finite': 'Must be finite.',
         'minimum': 'Must be greater than or equal to {minimum}.',
         'exclusive_minimum': 'Must be greater than {minimum}.',
         'maximum': 'Must be less than or equal to {maximum}.',
@@ -178,6 +192,8 @@ class NumericType(Validator):
             self.error('null')
         elif not isinstance(value, (int, float)) or isinstance(value, bool):
             self.error('type')
+        elif isinstance(value, float) and not isfinite(value):
+            self.error('finite')
         elif self.numeric_type is int and isinstance(value, float) and not value.is_integer():
             self.error('integer')
 
@@ -295,7 +311,6 @@ class Object(Validator):
             self.error('type')
 
         validated = dict_type()
-        value = dict_type(value)
 
         # Ensure all property keys are strings.
         errors = {}
@@ -313,44 +328,48 @@ class Object(Validator):
             if len(value) > self.max_properties:
                 self.error('max_properties')
 
-        # Requried properties
+        # Required properties
         for key in self.required:
             if key not in value:
                 errors[key] = self.error_message('required')
 
         # Properties
         for key, child_schema in self.properties.items():
+            if key not in value:
+                continue
+            item = value[key]
             try:
-                item = value.pop(key)
-            except KeyError:
-                pass
-            else:
-                try:
-                    validated[key] = child_schema.validate(item, definitions=definitions)
-                except ValidationError as exc:
-                    errors[key] = exc.detail
+                validated[key] = child_schema.validate(item, definitions=definitions)
+            except ValidationError as exc:
+                errors[key] = exc.detail
 
         # Pattern properties
         if self.pattern_properties:
             for key in list(value.keys()):
                 for pattern, child_schema in self.pattern_properties.items():
                     if re.search(pattern, key):
-                        item = value.pop(key)
+                        item = value[key]
                         try:
                             validated[key] = child_schema.validate(item, definitions=definitions)
                         except ValidationError as exc:
                             errors[key] = exc.detail
 
         # Additional properties
+        remaining = [
+            key for key in value.keys()
+            if key not in set(validated.keys())
+        ]
+
         if self.additional_properties is True:
-            validated.update(value)
+            for key in remaining:
+                validated[key] = value[key]
         elif self.additional_properties is False:
-            for key in value.keys():
+            for key in remaining:
                 errors[key] = self.error_message('no_additional_properties')
         elif self.additional_properties is not None:
             child_schema = self.additional_properties
-            for key in list(value.keys()):
-                item = value.pop(key)
+            for key in remaining:
+                item = value[key]
                 try:
                     validated[key] = child_schema.validate(item, definitions=definitions)
                 except ValidationError as exc:
@@ -473,7 +492,7 @@ class Union(Validator):
 
         for item in self.items:
             try:
-                return item.validate(value)
+                return item.validate(value, definitions=definitions)
             except ValidationError:
                 pass
         self.error('union')

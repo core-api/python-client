@@ -154,7 +154,8 @@ class JSONSchemaCodec(BaseCodec):
         return decode(jsonschema)
 
     def decode_from_data_structure(self, struct):
-        return decode(struct)
+        jsonschema = JSONSchema.validate(struct)
+        return decode(jsonschema)
 
     def encode(self, item, **options):
         struct = self.encode_to_data_structure(item)

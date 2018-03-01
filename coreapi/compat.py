@@ -15,6 +15,7 @@ try:
     # Python 2
     import urlparse
     import cookielib as cookiejar
+    import math
 
     string_types = (basestring,)
     text_type = unicode
@@ -25,11 +26,17 @@ try:
         # Provide a consistently-as-unicode interface across 2.x and 3.x
         return base64.b64encode(input_string)
 
+    def isfinite(num):
+        if math.isinf(num) or math.isnan(num):
+            return False
+        return True
+
 except ImportError:
     # Python 3
     import urllib.parse as urlparse
     from io import IOBase
     from http import cookiejar
+    from math import isfinite
 
     string_types = (str,)
     text_type = str
