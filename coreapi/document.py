@@ -48,7 +48,7 @@ class Document(Mapping):
     Expresses the data that the client may access,
     and the actions that the client may perform.
     """
-    def __init__(self, url=None, title=None, description=None, version=None, media_type=None, content=None):
+    def __init__(self, url=None, title=None, description=None, version=None, media_type=None, content=None, sections=None):
         content = {} if (content is None) else content
 
         if url is not None and not isinstance(url, string_types):
@@ -71,6 +71,18 @@ class Document(Mapping):
         self._description = '' if (description is None) else description
         self._version = '' if (version is None) else version
         self._media_type = '' if (media_type is None) else media_type
+
+        if sections:
+            for section in sections:
+                if not section.id:
+                    for link in section.links:
+                        content[link.id] = link
+                else:
+                    content[section.id] = {}
+                    for link in section.links:
+                        content[section.id][link.id] = link
+            self.sections = sections
+
         self._data = {key: _to_objects(value) for key, value in content.items()}
 
     def __iter__(self):
@@ -133,6 +145,14 @@ class Document(Mapping):
         ])
 
 
+class Section(object):
+    def __init__(self, id=None, title=None, description=None, links=None):
+        self.id = id
+        self.title = title
+        self.description = description
+        self.links = links
+
+
 class Object(Mapping):
     """
     An immutable mapping of strings to values.
@@ -178,7 +198,7 @@ class Link(object):
     """
     Links represent the actions that a client may perform.
     """
-    def __init__(self, url=None, method=None, encoding=None, title=None, description=None, fields=None, action=None):
+    def __init__(self, url=None, method=None, encoding=None, title=None, description=None, fields=None, action=None, id=None):
         if action is not None:
             method = action  # Deprecated
 
@@ -200,6 +220,7 @@ class Link(object):
         ]):
             raise TypeError("Argument 'fields' must be a list of strings or fields.")
 
+        self.id = id
         self._url = '' if (url is None) else url
         self._method = '' if (method is None) else method
         self._encoding = '' if (encoding is None) else encoding

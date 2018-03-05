@@ -1,6 +1,6 @@
 from coreapi.codecs import BaseCodec, JSONSchemaCodec
 from coreapi.compat import VERBOSE_SEPARATORS, dict_type, force_bytes, urlparse
-from coreapi.document import Document, Link, Field
+from coreapi.document import Document, Link, Field, Section
 from coreapi.exceptions import ParseError
 from coreapi.schemas import OpenAPI
 import json
@@ -49,14 +49,14 @@ class OpenAPICodec(BaseCodec):
         description = lookup(openapi, ['info', 'description'])
         version = lookup(openapi, ['info', 'version'])
         base_url = lookup(openapi, ['servers', 0, 'url'])
-        content = self.get_links(openapi, base_url)
-        return Document(title=title, description=description, version=version, url=base_url, content=content)
+        sections = self.get_sections(openapi, base_url)
+        return Document(title=title, description=description, version=version, url=base_url, sections=sections)
 
-    def get_links(self, openapi, base_url):
+    def get_sections(self, openapi, base_url):
         """
         Return all the links in the document, layed out by tag and operationId.
         """
-        content = {}
+        links = dict_type()
 
         for path, path_info in openapi.get('paths', {}).items():
             operations = {
@@ -64,26 +64,23 @@ class OpenAPICodec(BaseCodec):
                 if key in METHODS
             }
             for operation, operation_info in operations.items():
-                operationId = operation_info.get('operationId')
-                tag = lookup(operation_info, ['tags', 0])
-                if not operationId:
-                    continue
-
+                tag = lookup(operation_info, ['tags', 0], default='')
                 link = self.get_link(base_url, path, path_info, operation, operation_info)
-                if tag is None:
-                    content[operationId] = link
-                else:
-                    if tag in content:
-                        content[tag][operationId] = link
-                    else:
-                        content[tag] = {operationId: link}
 
-        return content
+                if tag not in links:
+                    links[tag] = []
+                links[tag].append(link)
+
+        return [
+            Section(id=key, title=key, links=value)
+            for key, value in links.items()
+        ]
 
     def get_link(self, base_url, path, path_info, operation, operation_info):
         """
         Return a single link in the document.
         """
+        id = operation_info.get('operationId')
         title = operation_info.get('summary')
         description = operation_info.get('description')
 
@@ -101,6 +98,7 @@ class OpenAPICodec(BaseCodec):
         ]
 
         return Link(
+            id=id,
             url=urlparse.urljoin(base_url, path),
             method=operation,
             title=title,
