@@ -2,15 +2,28 @@ from coreapi.compat import dict_type, isfinite, string_types
 import re
 
 
-def unbool(element, true=object(), false=object()):
-    # https://github.com/Julian/jsonschema/blob/master/jsonschema/_utils.py
-    """
-    A hack to treat True and False as distinct from 1 and 0 for uniqueness checks.
-    """
+NO_DEFAULT = object()
+TRUE = object()
+FALSE = object()
+
+
+def hashable(element):
+    # Coerce a primitive into a uniquely hashable type, for uniqueness checks.
+
     if element is True:
-        return true
+        return TRUE  # Need to make `True` distinct from `1`.
     elif element is False:
-        return false
+        return FALSE  # Need to make `False` distinct from `0`.
+    elif isinstance(element, list):
+        return ('list', tuple([
+            hashable(item) for item in element
+        ]))
+    elif isinstance(element, dict):
+        return ('dict', tuple([
+            (hashable(key), hashable(value)) for key, value in element.items()
+        ]))
+
+    assert (element is None) or isinstance(element, (int, float, string_types))
     return element
 
 
@@ -21,25 +34,24 @@ class ValidationError(Exception):
         super(ValidationError, self).__init__(detail)
 
 
-class NoDefault(object):
-    pass
-
-
 class Validator(object):
     errors = {}
 
-    def __init__(self, title='', description='', default=NoDefault, definitions=None):
+    def __init__(self, title='', description='', default=NO_DEFAULT, definitions=None):
         definitions = {} if (definitions is None) else dict_type(definitions)
 
         assert isinstance(title, string_types)
         assert isinstance(description, string_types)
+        assert isinstance(definitions, dict)
         assert all(isinstance(k, string_types) for k in definitions.keys())
         assert all(isinstance(v, Validator) for v in definitions.values())
 
         self.title = title
         self.description = description
-        self.default = default
         self.definitions = definitions
+
+        if default is not NO_DEFAULT:
+            self.default = default
 
     def validate(self, value, definitions=None):
         raise NotImplementedError()
@@ -51,15 +63,15 @@ class Validator(object):
             return False
         return True
 
+    def has_default(self):
+        return hasattr(self, 'default')
+
     def error(self, code):
         message = self.error_message(code)
         raise ValidationError(message)
 
     def error_message(self, code):
         return self.errors[code].format(**self.__dict__)
-
-    def has_default(self):
-        return self.default is not NoDefault
 
     def __or__(self, other):
         if isinstance(self, Union):
@@ -427,7 +439,7 @@ class Array(Validator):
         # Ensure all items are of the right type.
         errors = {}
         if self.unique_items:
-            seen_items = []
+            seen_items = set()
 
         for pos, item in enumerate(value):
             try:
@@ -440,10 +452,11 @@ class Array(Validator):
                     item = self.items.validate(item, definitions=definitions)
 
                 if self.unique_items:
-                    if unbool(item) in seen_items:
+                    hashable_item = hashable(item)
+                    if hashable_item in seen_items:
                         self.error('unique_items')
                     else:
-                        seen_items.append(unbool(item))
+                        seen_items.add(hashable_item)
 
                 validated.append(item)
             except ValidationError as exc:
