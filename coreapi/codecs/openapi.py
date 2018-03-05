@@ -4,6 +4,7 @@ from coreapi.document import Document, Link, Field, Section
 from coreapi.exceptions import ParseError
 from coreapi.schemas import OpenAPI
 import json
+import re
 
 
 METHODS = [
@@ -32,6 +33,13 @@ def _relative_url(base_url, url):
     if base_prefix == url_prefix and url_prefix != '://':
         return url[len(url_prefix):]
     return url
+
+
+def _simple_slugify(text):
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9]+', '_', text)
+    text = re.sub(r'[_]+', '_', text)
+    return text.strip('_')
 
 
 class OpenAPICodec(BaseCodec):
@@ -72,7 +80,7 @@ class OpenAPICodec(BaseCodec):
                 links[tag].append(link)
 
         return [
-            Section(id=key, title=key, links=value)
+            Section(id=_simple_slugify(key), title=key, links=value)
             for key, value in links.items()
         ]
 
