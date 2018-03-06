@@ -123,14 +123,17 @@ class OpenAPICodec(BaseCodec):
 
         # TODO: Handle media type generically here...
         body_schema = lookup(operation_info, ['requestBody', 'content', 'application/json', 'schema'])
+
+        encoding = None
         if body_schema:
-            if isinstance(body_schema, string_types):
-                ref = body_schema[len('^#/components/schemas/'):]
+            encoding = 'application/json'
+            if '$ref' in body_schema:
+                ref = body_schema['$ref'][len('#/components/schemas/'):]
                 schema = schema_definitions.get(ref)
             else:
                 schema = JSONSchemaCodec().decode_from_data_structure(body_schema)
             if isinstance(schema, typesys.Object):
-                for key, value in schema.properties:
+                for key, value in schema.properties.items():
                     fields += [Field(name=key, location='form', schema=value)]
 
         return Link(
@@ -139,7 +142,8 @@ class OpenAPICodec(BaseCodec):
             method=operation,
             title=title,
             description=description,
-            fields=fields
+            fields=fields,
+            encoding=encoding
         )
 
     def get_field(self, parameter, schema_definitions):
@@ -154,8 +158,8 @@ class OpenAPICodec(BaseCodec):
         example = parameter.get('example')
 
         if schema is not None:
-            if isinstance(schema, string_types):
-                ref = schema[len('^#/components/schemas/'):]
+            if '$ref' in schema:
+                ref = schema['$ref'][len('#/components/schemas/'):]
                 schema = schema_definitions.get(ref)
             else:
                 schema = JSONSchemaCodec().decode_from_data_structure(schema)

@@ -2,7 +2,9 @@ from coreapi import typesys
 from coreapi.schemas import JSONSchema
 
 
-SchemaRefString = typesys.String(pattern='^#/components/schemas/')
+SchemaRef = typesys.Object(
+    properties={'$ref': typesys.String(pattern='^#/components/schemas/')}
+)
 
 
 OpenAPI = typesys.Object(
@@ -113,7 +115,7 @@ OpenAPI = typesys.Object(
                 ('required', typesys.Boolean()),
                 ('deprecated', typesys.Boolean()),
                 ('allowEmptyValue', typesys.Boolean()),
-                ('schema', JSONSchema | SchemaRefString),
+                ('schema', JSONSchema | SchemaRef),
                 ('example', typesys.Any())
                 # TODO: Other fields
             ],
@@ -128,7 +130,7 @@ OpenAPI = typesys.Object(
         ),
         'MediaType': typesys.Object(
             properties=[
-                ('schema', JSONSchema | SchemaRefString),
+                ('schema', JSONSchema | SchemaRef),
                 ('example', typesys.Any())
                 # TODO 'examples', 'encoding'
             ]

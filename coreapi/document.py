@@ -266,6 +266,9 @@ class Link(object):
     def query_fields(self):
         return [field for field in self.fields if field.location == 'query']
 
+    def form_fields(self):
+        return [field for field in self.fields if field.location == 'form']
+
     def __eq__(self, other):
         return (
             isinstance(other, Link) and
