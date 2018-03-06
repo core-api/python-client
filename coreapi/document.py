@@ -152,6 +152,12 @@ class Section(object):
         self.description = description
         self.links = links
 
+    def path_links(self):
+        return [link for link in self.links if link.location == 'path']
+
+    def query_links(self):
+        return [link for link in self.links if link.location == 'query']
+
 
 class Object(Mapping):
     """
