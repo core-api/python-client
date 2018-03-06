@@ -74,6 +74,8 @@ class OpenAPICodec(BaseCodec):
             for operation, operation_info in operations.items():
                 tag = lookup(operation_info, ['tags', 0], default='')
                 link = self.get_link(base_url, path, path_info, operation, operation_info)
+                if link is None:
+                    continue
 
                 if tag not in links:
                     links[tag] = []
@@ -91,6 +93,11 @@ class OpenAPICodec(BaseCodec):
         id = operation_info.get('operationId')
         title = operation_info.get('summary')
         description = operation_info.get('description')
+
+        if id is None:
+            id = _simple_slugify(title)
+            if not id:
+                return None
 
         # Allow path info and operation info to override the base url.
         base_url = lookup(path_info, ['servers', 0, 'url'], default=base_url)
