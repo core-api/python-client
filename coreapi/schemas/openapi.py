@@ -9,7 +9,7 @@ OpenAPI = typesys.Object(
         ('info', typesys.Ref('Info')),
         ('servers', typesys.Array(items=typesys.Ref('Server'))),
         ('paths', typesys.Ref('Paths')),
-        # TODO: 'components': ...,
+        ('components', typesys.Ref('Components')),
         ('security', typesys.Ref('SecurityRequirement')),
         ('tags', typesys.Array(items=typesys.Ref('Tag'))),
         ('externalDocs', typesys.Ref('ExternalDocumentation'))
@@ -86,7 +86,7 @@ OpenAPI = typesys.Object(
                 ('externalDocs', typesys.Ref('ExternalDocumentation')),
                 ('operationId', typesys.String()),
                 ('parameters', typesys.Array(items=typesys.Ref('Parameter'))),  # TODO: Parameter | ReferenceObject
-                # TODO: 'requestBody'
+                ('requestBody', typesys.Ref('RequestBody')),  # TODO: RequestBody | ReferenceObject
                 # TODO: 'responses'
                 # TODO: 'callbacks'
                 ('deprecated', typesys.Boolean()),
@@ -109,11 +109,30 @@ OpenAPI = typesys.Object(
                 ('required', typesys.Boolean()),
                 ('deprecated', typesys.Boolean()),
                 ('allowEmptyValue', typesys.Boolean()),
-                ('schema', JSONSchema),
+                ('schema', JSONSchema),  # TODO: | RefString
                 ('example', typesys.Any())
                 # TODO: Other fields
             ],
             required=['name', 'in']
+        ),
+        'RequestBody': typesys.Object(
+            properties=[
+                ('description', typesys.String()),
+                ('content', typesys.Object(additional_properties=typesys.Ref('MediaType'))),
+                ('required', typesys.Boolean())
+            ]
+        ),
+        'MediaType': typesys.Object(
+            properties=[
+                ('schema': JSONSchema),  # TODO: | RefString
+                ('example': typesys.Any())
+                # TODO 'examples', 'encoding'
+            ]
+        ),
+        'Components': typesys.Object(
+            properties: [
+                ('schemas', typesys.Object(additional_properties=JSONSchema)),
+            ]
         ),
         'Tag': typesys.Object(
             properties=[
