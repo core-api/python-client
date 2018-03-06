@@ -152,12 +152,6 @@ class Section(object):
         self.description = description
         self.links = links
 
-    def path_links(self):
-        return [link for link in self.links if link.location == 'path']
-
-    def query_links(self):
-        return [link for link in self.links if link.location == 'query']
-
 
 class Object(Mapping):
     """
@@ -265,6 +259,12 @@ class Link(object):
     def action(self):
         # Deprecated
         return self._method
+
+    def path_fields(self):
+        return [field for field in self.fields if field.location == 'path']
+
+    def query_fields(self):
+        return [field for field in self.fields if field.location == 'query']
 
     def __eq__(self, other):
         return (
