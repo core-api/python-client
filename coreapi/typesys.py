@@ -37,7 +37,7 @@ class ValidationError(Exception):
 class Validator(object):
     errors = {}
 
-    def __init__(self, title='', description='', default=NO_DEFAULT, definitions=None):
+    def __init__(self, title='', description='', default=NO_DEFAULT, definitions=None, self_ref=None):
         definitions = {} if (definitions is None) else dict_type(definitions)
 
         assert isinstance(title, string_types)
@@ -49,6 +49,7 @@ class Validator(object):
         self.title = title
         self.description = description
         self.definitions = definitions
+        self.self_ref = self_ref
 
         if default is not NO_DEFAULT:
             self.default = default
@@ -72,6 +73,18 @@ class Validator(object):
 
     def error_message(self, code):
         return self.errors[code].format(**self.__dict__)
+
+    def get_definitions(self, definitions=None):
+        if self.definitions is None and self.self_ref is None:
+            return definitions
+
+        if definitions is None:
+            definitions = {}
+        if self.definitions is not None:
+            definitions.update(self.definitions)
+        if self.self_ref is not None:
+            definitions[self.self_ref] = self
+        return definitions
 
     def __or__(self, other):
         if isinstance(self, Union):
@@ -299,10 +312,6 @@ class Object(Validator):
         self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
-        if definitions is None:
-            definitions = dict(self.definitions)
-            definitions[''] = self
-
         if value is None and self.allow_null:
             return None
         elif value is None:
@@ -310,6 +319,7 @@ class Object(Validator):
         elif not isinstance(value, dict):
             self.error('type')
 
+        definitions = self.get_definitions(definitions)
         validated = dict_type()
 
         # Ensure all property keys are strings.
@@ -412,10 +422,6 @@ class Array(Validator):
         self.allow_null = allow_null
 
     def validate(self, value, definitions=None):
-        if definitions is None:
-            definitions = dict(self.definitions)
-            definitions[''] = self
-
         if value is None and self.allow_null:
             return None
         elif value is None:
@@ -423,6 +429,7 @@ class Array(Validator):
         elif not isinstance(value, list):
             self.error('type')
 
+        definitions = self.get_definitions(definitions)
         validated = []
 
         if self.min_items is not None and self.min_items == self.max_items and len(value) != self.min_items:
@@ -500,7 +507,7 @@ class Union(Validator):
 
 
 class Ref(Validator):
-    def __init__(self, ref='', **kwargs):
+    def __init__(self, ref, **kwargs):
         super(Ref, self).__init__(**kwargs)
         assert isinstance(ref, string_types)
         self.ref = ref

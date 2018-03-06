@@ -1,5 +1,6 @@
+from coreapi import typesys
 from coreapi.codecs import BaseCodec, JSONSchemaCodec
-from coreapi.compat import VERBOSE_SEPARATORS, dict_type, force_bytes, urlparse
+from coreapi.compat import VERBOSE_SEPARATORS, dict_type, force_bytes, string_types, urlparse
 from coreapi.document import Document, Link, Field, Section
 from coreapi.exceptions import ParseError
 from coreapi.schemas import OpenAPI
@@ -57,10 +58,18 @@ class OpenAPICodec(BaseCodec):
         description = lookup(openapi, ['info', 'description'])
         version = lookup(openapi, ['info', 'version'])
         base_url = lookup(openapi, ['servers', 0, 'url'])
-        sections = self.get_sections(openapi, base_url)
+        schema_definitions = self.get_schema_definitions(openapi)
+        sections = self.get_sections(openapi, base_url, schema_definitions)
         return Document(title=title, description=description, version=version, url=base_url, sections=sections)
 
-    def get_sections(self, openapi, base_url):
+    def get_schema_definitions(self, openapi):
+        definitions = {}
+        schemas = lookup(openapi, ['components', 'schemas'], {})
+        for key, value in schemas.items():
+            definitions[key] = JSONSchemaCodec().decode_from_data_structure(value)
+        return definitions
+
+    def get_sections(self, openapi, base_url, schema_definitions):
         """
         Return all the links in the document, layed out by tag and operationId.
         """
@@ -73,7 +82,7 @@ class OpenAPICodec(BaseCodec):
             }
             for operation, operation_info in operations.items():
                 tag = lookup(operation_info, ['tags', 0], default='')
-                link = self.get_link(base_url, path, path_info, operation, operation_info)
+                link = self.get_link(base_url, path, path_info, operation, operation_info, schema_definitions)
                 if link is None:
                     continue
 
@@ -86,7 +95,7 @@ class OpenAPICodec(BaseCodec):
             for key, value in links.items()
         ]
 
-    def get_link(self, base_url, path, path_info, operation, operation_info):
+    def get_link(self, base_url, path, path_info, operation, operation_info, schema_definitions):
         """
         Return a single link in the document.
         """
@@ -108,9 +117,21 @@ class OpenAPICodec(BaseCodec):
         parameters += operation_info.get('parameters', [])
 
         fields = [
-            self.get_field(parameter)
+            self.get_field(parameter, schema_definitions)
             for parameter in parameters
         ]
+
+        # TODO: Handle media type generically here...
+        body_schema = lookup(operation_info, ['requestBody', 'content', 'application/json', 'schema'])
+        if body_schema:
+            if isinstance(body_schema, string_types):
+                ref = body_schema[len('^#/components/schemas/'):]
+                schema = schema_definitions.get(ref)
+            else:
+                schema = JSONSchemaCodec().decode_from_data_structure(body_schema)
+            if isinstance(schema, typesys.Object):
+                for key, value in schema.properties:
+                    fields += [Field(name=key, location='form', schema=value)]
 
         return Link(
             id=id,
@@ -121,7 +142,7 @@ class OpenAPICodec(BaseCodec):
             fields=fields
         )
 
-    def get_field(self, parameter):
+    def get_field(self, parameter, schema_definitions):
         """
         Return a single field in a link.
         """
@@ -133,7 +154,11 @@ class OpenAPICodec(BaseCodec):
         example = parameter.get('example')
 
         if schema is not None:
-            schema = JSONSchemaCodec().decode_from_data_structure(schema)
+            if isinstance(schema, string_types):
+                ref = schema[len('^#/components/schemas/'):]
+                schema = schema_definitions.get(ref)
+            else:
+                schema = JSONSchemaCodec().decode_from_data_structure(schema)
 
         return Field(
             name=name,
