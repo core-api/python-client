@@ -90,7 +90,7 @@ OpenAPI = typesys.Object(
                 # TODO: 'responses'
                 # TODO: 'callbacks'
                 ('deprecated', typesys.Boolean()),
-                ('security', typesys.Ref('SecurityRequirement')),
+                ('security', typesys.Array(typesys.Ref('SecurityRequirement'))),
                 ('servers', typesys.Array(items=typesys.Ref('Server')))
             ]
         ),
