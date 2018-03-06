@@ -80,7 +80,7 @@ class OpenAPICodec(BaseCodec):
                 links[tag].append(link)
 
         return [
-            Section(id=_simple_slugify(key), title=key, links=value)
+            Section(id=_simple_slugify(key), title=key.title(), links=value)
             for key, value in links.items()
         ]
 
